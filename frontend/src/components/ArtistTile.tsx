@@ -1,8 +1,8 @@
 import { Music, User } from "lucide-react";
-import { SpotifyLibraryArtist } from "../types/spotify";
+import { Artist } from "../types";
 import { Tile } from "./Tile";
 
-export function ArtistTile({ artist }: { artist: SpotifyLibraryArtist }) {
+export function ArtistTile({ artist }: { artist: Artist }) {
   const artistImage =
     artist.images && artist.images.length > 0 ? artist.images[0].url : null;
 
@@ -22,17 +22,19 @@ export function ArtistTile({ artist }: { artist: SpotifyLibraryArtist }) {
             </div>
           )}
         </div>
+
         <h3
           className="font-semibold text-base mb-1 truncate"
           title={artist.name}
         >
           {artist.name}
         </h3>
+
         <span className="flex gap-2 items-center justify-center">
           <Music size={12} />
           <p className="text-sm text-base-content/70">
-            {artist.track_count ?? "--"} track
-            {artist.track_count !== 1 ? "s" : ""}
+            {artist.trackCount ?? "--"} track
+            {artist.trackCount !== 1 ? "s" : ""}
           </p>
         </span>
       </div>

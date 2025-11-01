@@ -1,13 +1,13 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
+  ReactNode,
   useContext,
   useEffect,
   useState,
-  ReactNode,
 } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authAPI } from "../services/api";
-import { SpotifyUser } from "../types/spotify";
+import { SpotifyUser } from "../types";
 
 interface AuthContextType {
   user: SpotifyUser | null;

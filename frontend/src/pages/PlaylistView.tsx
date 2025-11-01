@@ -7,33 +7,32 @@ import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { SpotifyLink } from "../components/SpotifyLink";
 import { TrackList } from "../components/TrackList";
-import { spotifyAPI } from "../services/api";
-import { SpotifyPlaylist, SpotifyPlaylistTrack } from "../types/spotify";
+import { baseAPI } from "../services/api";
 
 export function PlaylistView() {
   const { id } = useParams<{ id: string }>();
 
   const {
-    data: playlistData,
+    data: playlist,
     isLoading: isPlaylistLoading,
     error: playlistError,
   } = useQuery({
     queryKey: ["playlist", id],
     queryFn: async () => {
-      const response = await spotifyAPI.getPlaylist(id!);
+      const response = await baseAPI.getPlaylist(id!);
       return response.data;
     },
     enabled: !!id,
   });
 
   const {
-    data: tracksData,
+    data: tracks,
     isLoading: isTracksLoading,
     error: tracksError,
   } = useQuery({
     queryKey: ["playlist-tracks", id],
     queryFn: async () => {
-      const response = await spotifyAPI.getPlaylistTracks(id!);
+      const response = await baseAPI.getPlaylistTracks(id!);
       return response.data;
     },
     enabled: !!id,
@@ -46,12 +45,9 @@ export function PlaylistView() {
     return <PageLoading />;
   }
 
-  if (error) {
+  if (error || !playlist || !tracks) {
     return <Error>Failed to load playlist tracks. Please try again.</Error>;
   }
-
-  const tracks: SpotifyPlaylistTrack[] = tracksData?.items || [];
-  const playlist: SpotifyPlaylist = playlistData;
 
   return (
     <Page>
@@ -60,7 +56,7 @@ export function PlaylistView() {
         title={
           <div className="flex justify-between items-center">
             {playlist?.name || "Playlist"}
-            <SpotifyLink href={playlist.external_urls.spotify} />
+            <SpotifyLink href={playlist.externalUrls.spotify} />
           </div>
         }
         subtitle={
@@ -74,7 +70,7 @@ export function PlaylistView() {
       {tracks.length === 0 ? (
         <Empty Icon={Music}>No tracks found</Empty>
       ) : (
-        <TrackList tracks={tracks.map((item) => item.track)} />
+        <TrackList tracks={tracks} />
       )}
     </Page>
   );

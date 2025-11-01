@@ -6,18 +6,17 @@ import { Grid } from "../components/Grid";
 import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { PlaylistTile } from "../components/PlaylistTile";
-import { spotifyAPI } from "../services/api";
-import { SpotifyPlaylist } from "../types/spotify";
+import { baseAPI } from "../services/api";
 
 export function Playlists() {
   const {
-    data: playlistsData,
+    data: playlists,
     isLoading,
     error,
   } = useQuery({
     queryKey: ["playlists"],
     queryFn: async () => {
-      const response = await spotifyAPI.getPlaylists();
+      const response = await baseAPI.getPlaylists();
       return response.data;
     },
   });
@@ -30,9 +29,7 @@ export function Playlists() {
     return <Error>Failed to load playlists. Please try again.</Error>;
   }
 
-  const playlists: SpotifyPlaylist[] = playlistsData?.items || [];
-
-  if (playlists.length === 0) {
+  if (!playlists || playlists.length === 0) {
     return <Empty Icon={Music}>No Playlists Found</Empty>;
   }
 

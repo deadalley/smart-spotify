@@ -1,5 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
 import { Music, User } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
@@ -7,54 +7,49 @@ import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { SpotifyLink } from "../components/SpotifyLink";
 import { TrackList } from "../components/TrackList";
-import { spotifyAPI } from "../services/api";
-import { SpotifyLibraryArtist, SpotifyPlaylistTrack } from "../types/spotify";
-
-interface ArtistTracksResponse {
-  artist: SpotifyLibraryArtist | null;
-  tracks: {
-    items: SpotifyPlaylistTrack[];
-    total: number;
-  };
-}
+import { baseAPI } from "../services/api";
 
 export function ArtistView() {
   const { id } = useParams<{ id: string }>();
-  const [data, setData] = useState<ArtistTracksResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchArtistTracks = async () => {
-      if (!id) return;
+  const {
+    data: artist,
+    isLoading: isArtistLoading,
+    error: artistError,
+  } = useQuery({
+    queryKey: ["artist", id],
+    queryFn: async () => {
+      const response = await baseAPI.getArtist(id!);
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
-      try {
-        setLoading(true);
-        const response = await spotifyAPI.getArtistTracks(id);
-        setData(response.data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching artist tracks:", err);
-        setError("Failed to load artist tracks");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const {
+    data: tracks,
+    isLoading: isTracksLoading,
+    error: tracksError,
+  } = useQuery({
+    queryKey: ["artist-tracks", id],
+    queryFn: async () => {
+      const response = await baseAPI.getArtistTracks(id!);
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
-    fetchArtistTracks();
-  }, [id]);
+  const isLoading = isArtistLoading || isTracksLoading;
+  const error = artistError || tracksError;
 
-  if (loading) {
+  if (isLoading) {
     return <PageLoading />;
   }
 
-  if (error || !data) {
-    return <Error>{error || "Artist not found"}</Error>;
+  if (error || !artist || !tracks) {
+    return <Error>Failed to load artist tracks. Please try again.</Error>;
   }
 
-  const { artist, tracks } = data;
-  const artistImage =
-    artist?.images && artist.images.length > 0 ? artist.images[0].url : null;
+  const artistImage = artist.images.length > 0 ? artist.images[0].url : null;
 
   return (
     <Page>
@@ -83,25 +78,25 @@ export function ArtistView() {
                   <span className="flex gap-2 items-center justify-start">
                     <Music size={12} />
                     <p className="text-sm text-base-content/70">
-                      {artist?.track_count ?? "--"} track
-                      {artist?.track_count !== 1 ? "s" : ""}
+                      {artist?.trackCount ?? "--"} track
+                      {artist?.trackCount !== 1 ? "s" : ""}
                     </p>
                   </span>
                 </div>
               </div>
 
-              {artist?.external_urls?.spotify && (
-                <SpotifyLink href={artist.external_urls.spotify} />
+              {artist?.externalUrls?.spotify && (
+                <SpotifyLink href={artist.externalUrls.spotify} />
               )}
             </div>
           </>
         }
       />
 
-      {tracks.items.length === 0 ? (
+      {tracks.length === 0 ? (
         <Empty Icon={Music}>No tracks found</Empty>
       ) : (
-        <TrackList tracks={tracks.items.map((item) => item.track)} />
+        <TrackList tracks={tracks} />
       )}
     </Page>
   );

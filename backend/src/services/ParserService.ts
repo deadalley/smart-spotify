@@ -29,7 +29,7 @@ export class ParserService {
       ownerId: spotifyPlaylist.owner.id,
       public: spotifyPlaylist.public,
       collaborative: spotifyPlaylist.collaborative,
-      tracksTotal: spotifyPlaylist.tracks.total,
+      trackCount: spotifyPlaylist.tracks.total,
       images: spotifyPlaylist.images || [],
       externalUrls: spotifyPlaylist.external_urls || { spotify: "" },
       snapshotId: spotifyPlaylist.snapshot_id || "",
@@ -58,6 +58,7 @@ export class ParserService {
       name: spotifyArtist.name,
       images: spotifyArtist.images || [],
       externalUrls: spotifyArtist.external_urls || { spotify: "" },
+      trackCount: 0, // Needs to be overwritten later
     };
   }
 
@@ -78,7 +79,7 @@ export class ParserService {
       ownerId: playlist.ownerId,
       public: playlist.public.toString(),
       collaborative: playlist.collaborative.toString(),
-      tracksTotal: playlist.tracksTotal.toString(),
+      trackCount: playlist.trackCount.toString(),
       images: JSON.stringify(playlist.images),
       externalUrls: JSON.stringify(playlist.externalUrls),
       snapshotId: playlist.snapshotId,
@@ -125,7 +126,7 @@ export class ParserService {
       ownerId: data.ownerId,
       public: data.public === "true",
       collaborative: data.collaborative === "true",
-      tracksTotal: parseInt(data.tracksTotal || "0"),
+      trackCount: parseInt(data.trackCount || "0"),
       images: JSON.parse(data.images || "[]"),
       externalUrls: JSON.parse(data.externalUrls || "{}"),
       snapshotId: data.snapshotId,
@@ -154,6 +155,7 @@ export class ParserService {
       name: data.name,
       images: JSON.parse(data.images || "[]"),
       externalUrls: JSON.parse(data.externalUrls || "{}"),
+      trackCount: 0, // Needs to be overwritten later
     };
   }
 }

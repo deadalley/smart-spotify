@@ -1,8 +1,8 @@
 import { Clock } from "lucide-react";
-import { SpotifyTrack } from "../types/spotify";
+import { Track } from "../types";
 import { TrackRow } from "./TrackRow";
 
-export function TrackList({ tracks }: { tracks: SpotifyTrack[] }) {
+export function TrackList({ tracks }: { tracks: Track[] }) {
   return (
     <div className="bg-base-200 shadow-xl">
       <div className="p-0">

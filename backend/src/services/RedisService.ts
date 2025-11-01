@@ -48,23 +48,50 @@ export class RedisService {
   }
 
   async getUserPlaylists(userId: string): Promise<Playlist[]> {
-    const playlistIds = await redisClient.sMembers(
-      this.getRedisKey(userId, "user", "playlists")
+    const playlistKeys = await redisClient.keys(
+      this.getRedisKey(userId, "playlist", "*")
     );
-
     const playlists: Playlist[] = [];
 
-    for (const playlistId of playlistIds) {
-      const playlistData = await redisClient.hGetAll(
-        this.getRedisKey(userId, "playlist", playlistId)
-      );
+    // Filter keys to only include direct playlist hash keys (not relationship sets)
+    const directplaylistKeys = playlistKeys.filter((key) => {
+      const parts = key.split(":");
+      // playlist hash keys have exactly 4 parts: smart-spotify:userId:playlist:playlistId
+      // Relationship keys have 5+ parts: smart-spotify:userId:playlist:playlistId:tracks/playlists
+      return parts.length === 4;
+    });
 
-      if (Object.keys(playlistData).length > 0) {
-        playlists.push(ParserService.convertFromRedisPlaylist(playlistData));
+    for (const playlistKey of directplaylistKeys) {
+      try {
+        const playlistData = await redisClient.hGetAll(playlistKey);
+        if (Object.keys(playlistData).length > 0) {
+          const playlist = ParserService.convertFromRedisPlaylist(playlistData);
+
+          playlists.push(playlist);
+        }
+      } catch (error) {
+        console.error(
+          `Error fetching playlist data for key ${playlistKey}:`,
+          error
+        );
       }
     }
 
     return playlists;
+  }
+
+  async getPlaylist(
+    userId: string,
+    playlistId: string
+  ): Promise<Playlist | null> {
+    const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
+    const playlistData = await redisClient.hGetAll(playlistKey);
+
+    if (Object.keys(playlistData).length === 0) {
+      return null;
+    }
+
+    return ParserService.convertFromRedisPlaylist(playlistData);
   }
 
   // Track operations
@@ -244,6 +271,17 @@ export class RedisService {
     }
 
     return artists;
+  }
+
+  async getArtist(userId: string, artistId: string): Promise<Artist | null> {
+    const artistKey = this.getRedisKey(userId, "artist", artistId);
+    const artistData = await redisClient.hGetAll(artistKey);
+
+    if (Object.keys(artistData).length === 0) {
+      return null;
+    }
+
+    return ParserService.convertFromRedisArtist(artistData);
   }
 
   // Helper method to delete all user data

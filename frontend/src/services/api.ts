@@ -1,4 +1,15 @@
 import axios from "axios";
+import {
+  Artist,
+  PersistResponse,
+  Playlist,
+  SpotifyArtistsResponse,
+  SpotifyPlaylist,
+  SpotifyPlaylistsResponse,
+  SpotifyPlaylistTracksResponse,
+  SpotifySearchResponse,
+  Track,
+} from "../types";
 
 const api = axios.create({
   baseURL: "/api",
@@ -16,30 +27,51 @@ export const authAPI = {
 // Spotify endpoints
 export const spotifyAPI = {
   // Playlists
-  getPlaylists: (offset = 0) => api.get(`/spotify/playlists?offset=${offset}`),
+  getPlaylists: (offset = 0) =>
+    api.get<SpotifyPlaylistsResponse>(`/spotify/playlists?offset=${offset}`),
 
   getPlaylist: (playlistId: string) =>
-    api.get(`/spotify/playlists/${playlistId}`),
+    api.get<SpotifyPlaylist>(`/spotify/playlists/${playlistId}`),
 
   getPlaylistTracks: (playlistId: string, offset = 0) =>
-    api.get(`/spotify/playlists/${playlistId}/tracks?offset=${offset}`),
+    api.get<SpotifyPlaylistTracksResponse>(
+      `/spotify/playlists/${playlistId}/tracks?offset=${offset}`
+    ),
 
   // Artists
-  getArtists: () => api.get("/spotify/artists"),
+  getArtists: () => api.get<SpotifyArtistsResponse>(`/spotify/artists`),
   getArtistTracks: (artistId: string) =>
-    api.get(`/spotify/artists/${artistId}/tracks`),
+    api.get<Track[]>(`/spotify/artists/${artistId}/tracks`),
 
   // Search
   search: (query: string, type = "track", limit = 20) =>
-    api.get(
+    api.get<SpotifySearchResponse>(
       `/spotify/search?q=${encodeURIComponent(
         query
       )}&type=${type}&limit=${limit}`
     ),
+};
 
+// Base api endpoints
+export const baseAPI = {
   // Data persistence
-  persist: () => api.post("/spotify/persist"),
-  getSyncStatus: () => api.get("/spotify/persist/status"),
+  persist: () => api.post<PersistResponse>("/persist"),
+  getSyncStatus: () => api.get("/persist/status"),
+
+  // Cached data
+  // Playlists
+  getPlaylists: (offset = 0) =>
+    api.get<Playlist[]>(`/playlists?offset=${offset}`),
+  getPlaylist: (playlistId: string) =>
+    api.get<Playlist>(`/playlists/${playlistId}`),
+  getPlaylistTracks: (playlistId: string, offset = 0) =>
+    api.get<Track[]>(`/playlists/${playlistId}/tracks?offset=${offset}`),
+
+  // Artists
+  getArtists: () => api.get<Artist[]>("/artists"),
+  getArtist: (artistId: string) => api.get<Artist>(`/artists/${artistId}`),
+  getArtistTracks: (artistId: string) =>
+    api.get<Track[]>(`/artists/${artistId}/tracks`),
 };
 
 // Axios interceptors for error handling

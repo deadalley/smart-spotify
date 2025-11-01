@@ -6,7 +6,7 @@ import { Loading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { TrackList } from "../components/TrackList";
 import { spotifyAPI } from "../services/api";
-import { SpotifySearchResult, SpotifyTrack } from "../types/spotify";
+import { SpotifySearchResponse, SpotifyTrack, Track } from "../types";
 
 export function Search() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,7 +21,7 @@ export function Search() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const { data: searchResults, isLoading } = useQuery<SpotifySearchResult>({
+  const { data: searchResults, isLoading } = useQuery<SpotifySearchResponse>({
     queryKey: ["search", debouncedQuery],
     queryFn: async () => {
       const response = await spotifyAPI.search(debouncedQuery);
@@ -58,7 +58,7 @@ export function Search() {
 
       {/* Search Results */}
       {!isLoading && debouncedQuery && tracks.length > 0 && (
-        <TrackList tracks={tracks} />
+        <TrackList tracks={tracks as unknown as Track[]} />
       )}
 
       {/* No Results */}

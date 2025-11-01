@@ -1,6 +1,6 @@
 import { RefreshCw, Trash } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
-import { spotifyAPI } from "../services/api";
+import { baseAPI } from "../services/api";
 
 interface SyncState {
   isLoading: boolean;
@@ -100,7 +100,7 @@ export function SyncModal() {
   const pollJobStatus = () => {
     const poll = async () => {
       try {
-        const response = await spotifyAPI.getSyncStatus();
+        const response = await baseAPI.getSyncStatus();
         const jobStatus = response.data;
 
         dispatch({
@@ -144,7 +144,7 @@ export function SyncModal() {
 
   const checkForActiveJob = async () => {
     try {
-      const response = await spotifyAPI.getSyncStatus();
+      const response = await baseAPI.getSyncStatus();
       const activeJob = response.data;
 
       if (activeJob.hasActiveJob && activeJob.status !== "completed") {
@@ -169,7 +169,7 @@ export function SyncModal() {
     dispatch({ type: "START_SYNC", message: "Starting sync..." });
 
     try {
-      const activeJobResponse = await spotifyAPI.getSyncStatus();
+      const activeJobResponse = await baseAPI.getSyncStatus();
       const activeJob = activeJobResponse.data;
 
       if (activeJob.hasActiveJob) {
@@ -181,11 +181,11 @@ export function SyncModal() {
         });
         pollJobStatus();
       } else {
-        const response = await spotifyAPI.persist();
+        const response = await baseAPI.persist();
         const jobData = response.data;
 
         if (jobData.success) {
-          dispatch({ type: "SET_JOB_ID", jobId: jobData.jobId });
+          dispatch({ type: "SET_JOB_ID", jobId: "jobData.jobId" }); // TODO: fix jobId
           dispatch({
             type: "UPDATE_PROGRESS",
             progress: 0,
