@@ -40,6 +40,10 @@ export const spotifyAPI = {
   // Data persistence
   persist: () => api.post("/spotify/persist"),
   getSyncStatus: () => api.get("/spotify/sync/status"),
+
+  // Job management
+  getPersistStatus: () => api.get("/spotify/persist/status"),
+  getJobStatus: (jobId: string) => api.get(`/spotify/persist/status/${jobId}`),
 };
 
 // Axios interceptors for error handling
