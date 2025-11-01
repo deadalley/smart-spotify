@@ -1,17 +1,13 @@
 import { PropsWithChildren } from "react";
+import { Link, To } from "react-router-dom";
 
-interface TileProps extends PropsWithChildren {
-  onClick?: () => void;
-  className?: string;
-}
-
-export function Tile({ children, onClick, className = "" }: TileProps) {
+export function Tile({ children, to }: PropsWithChildren<{ to: To }>) {
   return (
-    <div
-      className={`bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors duration-200 group ${className}`}
-      onClick={onClick}
+    <Link
+      to={to}
+      className="bg-zinc-800 p-4 rounded-lg hover:bg-zinc-700 transition-colors duration-200 group"
     >
       {children}
-    </div>
+    </Link>
   );
 }

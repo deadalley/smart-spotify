@@ -8,6 +8,7 @@ interface TrackRowProps {
 }
 
 export function TrackRow({ track, index }: TrackRowProps) {
+  console.log({ track });
   return (
     <>
       <div className="grid grid-cols-12 gap-4 p-4 hover:bg-zinc-900 transition-colors duration-200 group">
@@ -20,7 +21,7 @@ export function TrackRow({ track, index }: TrackRowProps) {
         <div className="col-span-6 flex items-center space-x-3">
           <div className="avatar">
             <div className="w-12 h-12 rounded">
-              {track.album.images[0] ? (
+              {track.album?.images[0] ? (
                 <img src={track.album.images[0].url} alt={track.album.name} />
               ) : (
                 <div className="bg-zinc-900 flex items-center justify-center">
@@ -41,7 +42,7 @@ export function TrackRow({ track, index }: TrackRowProps) {
 
         <div className="col-span-3 flex items-center">
           <p className="text-base-content/60 text-sm truncate hover:text-base-content">
-            {track.album.name}
+            {track.album?.name ?? "--"}
           </p>
         </div>
 

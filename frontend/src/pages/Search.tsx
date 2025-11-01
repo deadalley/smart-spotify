@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Music, Search as SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Empty } from "../components/Empty";
 import { Loading } from "../components/Loading";
+import { Page } from "../components/Page";
 import { TrackList } from "../components/TrackList";
 import { spotifyAPI } from "../services/api";
 import { SpotifySearchResult, SpotifyTrack } from "../types/spotify";
@@ -31,11 +33,8 @@ export function Search() {
   const tracks: SpotifyTrack[] = searchResults?.tracks?.items || [];
 
   return (
-    <div className="container p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Search</h1>
-      </div>
+    <Page>
+      <Page.Header title="Search" />
 
       {/* Search Input */}
       <label className="input w-full mb-8">
@@ -64,19 +63,7 @@ export function Search() {
 
       {/* No Results */}
       {!isLoading && debouncedQuery && tracks.length === 0 && (
-        <div className="hero min-h-96">
-          <div className="hero-content text-center">
-            <div className="max-w-md">
-              <Music size={64} className="mx-auto mb-4 text-base-content/40" />
-              <h1 className="text-2xl font-bold text-base-content mb-4">
-                No results found
-              </h1>
-              <p className="text-base-content/60">
-                Try searching with different keywords.
-              </p>
-            </div>
-          </div>
-        </div>
+        <Empty Icon={Music}>No Tracks found</Empty>
       )}
 
       {/* Empty State */}
@@ -98,6 +85,6 @@ export function Search() {
           </div>
         </div>
       )}
-    </div>
+    </Page>
   );
 }

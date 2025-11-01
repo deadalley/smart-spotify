@@ -1,10 +1,9 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { Layout } from "./components/Layout";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Artists } from "./pages/Artists";
 import { ArtistView } from "./pages/ArtistView";
-import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
 import { Playlists } from "./pages/Playlists";
 import { PlaylistView } from "./pages/PlaylistView";
@@ -16,7 +15,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
+          <Route index element={<Navigate to="/search" replace />} />
           <Route path="playlists" element={<Playlists />} />
           <Route path="playlists/:id" element={<PlaylistView />} />
           <Route path="artists" element={<Artists />} />

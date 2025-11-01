@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Music } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
-import { Loading } from "../components/Loading";
+import { Music } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { Empty } from "../components/Empty";
+import { Error } from "../components/Error";
+import { PageLoading } from "../components/Loading";
+import { Page } from "../components/Page";
+import { SpotifyLink } from "../components/SpotifyLink";
 import { TrackList } from "../components/TrackList";
 import { spotifyAPI } from "../services/api";
 import { SpotifyPlaylist, SpotifyPlaylistTrack } from "../types/spotify";
@@ -39,72 +43,39 @@ export function PlaylistView() {
   const error = playlistError || tracksError;
 
   if (isLoading) {
-    return <Loading />;
+    return <PageLoading />;
   }
 
   if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="alert alert-error">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="stroke-current shrink-0 h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>Failed to load playlist tracks. Please try again.</span>
-        </div>
-      </div>
-    );
+    return <Error>Failed to load playlist tracks. Please try again.</Error>;
   }
 
   const tracks: SpotifyPlaylistTrack[] = tracksData?.items || [];
   const playlist: SpotifyPlaylist = playlistData;
 
   return (
-    <div className="container p-6">
-      {/* Back button */}
-      <div className="mb-6">
-        <Link to="/artists" className="btn btn-ghost btn-sm">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Artists
-        </Link>
-      </div>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          {playlist?.name || "Playlist"}
-        </h1>
-        <p className="text-zinc-400">
-          {tracks.length} track{tracks.length !== 1 ? "s" : ""}
-        </p>
-        {playlist?.description && (
-          <p className="text-zinc-500 text-sm mt-2">{playlist.description}</p>
-        )}
-      </div>
+    <Page>
+      <Page.Back to="/playlists" label="Playlists" />
+      <Page.Header
+        title={
+          <div className="flex justify-between items-center">
+            {playlist?.name || "Playlist"}
+            <SpotifyLink href={playlist.external_urls.spotify} />
+          </div>
+        }
+        subtitle={
+          <span className="flex gap-2 items-center justify-start text-zinc-400">
+            <Music size={16} />
+            {tracks.length} track{tracks.length !== 1 ? "s" : ""}
+          </span>
+        }
+      />
 
       {tracks.length === 0 ? (
-        <div className="hero min-h-96">
-          <div className="hero-content text-center">
-            <div className="max-w-md">
-              <Music size={64} className="mx-auto mb-4 text-base-content/40" />
-              <h1 className="text-2xl font-bold text-base-content mb-4">
-                No tracks found
-              </h1>
-              <p className="text-base-content/60">This playlist is empty.</p>
-            </div>
-          </div>
-        </div>
+        <Empty Icon={Music}>No tracks found</Empty>
       ) : (
         <TrackList tracks={tracks.map((item) => item.track)} />
       )}
-    </div>
+    </Page>
   );
 }

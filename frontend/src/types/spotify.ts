@@ -39,7 +39,7 @@ export interface SpotifyTrack {
   id: string;
   name: string;
   artists: SpotifyArtist[];
-  album: SpotifyAlbum;
+  album?: SpotifyAlbum;
   duration_ms: number;
   explicit: boolean;
   preview_url: string | null;

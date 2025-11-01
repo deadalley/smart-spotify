@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import { PageLoading } from "../components/Loading";
 import { SpotifyLogo } from "../components/SpotifyLogo";
 
 export function Login() {
@@ -10,14 +11,7 @@ export function Login() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-base-100">
-        <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="mt-4 text-base-content">Loading...</p>
-        </div>
-      </div>
-    );
+    return <PageLoading />;
   }
 
   if (isAuthenticated) {
@@ -25,9 +19,9 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen hero bg-linear-to-br from-base-100 to-base-200">
+    <div className="w-screen h-screen flex flex-col justify-center items-center">
       <div className="flex flex-col gap-4 items-center">
-        <h1 className="flex gap-2 text-4xl font-bold text-primary justify-center items-center">
+        <h1 className="flex gap-4 text-4xl font-bold text-primary justify-center items-center">
           <SpotifyLogo className="size-8" /> Smart Spotify
         </h1>
 
