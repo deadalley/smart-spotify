@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import { connectRedis } from "./redis.js";
 import { authRouter } from "./routes/auth.js";
 import { spotifyRouter } from "./routes/spotify.js";
 
@@ -22,6 +23,17 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/spotify", spotifyRouter);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// Initialize Redis connection and start server
+const startServer = async () => {
+  try {
+    await connectRedis();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
