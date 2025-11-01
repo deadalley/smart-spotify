@@ -5,7 +5,6 @@ import {
   ArtistTracksResponse,
   ExternalUrls,
   Playlist,
-  PlaylistsResponse,
   SpotifyArtist,
   SpotifyPlaylist,
   SpotifyTrack,
@@ -25,7 +24,7 @@ export class RedisService {
   ): string {
     const namespace = `smart-spotify:${userId}`;
 
-    if (keys) {
+    if (keys?.length) {
       return `${namespace}:${type}:${keys.join(":")}`;
     }
 
@@ -153,15 +152,15 @@ export class RedisService {
 
       // Add to user's playlists set
       await redisClient.sAdd(
-        this.getRedisKey(userId, "playlists"),
+        this.getRedisKey(userId, "user", "playlists"),
         playlist.id
       );
     }
   }
 
-  async getUserPlaylists(userId: string): Promise<PlaylistsResponse> {
+  async getUserPlaylists(userId: string): Promise<Playlist[]> {
     const playlistIds = await redisClient.sMembers(
-      this.getRedisKey(userId, "playlists")
+      this.getRedisKey(userId, "user", "playlists")
     );
     const playlists: Playlist[] = [];
 
@@ -185,10 +184,7 @@ export class RedisService {
       }
     }
 
-    return {
-      items: playlists,
-      total: playlists.length,
-    };
+    return playlists;
   }
 
   // Track operations
@@ -200,65 +196,59 @@ export class RedisService {
     const trackIds: string[] = [];
 
     for (const item of spotifyTracks) {
-      if (item.track && !item.track.is_local) {
-        const track = this.convertSpotifyTrack(item.track);
-        const trackKey = this.getRedisKey(userId, "track", track.id);
+      const track = this.convertSpotifyTrack(item.track);
+      const trackKey = this.getRedisKey(userId, "track", track.id);
 
-        // Store track metadata
-        await redisClient.hSet(trackKey, {
-          id: track.id,
-          name: track.name,
-          duration_ms: track.duration_ms.toString(),
-          explicit: track.explicit.toString(),
-          popularity: track.popularity.toString(),
-          preview_url: track.preview_url || "",
-          track_number: track.track_number.toString(),
-          disc_number: track.disc_number.toString(),
-          album_id: track.album_id,
-          album_name: track.album_name,
-          album_type: track.album_type,
-          album_release_date: track.album_release_date,
-          album_images: JSON.stringify(track.album_images),
-          external_urls: JSON.stringify(track.external_urls),
-          artist_ids: JSON.stringify(track.artist_ids),
-          artist_names: JSON.stringify(track.artist_names),
-        });
+      // Store track metadata
+      await redisClient.hSet(trackKey, {
+        id: track.id,
+        name: track.name,
+        duration_ms: track.duration_ms.toString(),
+        explicit: track.explicit.toString(),
+        popularity: track.popularity.toString(),
+        preview_url: track.preview_url || "",
+        track_number: track.track_number.toString(),
+        disc_number: track.disc_number.toString(),
+        album_id: track.album_id,
+        album_name: track.album_name,
+        album_type: track.album_type,
+        album_release_date: track.album_release_date,
+        album_images: JSON.stringify(track.album_images),
+        external_urls: JSON.stringify(track.external_urls),
+        artist_ids: JSON.stringify(track.artist_ids),
+        artist_names: JSON.stringify(track.artist_names),
+      });
 
-        trackIds.push(track.id);
+      console.log(`Stored track: ${track.name} (${track.id})`);
 
-        // Store track-playlist relationship
+      trackIds.push(track.id);
+
+      // Store track-playlist relationship
+      await redisClient.sAdd(
+        this.getRedisKey(userId, "track", track.id, "playlists"),
+        playlistId
+      );
+
+      // Store artist relationships
+      for (let i = 0; i < track.artist_ids.length; i++) {
+        const artistId = track.artist_ids[i];
+
+        // Store artist-track relationship
         await redisClient.sAdd(
-          this.getRedisKey(userId, "track", track.id, "playlists"),
+          this.getRedisKey(userId, "artist", artistId, "tracks"),
+          track.id
+        );
+
+        // Store artist-playlist relationship
+        await redisClient.sAdd(
+          this.getRedisKey(userId, "artist", artistId, "playlists"),
           playlistId
         );
 
-        // Store artist relationships
-        for (let i = 0; i < track.artist_ids.length; i++) {
-          const artistId = track.artist_ids[i];
-
-          // Store artist-track relationship
-          await redisClient.sAdd(
-            this.getRedisKey(userId, "artist", artistId, "tracks"),
-            track.id
-          );
-
-          // Store artist-playlist relationship
-          await redisClient.sAdd(
-            this.getRedisKey(userId, "artist", artistId, "playlists"),
-            playlistId
-          );
-
-          // Store track-artist relationship
-          await redisClient.sAdd(
-            this.getRedisKey(userId, "track", track.id, "artists"),
-            artistId
-          );
-        }
-
-        // Store album relationships
+        // Store track-artist relationship
         await redisClient.sAdd(
-          this.getRedisKey(userId, "album", track.album_id, "tracks"),
-          track.id
+          this.getRedisKey(userId, "track", track.id, "artists"),
+          artistId
         );
       }
     }
@@ -320,6 +310,54 @@ export class RedisService {
     };
   }
 
+  async getUserTracks(userId: string): Promise<Track[]> {
+    const trackKeys = await redisClient.keys(
+      this.getRedisKey(userId, "track", "*")
+    );
+    const tracks: Track[] = [];
+
+    // Filter keys to only include direct track hash keys (not relationship sets)
+    const directTrackKeys = trackKeys.filter((key) => {
+      const parts = key.split(":");
+      // Track hash keys have exactly 4 parts: smart-spotify:userId:track:trackId
+      // Relationship keys have 5+ parts: smart-spotify:userId:track:trackId:playlists/artists
+      return parts.length === 4;
+    });
+
+    for (const trackKey of directTrackKeys) {
+      try {
+        const trackData = await redisClient.hGetAll(trackKey);
+        if (Object.keys(trackData).length > 0) {
+          const track: Track = {
+            id: trackData.id,
+            name: trackData.name,
+            duration_ms: parseInt(trackData.duration_ms || "0"),
+            explicit: trackData.explicit === "true",
+            popularity: parseInt(trackData.popularity || "0"),
+            preview_url: trackData.preview_url || null,
+            track_number: parseInt(trackData.track_number || "0"),
+            disc_number: parseInt(trackData.disc_number || "0"),
+            external_urls: JSON.parse(trackData.external_urls || "{}"),
+            artist_ids: JSON.parse(trackData.artist_ids || "[]"),
+            artist_names: JSON.parse(trackData.artist_names || "[]"),
+            album_id: trackData.album_id,
+            album_name: trackData.album_name,
+            album_type: trackData.album_type,
+            album_release_date: trackData.album_release_date,
+            album_images: JSON.parse(trackData.album_images || "[]"),
+          };
+
+          tracks.push(track);
+        }
+      } catch (error) {
+        console.error(`Error fetching track data for key ${trackKey}:`, error);
+        // Continue processing other tracks instead of failing completely
+      }
+    }
+
+    return tracks.sort((a, b) => b.name.localeCompare(a.name));
+  }
+
   // Artist operations
   async storeArtists(
     userId: string,
@@ -370,26 +408,42 @@ export class RedisService {
     );
     const artists: Artist[] = [];
 
-    for (const artistKey of artistKeys) {
-      const artistData = await redisClient.hGetAll(artistKey);
-      if (Object.keys(artistData).length > 0) {
-        const artistId = artistData.id;
-        const trackCount = await redisClient.sCard(
-          this.getRedisKey(userId, "artist", artistId, "tracks")
+    // Filter keys to only include direct artist hash keys (not relationship sets)
+    const directArtistKeys = artistKeys.filter((key) => {
+      const parts = key.split(":");
+      // Artist hash keys have exactly 4 parts: smart-spotify:userId:artist:artistId
+      // Relationship keys have 5+ parts: smart-spotify:userId:artist:artistId:tracks/playlists
+      return parts.length === 4;
+    });
+
+    for (const artistKey of directArtistKeys) {
+      try {
+        const artistData = await redisClient.hGetAll(artistKey);
+        if (Object.keys(artistData).length > 0) {
+          const artistId = artistData.id;
+          const trackCount = await redisClient.sCard(
+            this.getRedisKey(userId, "artist", artistId, "tracks")
+          );
+
+          const artist: Artist = {
+            id: artistData.id,
+            name: artistData.name,
+            popularity: parseInt(artistData.popularity || "0"),
+            followers: parseInt(artistData.followers || "0"),
+            genres: JSON.parse(artistData.genres || "[]"),
+            images: JSON.parse(artistData.images || "[]"),
+            external_urls: JSON.parse(artistData.external_urls || "{}"),
+            track_count: trackCount,
+          };
+
+          artists.push(artist);
+        }
+      } catch (error) {
+        console.error(
+          `Error fetching artist data for key ${artistKey}:`,
+          error
         );
-
-        const artist: Artist = {
-          id: artistData.id,
-          name: artistData.name,
-          popularity: parseInt(artistData.popularity || "0"),
-          followers: parseInt(artistData.followers || "0"),
-          genres: JSON.parse(artistData.genres || "[]"),
-          images: JSON.parse(artistData.images || "[]"),
-          external_urls: JSON.parse(artistData.external_urls || "{}"),
-          track_count: trackCount,
-        };
-
-        artists.push(artist);
+        // Continue processing other artists instead of failing completely
       }
     }
 
@@ -463,37 +517,6 @@ export class RedisService {
     };
   }
 
-  // Album operations
-  async storeAlbums(
-    userId: string,
-    spotifyTracks: { track: SpotifyTrack }[]
-  ): Promise<void> {
-    const albumsMap = new Map<string, SpotifyTrack["album"]>();
-
-    // Collect unique albums
-    for (const item of spotifyTracks) {
-      if (item.track && !item.track.is_local) {
-        albumsMap.set(item.track.album.id, item.track.album);
-      }
-    }
-
-    // Store each album
-    for (const [albumId, album] of albumsMap) {
-      const albumKey = this.getRedisKey(userId, "album", albumId);
-
-      await redisClient.hSet(albumKey, {
-        id: album.id,
-        name: album.name,
-        album_type: album.album_type,
-        release_date: album.release_date || "",
-        total_tracks: album.total_tracks?.toString() || "0",
-        images: JSON.stringify(album.images || []),
-        external_urls: JSON.stringify(album.external_urls || {}),
-        artist_ids: JSON.stringify(album.artists?.map((a) => a.id) || []),
-      });
-    }
-  }
-
   // Sync metadata operations
   async storeSyncMetadata(
     userId: string,
@@ -539,21 +562,36 @@ export class RedisService {
     const trackKeys = await redisClient.keys(
       this.getRedisKey(userId, "track", "*")
     );
-    return trackKeys.length;
+    // Filter to only count direct track hash keys
+    const directTrackKeys = trackKeys.filter((key) => {
+      const parts = key.split(":");
+      return parts.length === 4;
+    });
+    return directTrackKeys.length;
   }
 
   async getArtistCount(userId: string): Promise<number> {
     const artistKeys = await redisClient.keys(
       this.getRedisKey(userId, "artist", "*")
     );
-    return artistKeys.length;
+    // Filter to only count direct artist hash keys
+    const directArtistKeys = artistKeys.filter((key) => {
+      const parts = key.split(":");
+      return parts.length === 4;
+    });
+    return directArtistKeys.length;
   }
 
   async getAllArtistIds(userId: string): Promise<string[]> {
     const artistKeys = await redisClient.keys(
       this.getRedisKey(userId, "artist", "*")
     );
-    return artistKeys.map((key) => key.split(":").pop() || "");
+    // Filter to only include direct artist hash keys
+    const directArtistKeys = artistKeys.filter((key) => {
+      const parts = key.split(":");
+      return parts.length === 4;
+    });
+    return directArtistKeys.map((key) => key.split(":").pop() || "");
   }
 
   // Helper method to delete all user data

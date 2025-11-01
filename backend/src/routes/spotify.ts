@@ -22,7 +22,6 @@ router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
     const spotifyService = new SpotifyService((req as any).accessToken);
     const userOwnedPlaylists = await spotifyService.getUserOwnedPlaylists();
 
-    // Return the complete dataset with only user-owned playlists
     res.json({
       items: userOwnedPlaylists,
       total: userOwnedPlaylists.length,
@@ -115,7 +114,6 @@ router.get("/artists", requireAuth, async (req: Request, res: Response) => {
     const spotifyService = new SpotifyService((req as any).accessToken);
     const artistsWithCounts = await spotifyService.getArtistsFromSavedTracks();
 
-    // Convert to array and add track_count field
     const artists = Array.from(artistsWithCounts.values()).map(
       ({ artist, trackCount }) => ({
         ...artist,
@@ -123,7 +121,6 @@ router.get("/artists", requireAuth, async (req: Request, res: Response) => {
       })
     );
 
-    // Sort by track count (most popular first)
     artists.sort((a, b) => b.track_count - a.track_count);
 
     res.json({
@@ -168,13 +165,11 @@ router.get(
   }
 );
 
-// New endpoint to start persist job
 router.post("/persist", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);
     const user = await spotifyService.getCurrentUser();
 
-    // Check if there's already an active job for this user
     const existingJobId = await bullService.getUserActiveJob(user.id);
 
     if (existingJobId) {
@@ -186,7 +181,6 @@ router.post("/persist", requireAuth, async (req: Request, res: Response) => {
       });
     }
 
-    // Start a new persist job
     const jobId = await bullService.startPersistJob(
       user.id,
       (req as any).accessToken
@@ -210,7 +204,6 @@ router.post("/persist", requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-// Endpoint to poll persist job status
 router.get(
   "/persist/status/:jobId",
   requireAuth,
@@ -241,7 +234,6 @@ router.get(
   }
 );
 
-// Endpoint to get current user's active persist job
 router.get(
   "/persist/status",
   requireAuth,
@@ -281,9 +273,6 @@ router.get(
   }
 );
 
-// Helper endpoints to retrieve persisted data from Redis
-
-// Get user's sync metadata
 router.get("/sync/status", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);
@@ -299,7 +288,6 @@ router.get("/sync/status", requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-// Get cached playlists from Redis
 router.get(
   "/cached/playlists",
   requireAuth,
@@ -319,7 +307,25 @@ router.get(
   }
 );
 
-// Get cached playlist tracks from Redis
+router.get(
+  "/cached/tracks",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+      const redisService = new RedisService();
+
+      const user = await spotifyService.getCurrentUser();
+      const tracksResponse = await redisService.getUserTracks(user.id);
+
+      res.json(tracksResponse);
+    } catch (error: any) {
+      console.error("Error fetching cached tracks:", error);
+      res.status(500).json({ error: "Failed to fetch cached tracks" });
+    }
+  }
+);
+
 router.get(
   "/cached/playlists/:id/tracks",
   requireAuth,
@@ -343,7 +349,6 @@ router.get(
   }
 );
 
-// Get cached artists from Redis
 router.get(
   "/cached/artists",
   requireAuth,
@@ -363,7 +368,6 @@ router.get(
   }
 );
 
-// Get cached artist tracks from Redis
 router.get(
   "/cached/artists/:id/tracks",
   requireAuth,
