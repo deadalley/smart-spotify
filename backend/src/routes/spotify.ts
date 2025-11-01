@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
+import { BullService } from "../services/BullService.js";
 import { RedisService, SpotifyService } from "../services/index.js";
 
 const router: Router = Router();
+const bullService = new BullService();
 
 const requireAuth = (req: Request, res: Response, next: any) => {
   const access_token = req.cookies?.spotify_access_token;
@@ -166,84 +168,118 @@ router.get(
   }
 );
 
-// New endpoint to persist all Spotify data to Redis
+// New endpoint to start persist job
 router.post("/persist", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);
-    const redisService = new RedisService();
-
-    // Get user information and store it
     const user = await spotifyService.getCurrentUser();
-    await redisService.storeUser(user);
 
-    // Get user-owned playlists and store them
-    const userOwnedPlaylists = await spotifyService.getUserOwnedPlaylists();
-    await redisService.storePlaylists(user.id, userOwnedPlaylists);
+    // Check if there's already an active job for this user
+    const existingJobId = await bullService.getUserActiveJob(user.id);
 
-    // Fetch and store tracks for each playlist
-    const allSpotifyTracks: { track: any }[] = [];
-    for (const playlist of userOwnedPlaylists) {
-      const playlistTracks = await spotifyService.getPlaylistTracks(
-        playlist.id
-      );
-      await redisService.storeTracks(user.id, playlist.id, playlistTracks);
-
-      // Store albums from tracks
-      await redisService.storeAlbums(user.id, playlistTracks);
-
-      // Collect artist info for later enrichment
-      for (const item of playlistTracks) {
-        if (item.track && item.track.artists) {
-          for (const artist of item.track.artists) {
-            await redisService.storeBasicArtist(
-              user.id,
-              artist.id,
-              artist.name,
-              artist.external_urls
-            );
-          }
-        }
-      }
-
-      allSpotifyTracks.push(...playlistTracks);
+    if (existingJobId) {
+      return res.json({
+        success: true,
+        message: "Persist job is already running",
+        jobId: existingJobId,
+        status: "active",
+      });
     }
 
-    // Get unique artist IDs and enrich with detailed info
-    const uniqueArtistIds = await redisService.getAllArtistIds(user.id);
-    const detailedArtists = await spotifyService.getArtists(uniqueArtistIds);
-    await redisService.storeArtists(user.id, detailedArtists);
-
-    // Store sync metadata
-    const trackCount = await redisService.getTrackCount(user.id);
-    const artistCount = await redisService.getArtistCount(user.id);
-
-    await redisService.storeSyncMetadata(user.id, {
-      playlists: userOwnedPlaylists.length,
-      tracks: trackCount,
-      artists: artistCount,
-    });
+    // Start a new persist job
+    const jobId = await bullService.startPersistJob(
+      user.id,
+      (req as any).accessToken
+    );
 
     res.json({
       success: true,
-      message: "Spotify data successfully persisted to Redis",
-      stats: {
-        playlists: userOwnedPlaylists.length,
-        tracks: trackCount,
-        artists: artistCount,
-        user_id: user.id,
-      },
+      message: "Persist job started successfully",
+      jobId: jobId,
+      status: "started",
     });
   } catch (error: any) {
-    console.error("Error persisting Spotify data:", error);
+    console.error("Error starting persist job:", error);
     if (error.response?.status === 401) {
       return res.status(401).json({ error: "Token expired" });
     }
     res.status(500).json({
-      error: "Failed to persist Spotify data",
+      error: "Failed to start persist job",
       details: error.message,
     });
   }
 });
+
+// Endpoint to poll persist job status
+router.get(
+  "/persist/status/:jobId",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const jobId = req.params.jobId;
+      const jobStatus = await bullService.getJobStatus(jobId);
+
+      if (!jobStatus) {
+        return res.status(404).json({
+          error: "Job not found",
+          jobId: jobId,
+        });
+      }
+
+      res.json({
+        success: true,
+        jobId: jobId,
+        ...jobStatus,
+      });
+    } catch (error: any) {
+      console.error("Error getting job status:", error);
+      res.status(500).json({
+        error: "Failed to get job status",
+        details: error.message,
+      });
+    }
+  }
+);
+
+// Endpoint to get current user's active persist job
+router.get(
+  "/persist/status",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
+
+      const activeJobId = await bullService.getUserActiveJob(user.id);
+
+      if (!activeJobId) {
+        return res.json({
+          success: true,
+          hasActiveJob: false,
+          message: "No active persist job found",
+        });
+      }
+
+      const jobStatus = await bullService.getJobStatus(activeJobId);
+
+      res.json({
+        success: true,
+        hasActiveJob: true,
+        jobId: activeJobId,
+        ...jobStatus,
+      });
+    } catch (error: any) {
+      console.error("Error getting active job status:", error);
+      if (error.response?.status === 401) {
+        return res.status(401).json({ error: "Token expired" });
+      }
+      res.status(500).json({
+        error: "Failed to get active job status",
+        details: error.message,
+      });
+    }
+  }
+);
 
 // Helper endpoints to retrieve persisted data from Redis
 
