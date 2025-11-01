@@ -56,7 +56,7 @@ importers:
         specifier: ^4.17.21
         version: 4.17.24
       '@types/node':
-        specifier: ^20.10.0
+        specifier: ^20.19.23
         version: 20.19.23
       tsx:
         specifier: ^4.6.0

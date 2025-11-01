@@ -105,14 +105,6 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      // Get user info
-      const userResponse = await axios.get("https://api.spotify.com/v1/me", {
-        headers: {
-          Authorization: `Bearer ${(req as any).accessToken}`,
-        },
-      });
-      const userId = userResponse.data.id;
-
       // Fetch playlist tracks
       const allTracks: any[] = [];
       let offset = 0;
