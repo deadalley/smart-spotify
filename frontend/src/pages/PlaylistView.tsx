@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Music } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { ArrowLeft, Music } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 import { Loading } from "../components/Loading";
 import { TrackList } from "../components/TrackList";
 import { spotifyAPI } from "../services/api";
@@ -70,6 +70,14 @@ export function PlaylistView() {
 
   return (
     <div className="container p-6">
+      {/* Back button */}
+      <div className="mb-6">
+        <Link to="/artists" className="btn btn-ghost btn-sm">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Artists
+        </Link>
+      </div>
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">
           {playlist?.name || "Playlist"}

@@ -24,6 +24,11 @@ export const spotifyAPI = {
   getPlaylistTracks: (playlistId: string, offset = 0) =>
     api.get(`/spotify/playlists/${playlistId}/tracks?offset=${offset}`),
 
+  // Artists
+  getArtists: () => api.get("/spotify/artists"),
+  getArtistTracks: (artistId: string) =>
+    api.get(`/spotify/artists/${artistId}/tracks`),
+
   // Search
   search: (query: string, type = "track", limit = 20) =>
     api.get(

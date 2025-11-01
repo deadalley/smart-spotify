@@ -24,6 +24,9 @@ export function Navbar() {
             <a href="/playlists">Playlists</a>
           </li>
           <li>
+            <a href="/artists">Artists</a>
+          </li>
+          <li>
             <a href="/search">Search</a>
           </li>
         </ul>

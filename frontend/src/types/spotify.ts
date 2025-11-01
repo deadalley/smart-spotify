@@ -57,6 +57,16 @@ export interface SpotifyArtist {
   };
 }
 
+export interface SpotifyLibraryArtist extends SpotifyArtist {
+  track_count: number;
+  images: SpotifyImage[];
+  followers: {
+    total: number;
+  };
+  genres: string[];
+  popularity: number;
+}
+
 export interface SpotifyAlbum {
   id: string;
   name: string;
