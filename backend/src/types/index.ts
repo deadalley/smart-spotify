@@ -1,14 +1,10 @@
 /* eslint-disable no-unused-vars */
 
-// Base types for internal use
+// Base types
 export interface User {
   id: string;
-  display_name: string;
+  displayName: string;
   email: string;
-  country: string;
-  followers: number;
-  images: Image[];
-  external_urls: ExternalUrls;
 }
 
 export interface Image {
@@ -25,77 +21,37 @@ export interface Playlist {
   id: string;
   name: string;
   description: string;
-  owner_id: string;
+  ownerId: string;
   public: boolean;
   collaborative: boolean;
-  tracks_total: number;
+  tracksTotal: number;
   images: Image[];
-  external_urls: ExternalUrls;
-  snapshot_id: string;
+  externalUrls: ExternalUrls;
+  snapshotId: string;
 }
 
 export interface Track {
   id: string;
   name: string;
-  duration_ms: number;
+  durationMs: number;
   explicit: boolean;
   popularity: number;
-  preview_url: string | null;
-  track_number: number;
-  disc_number: number;
-  external_urls: ExternalUrls;
-  artist_ids: string[];
-  artist_names: string[];
-  album_id: string;
-  album_name: string;
-  album_type: string;
-  album_release_date: string;
-  album_images: Image[];
+  previewUrl: string | null;
+  trackNumber: number;
+  discNumber: number;
+  externalUrls: ExternalUrls;
+  artistIds: string[];
+  artistNames: string[];
 }
 
 export interface Artist {
   id: string;
   name: string;
-  popularity: number;
-  followers: number;
-  genres: string[];
   images: Image[];
-  external_urls: ExternalUrls;
-  track_count?: number;
-}
-
-export interface Album {
-  id: string;
-  name: string;
-  album_type: string;
-  release_date: string;
-  total_tracks: number;
-  images: Image[];
-  external_urls: ExternalUrls;
-  artist_ids: string[];
+  externalUrls: ExternalUrls;
 }
 
 // Response types
-export interface PlaylistsResponse {
-  items: Playlist[];
-  total: number;
-}
-
-export interface TracksResponse {
-  items: { track: Track }[];
-  total: number;
-}
-
-export interface ArtistsResponse {
-  items: Artist[];
-  total: number;
-}
-
-export interface ArtistTracksResponse {
-  artist: Artist | null;
-  tracks: TracksResponse;
-}
-
 export interface SyncStatus {
   synced: boolean;
   last_sync?: string;

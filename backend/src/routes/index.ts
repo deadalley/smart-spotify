@@ -9,8 +9,8 @@ const redisService = new RedisService();
 router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);
-
     const user = await spotifyService.getCurrentUser();
+
     const playlistsResponse = await redisService.getUserPlaylists(user.id);
 
     res.json(playlistsResponse);
@@ -23,8 +23,8 @@ router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
 router.get("/tracks", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);
-
     const user = await spotifyService.getCurrentUser();
+
     const tracksResponse = await redisService.getUserTracks(user.id);
 
     res.json(tracksResponse);
@@ -40,10 +40,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
 
       const playlistId = req.params.id;
 
-      const user = await spotifyService.getCurrentUser();
       const tracksResponse = await redisService.getPlaylistTracks(
         user.id,
         playlistId
@@ -60,9 +60,9 @@ router.get(
 router.get("/artists", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);
-
     const user = await spotifyService.getCurrentUser();
-    const artistsResponse = await redisService.getAllArtists(user.id);
+
+    const artistsResponse = await redisService.getUserArtists(user.id);
 
     res.json(artistsResponse);
   } catch (error: any) {
@@ -77,10 +77,10 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
 
       const artistId = req.params.id;
 
-      const user = await spotifyService.getCurrentUser();
       const artistTracksResponse = await redisService.getArtistTracks(
         user.id,
         artistId

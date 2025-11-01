@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Job } from "bullmq";
+import { ParserService } from "../services/ParserService";
 import { RedisService } from "../services/RedisService";
 import { SpotifyService } from "../services/SpotifyService";
-import { SpotifyTrack } from "../types/index";
+import { Track } from "../types";
 
 enum JobProgressPercentage {
   // eslint-disable-next-line no-unused-vars
@@ -73,16 +74,19 @@ export async function persistUserDataJob(
 
     // Store user info
     const user = await spotifyService.getCurrentUser();
-    await redisService.storeUser(user);
+    await redisService.storeUser(ParserService.convertFromSpotifyUser(user));
     await job.updateProgress(JobProgressPercentage.USER_INFO_STORED);
 
     // Store playlists
     const playlists = await spotifyService.getUserOwnedPlaylists();
-    await redisService.storePlaylists(userId, playlists);
+    await redisService.storePlaylists(
+      userId,
+      playlists.map((p) => ParserService.convertFromSpotifyPlaylist(p))
+    );
     await job.updateProgress(JobProgressPercentage.PLAYLISTS_STORED);
 
     // Store tracks
-    const tracks: SpotifyTrack[] = [];
+    const tracks: Track[] = [];
     const artistIdsSet: Set<string> = new Set();
 
     for (let i = 0; i < playlists.length; i++) {
@@ -92,17 +96,17 @@ export async function persistUserDataJob(
         playlist.id
       );
 
-      const validTracks = playlistTracks.filter(
-        (item) => item.track && !item.track.is_local
-      );
+      const validTracks = playlistTracks
+        .filter((item) => item.track && !item.track.is_local)
+        .map((item) => ParserService.convertFromSpotifyTrack(item.track!));
 
       if (validTracks.length > 0) {
         await redisService.storeTracks(userId, playlist.id, validTracks);
-        tracks.push(...validTracks.map((item) => item.track!));
 
-        validTracks.forEach((item) => {
-          item.track?.artists.forEach((artist) => {
-            artistIdsSet.add(artist.id);
+        validTracks.forEach((track) => {
+          tracks.push(track);
+          track.artistIds.forEach((artistId) => {
+            artistIdsSet.add(artistId);
           });
         });
       }
@@ -124,7 +128,10 @@ export async function persistUserDataJob(
       const batch = artistIds.slice(i, i + batchSize);
       const artists = await spotifyService.getArtists(batch);
 
-      await redisService.storeArtists(userId, artists);
+      await redisService.storeArtists(
+        userId,
+        artists.map((a) => ParserService.convertFromSpotifyArtist(a))
+      );
 
       const progress = calculateProgress({
         currentStep: i,
