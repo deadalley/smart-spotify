@@ -36,6 +36,10 @@ export const spotifyAPI = {
         query
       )}&type=${type}&limit=${limit}`
     ),
+
+  // Data persistence
+  persist: () => api.post("/spotify/persist"),
+  getSyncStatus: () => api.get("/spotify/sync/status"),
 };
 
 // Axios interceptors for error handling
