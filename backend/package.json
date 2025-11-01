@@ -20,6 +20,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "axios": "^1.6.0",
     "bullmq": "^5.63.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -28,6 +29,7 @@
     "redis": "^4.7.0"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.4",
     "@types/cookie-parser": "^1.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",

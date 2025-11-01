@@ -3,8 +3,8 @@ import {
   getPersistJobStatusMessage,
   PersistJobData,
   persistUserDataJob,
-} from "../jobs/persistUserData.js";
-import { JobProgress, JobQueues, Jobs, JobStatus } from "../types/index.js";
+} from "../jobs/persistUserData";
+import { JobProgress, JobQueues, Jobs, JobStatus } from "../types/index";
 
 export class BullService {
   private persistQueue: Queue;

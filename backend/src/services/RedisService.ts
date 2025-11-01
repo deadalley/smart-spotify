@@ -1,4 +1,4 @@
-import { redisClient } from "../redis.js";
+import { redisClient } from "../redis";
 import {
   Artist,
   ArtistsResponse,
@@ -12,7 +12,7 @@ import {
   Track,
   TracksResponse,
   User,
-} from "../types/index.js";
+} from "../types/index";
 
 export class RedisService {
   // Generic function to generate Redis keys

@@ -8,7 +8,7 @@ import {
   SpotifySearchResponse,
   SpotifyTrack,
   SpotifyUser,
-} from "../types/index.js";
+} from "../types/index";
 
 export class SpotifyService {
   private baseURL = "https://api.spotify.com/v1";

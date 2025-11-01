@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Job } from "bullmq";
-import { RedisService } from "../services/RedisService.js";
-import { SpotifyService } from "../services/SpotifyService.js";
-import { SpotifyTrack } from "../types/index.js";
+import { RedisService } from "../services/RedisService";
+import { SpotifyService } from "../services/SpotifyService";
+import { SpotifyTrack } from "../types/index";
 
 enum JobProgressPercentage {
   // eslint-disable-next-line no-unused-vars

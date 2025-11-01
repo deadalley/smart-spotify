@@ -2,11 +2,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { connectRedis } from "./redis.js";
-import { authRouter } from "./routes/auth.js";
-import { indexRouter } from "./routes/index.js";
-import { persistRouter } from "./routes/persist.js";
-import { spotifyRouter } from "./routes/spotify.js";
+import { connectRedis } from "./redis";
+import { authRouter } from "./routes/auth";
+import { indexRouter } from "./routes/index";
+import { persistRouter } from "./routes/persist";
+import { spotifyRouter } from "./routes/spotify";
 
 dotenv.config();
 

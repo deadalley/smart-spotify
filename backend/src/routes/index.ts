@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
-import { requireAuth } from "../middleware/requireAuth.js";
-import { RedisService, SpotifyService } from "../services/index.js";
+import { requireAuth } from "../middleware/requireAuth";
+import { RedisService, SpotifyService } from "../services/index";
 
 const router: Router = Router();
 const redisService = new RedisService();
