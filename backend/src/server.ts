@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import express from "express";
 import { connectRedis } from "./redis.js";
 import { authRouter } from "./routes/auth.js";
+import { indexRouter } from "./routes/index.js";
+import { persistRouter } from "./routes/persist.js";
 import { spotifyRouter } from "./routes/spotify.js";
 
 dotenv.config();
@@ -22,6 +24,8 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRouter);
 app.use("/api/spotify", spotifyRouter);
+app.use("/api/persist", persistRouter);
+app.use("/api", indexRouter);
 
 // Initialize Redis connection and start server
 const startServer = async () => {

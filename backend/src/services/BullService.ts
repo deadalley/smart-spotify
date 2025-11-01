@@ -1,7 +1,10 @@
 import { Job, Queue, Worker } from "bullmq";
-import { PersistJobData, persistUserDataJob } from "../jobs/persistUserData.js";
-import { JobProgress, JobQueues, JobStatus } from "../types/index.js";
-import { RedisService } from "./RedisService.js";
+import {
+  getPersistJobStatusMessage,
+  PersistJobData,
+  persistUserDataJob,
+} from "../jobs/persistUserData.js";
+import { JobProgress, JobQueues, Jobs, JobStatus } from "../types/index.js";
 
 export class BullService {
   private persistQueue: Queue;
@@ -51,31 +54,10 @@ export class BullService {
     });
   }
 
-  async startPersistJob(userId: string, accessToken: string): Promise<string> {
-    // Check if there's already an active job for this user
+  async getActiveJob(userId: string): Promise<string | null> {
     const activeJobs = await this.persistQueue.getJobs(["waiting", "active"]);
-    const existingJob = activeJobs.find((job) => job.data.userId === userId);
-
-    if (existingJob) {
-      return existingJob.id!;
-    }
-
-    // Create a new job
-    const job = await this.persistQueue.add(
-      "persist-data",
-      { userId, accessToken },
-      {
-        attempts: 3,
-        backoff: {
-          type: "exponential",
-          delay: 2000,
-        },
-        removeOnComplete: 5, // Keep last 5 completed jobs
-        removeOnFail: 5, // Keep last 5 failed jobs
-      }
-    );
-
-    return job.id!;
+    const userJob = activeJobs.find((job) => job.data.userId === userId);
+    return userJob ? userJob.id! : null;
   }
 
   async getJobStatus(jobId: string): Promise<JobProgress | null> {
@@ -108,23 +90,13 @@ export class BullService {
 
       const progress: JobProgress = {
         status,
-        progress: (job.progress as number) || 0,
-        message: this.getStatusMessage(status, (job.progress as number) || 0),
+        progress: Number(job.progress || 0),
         startedAt: job.processedOn ? new Date(job.processedOn) : undefined,
         completedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
       };
 
       if (status === JobStatus.FAILED && job.failedReason) {
         progress.error = job.failedReason;
-      }
-
-      if (status === JobStatus.COMPLETED && job.returnvalue) {
-        // Try to get stats from Redis
-        const redisService = new RedisService();
-        const syncStatus = await redisService.getSyncStatus(job.data.userId);
-        if (syncStatus.synced && syncStatus.stats) {
-          progress.stats = syncStatus.stats;
-        }
       }
 
       return progress;
@@ -134,33 +106,57 @@ export class BullService {
     }
   }
 
-  private getStatusMessage(status: JobStatus, progress: number): string {
-    switch (status) {
-      case JobStatus.WAITING:
-        return "Job is waiting to start...";
-      case JobStatus.ACTIVE:
-        if (progress < 10) return "Fetching user information...";
-        if (progress < 30) return "Loading playlists...";
-        if (progress < 80) return "Processing tracks...";
-        if (progress < 95) return "Fetching artist details...";
-        return "Finalizing data...";
-      case JobStatus.COMPLETED:
-        return "Data sync completed successfully!";
-      case JobStatus.FAILED:
-        return "Data sync failed. Please try again.";
-      default:
-        return "Unknown status";
-    }
-  }
-
-  async getUserActiveJob(userId: string): Promise<string | null> {
-    const activeJobs = await this.persistQueue.getJobs(["waiting", "active"]);
-    const userJob = activeJobs.find((job) => job.data.userId === userId);
-    return userJob ? userJob.id! : null;
-  }
-
   async cleanup(): Promise<void> {
     await this.persistWorker.close();
     await this.persistQueue.close();
+  }
+
+  // Jobs
+  async startPersistJob(userId: string, accessToken: string): Promise<string> {
+    // Check if there's already an active job for this user
+    const activeJobs = await this.persistQueue.getJobs(["waiting", "active"]);
+    const existingJob = activeJobs.find((job) => job.data.userId === userId);
+
+    if (existingJob) {
+      return existingJob.id!;
+    }
+
+    // Create a new job
+    const job = await this.persistQueue.add(
+      Jobs.PERSIST_USER_DATA,
+      { userId, accessToken },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 2000,
+        },
+        removeOnComplete: 5, // Keep last 5 completed jobs
+        removeOnFail: 5, // Keep last 5 failed jobs
+      }
+    );
+
+    return job.id!;
+  }
+
+  async getPersistJobStatus(userId: string): Promise<JobProgress | null> {
+    const activeJobs = await this.persistQueue.getJobs([
+      "waiting",
+      "active",
+      "completed",
+      "failed",
+    ]);
+    const userJob = activeJobs.find((job) => job.data.userId === userId);
+
+    if (!userJob) {
+      return null;
+    }
+
+    return this.getJobStatus(userJob.id!);
+  }
+
+  async getPersistJobStatusMessage(userId: string): Promise<string | null> {
+    const jobProgress = await this.getPersistJobStatus(userId);
+    return getPersistJobStatusMessage(jobProgress?.progress || 0);
   }
 }

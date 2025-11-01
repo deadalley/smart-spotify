@@ -97,10 +97,10 @@ export function SyncModal() {
     }
   };
 
-  const pollJobStatus = (jobId: string) => {
+  const pollJobStatus = () => {
     const poll = async () => {
       try {
-        const response = await spotifyAPI.getJobStatus(jobId);
+        const response = await spotifyAPI.getSyncStatus();
         const jobStatus = response.data;
 
         dispatch({
@@ -144,7 +144,7 @@ export function SyncModal() {
 
   const checkForActiveJob = async () => {
     try {
-      const response = await spotifyAPI.getPersistStatus();
+      const response = await spotifyAPI.getSyncStatus();
       const activeJob = response.data;
 
       if (activeJob.hasActiveJob && activeJob.status !== "completed") {
@@ -154,7 +154,7 @@ export function SyncModal() {
           progress: activeJob.progress || 0,
           message: activeJob.message || "Resuming existing sync...",
         });
-        pollJobStatus(activeJob.jobId);
+        pollJobStatus();
       }
     } catch {}
   };
@@ -169,7 +169,7 @@ export function SyncModal() {
     dispatch({ type: "START_SYNC", message: "Starting sync..." });
 
     try {
-      const activeJobResponse = await spotifyAPI.getPersistStatus();
+      const activeJobResponse = await spotifyAPI.getSyncStatus();
       const activeJob = activeJobResponse.data;
 
       if (activeJob.hasActiveJob) {
@@ -179,7 +179,7 @@ export function SyncModal() {
           progress: activeJob.progress || 0,
           message: activeJob.message || "Resuming existing sync...",
         });
-        pollJobStatus(activeJob.jobId);
+        pollJobStatus();
       } else {
         const response = await spotifyAPI.persist();
         const jobData = response.data;
@@ -191,7 +191,7 @@ export function SyncModal() {
             progress: 0,
             message: "Job started, fetching progress...",
           });
-          pollJobStatus(jobData.jobId);
+          pollJobStatus();
         } else {
           throw new Error(jobData.message || "Failed to start sync job");
         }

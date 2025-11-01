@@ -9,7 +9,6 @@ import {
   SpotifyPlaylist,
   SpotifyTrack,
   SpotifyUser,
-  SyncStatus,
   Track,
   TracksResponse,
   User,
@@ -218,8 +217,6 @@ export class RedisService {
         artist_ids: JSON.stringify(track.artist_ids),
         artist_names: JSON.stringify(track.artist_names),
       });
-
-      console.log(`Stored track: ${track.name} (${track.id})`);
 
       trackIds.push(track.id);
 
@@ -513,46 +510,6 @@ export class RedisService {
       tracks: {
         items: tracks,
         total: tracks.length,
-      },
-    };
-  }
-
-  // Sync metadata operations
-  async storeSyncMetadata(
-    userId: string,
-    stats: {
-      playlists: number;
-      tracks: number;
-      artists: number;
-    }
-  ): Promise<void> {
-    await redisClient.hSet(this.getRedisKey(userId, "sync_metadata"), {
-      last_sync: new Date().toISOString(),
-      playlists_count: stats.playlists.toString(),
-      tracks_count: stats.tracks.toString(),
-      artists_count: stats.artists.toString(),
-    });
-  }
-
-  async getSyncStatus(userId: string): Promise<SyncStatus> {
-    const syncMetadata = await redisClient.hGetAll(
-      this.getRedisKey(userId, "sync_metadata")
-    );
-
-    if (Object.keys(syncMetadata).length === 0) {
-      return {
-        synced: false,
-        message: "No data found in Redis",
-      };
-    }
-
-    return {
-      synced: true,
-      last_sync: syncMetadata.last_sync,
-      stats: {
-        playlists: parseInt(syncMetadata.playlists_count || "0"),
-        tracks: parseInt(syncMetadata.tracks_count || "0"),
-        artists: parseInt(syncMetadata.artists_count || "0"),
       },
     };
   }

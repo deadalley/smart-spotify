@@ -8,7 +8,6 @@ interface TrackRowProps {
 }
 
 export function TrackRow({ track, index }: TrackRowProps) {
-  console.log({ track });
   return (
     <>
       <div className="grid grid-cols-12 gap-4 p-4 hover:bg-zinc-900 transition-colors duration-200 group">

@@ -1,0 +1,84 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Request, Response, Router } from "express";
+import { requireAuth } from "../middleware/requireAuth.js";
+import { BullService } from "../services/BullService.js";
+import { SpotifyService } from "../services/index.js";
+
+const router: Router = Router();
+const bullService = new BullService();
+
+router.post("/", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const spotifyService = new SpotifyService((req as any).accessToken);
+    const user = await spotifyService.getCurrentUser();
+
+    const existingJobId = await bullService.getActiveJob(user.id);
+
+    if (existingJobId) {
+      return res.json({
+        success: true,
+        message: "Persist job is already running",
+        jobId: existingJobId,
+        status: "active",
+      });
+    }
+
+    const jobId = await bullService.startPersistJob(
+      user.id,
+      (req as any).accessToken
+    );
+
+    res.json({
+      success: true,
+      message: "Persist job started successfully",
+      jobId: jobId,
+      status: "started",
+    });
+  } catch (error: any) {
+    console.error("Error starting persist job:", error);
+    if (error.response?.status === 401) {
+      return res.status(401).json({ error: "Token expired" });
+    }
+    res.status(500).json({
+      error: "Failed to start persist job",
+      details: error.message,
+    });
+  }
+});
+
+router.get("/status", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const spotifyService = new SpotifyService((req as any).accessToken);
+    const user = await spotifyService.getCurrentUser();
+
+    const activeJobId = await bullService.getActiveJob(user.id);
+
+    if (!activeJobId) {
+      return res.json({
+        success: true,
+        hasActiveJob: false,
+        message: "No active persist job found",
+      });
+    }
+
+    const jobStatus = await bullService.getJobStatus(activeJobId);
+
+    res.json({
+      success: true,
+      hasActiveJob: true,
+      jobId: activeJobId,
+      ...jobStatus,
+    });
+  } catch (error: any) {
+    console.error("Error getting active job status:", error);
+    if (error.response?.status === 401) {
+      return res.status(401).json({ error: "Token expired" });
+    }
+    res.status(500).json({
+      error: "Failed to get active job status",
+      details: error.message,
+    });
+  }
+});
+
+export { router as persistRouter };

@@ -24,6 +24,24 @@ export interface PersistJobData {
   accessToken: string;
 }
 
+export function getPersistJobStatusMessage(progress: number): string {
+  if (progress === JobProgressPercentage.START) {
+    return "Job started...";
+  } else if (progress < JobProgressPercentage.PLAYLISTS_STORED) {
+    return "Storing user info...";
+  } else if (progress < JobProgressPercentage.TRACKS_STORED) {
+    return "Storing playlists...";
+  } else if (progress < JobProgressPercentage.ARTISTS_STORED) {
+    return "Storing tracks...";
+  } else if (progress < JobProgressPercentage.COMPLETED) {
+    return "Storing artists...";
+  } else if (progress === JobProgressPercentage.COMPLETED) {
+    return "Data persistence completed.";
+  } else {
+    return "Unknown progress state.";
+  }
+}
+
 function calculateProgress({
   currentStep,
   totalSteps,
