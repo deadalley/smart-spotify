@@ -2,9 +2,10 @@ import { LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { SpotifyLogo } from "./SpotifyLogo";
+import { SyncModal } from "./SyncModal";
 
 export function Navbar() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -18,7 +19,7 @@ export function Navbar() {
           Smart Spotify
         </Link>
       </div>
-      <div className="flex">
+      <div className="flex items-center">
         <ul className="menu menu-horizontal px-1 mr-4">
           <li>
             <a href="/playlists">Playlists</a>
@@ -31,11 +32,7 @@ export function Navbar() {
           </li>
         </ul>
         <div className="flex items-center gap-4">
-          {user && (
-            <span className="text-base-content font-medium">
-              {user.display_name}
-            </span>
-          )}
+          <SyncModal />
           <button onClick={handleLogout} className="btn btn-ghost btn-sm">
             <LogOut className="w-4 h-4" />
           </button>
