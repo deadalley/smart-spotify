@@ -186,16 +186,17 @@ router.post("/persist", requireAuth, async (req: Request, res: Response) => {
       const playlistTracks = await spotifyService.getPlaylistTracks(
         playlist.id
       );
-      await redisService.storeTracks(playlist.id, playlistTracks);
+      await redisService.storeTracks(user.id, playlist.id, playlistTracks);
 
       // Store albums from tracks
-      await redisService.storeAlbums(playlistTracks);
+      await redisService.storeAlbums(user.id, playlistTracks);
 
       // Collect artist info for later enrichment
       for (const item of playlistTracks) {
         if (item.track && item.track.artists) {
           for (const artist of item.track.artists) {
             await redisService.storeBasicArtist(
+              user.id,
               artist.id,
               artist.name,
               artist.external_urls
@@ -208,13 +209,13 @@ router.post("/persist", requireAuth, async (req: Request, res: Response) => {
     }
 
     // Get unique artist IDs and enrich with detailed info
-    const uniqueArtistIds = await redisService.getAllArtistIds();
+    const uniqueArtistIds = await redisService.getAllArtistIds(user.id);
     const detailedArtists = await spotifyService.getArtists(uniqueArtistIds);
-    await redisService.storeArtists(detailedArtists);
+    await redisService.storeArtists(user.id, detailedArtists);
 
     // Store sync metadata
-    const trackCount = await redisService.getTrackCount();
-    const artistCount = await redisService.getArtistCount();
+    const trackCount = await redisService.getTrackCount(user.id);
+    const artistCount = await redisService.getArtistCount(user.id);
 
     await redisService.storeSyncMetadata(user.id, {
       playlists: userOwnedPlaylists.length,
@@ -288,10 +289,15 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
       const redisService = new RedisService();
       const playlistId = req.params.id;
 
-      const tracksResponse = await redisService.getPlaylistTracks(playlistId);
+      const user = await spotifyService.getCurrentUser();
+      const tracksResponse = await redisService.getPlaylistTracks(
+        user.id,
+        playlistId
+      );
 
       res.json(tracksResponse);
     } catch (error: any) {
@@ -307,8 +313,11 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
       const redisService = new RedisService();
-      const artistsResponse = await redisService.getAllArtists();
+
+      const user = await spotifyService.getCurrentUser();
+      const artistsResponse = await redisService.getAllArtists(user.id);
 
       res.json(artistsResponse);
     } catch (error: any) {
@@ -324,10 +333,15 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
       const redisService = new RedisService();
       const artistId = req.params.id;
 
-      const artistTracksResponse = await redisService.getArtistTracks(artistId);
+      const user = await spotifyService.getCurrentUser();
+      const artistTracksResponse = await redisService.getArtistTracks(
+        user.id,
+        artistId
+      );
 
       res.json(artistTracksResponse);
     } catch (error: any) {
