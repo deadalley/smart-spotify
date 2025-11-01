@@ -1,0 +1,33 @@
+{
+  "name": "smart-spotify",
+  "version": "1.0.0",
+  "description": "A React + Express Spotify integration app with authentication, playlist viewing, and library search",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter frontend dev\" \"pnpm --filter backend dev\"",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "start": "pnpm --filter backend start",
+    "lint": "concurrently \"pnpm --filter frontend lint\" \"pnpm --filter backend lint\"",
+    "lint:frontend": "pnpm --filter frontend lint",
+    "lint:backend": "pnpm --filter backend lint",
+    "lint:fix": "pnpm --filter frontend lint:fix && pnpm --filter backend lint:fix",
+    "install:all": "pnpm install"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.46.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
