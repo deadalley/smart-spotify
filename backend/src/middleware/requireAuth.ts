@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 
 export function requireAuth(req: Request, res: Response, next: any) {

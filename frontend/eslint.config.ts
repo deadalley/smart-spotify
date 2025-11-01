@@ -1,10 +1,26 @@
+import js from "@eslint/js";
 import pluginReact from "eslint-plugin-react";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
-import sharedConfig from "../eslint.config.shared.ts";
+import tseslint from "typescript-eslint";
 
 export default defineConfig([
-  ...sharedConfig,
+  ...tseslint.configs.recommended,
+  {
+    ignores: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.git/**",
+      "**/coverage/**",
+      "**/build/**",
+      "**/eslint.config.*",
+    ],
+  },
+  {
+    files: ["**/*.{js,ts}"],
+    plugins: { js },
+    extends: ["js/recommended"],
+  },
   {
     files: ["**/*.{js,ts,jsx,tsx}"],
     languageOptions: {
