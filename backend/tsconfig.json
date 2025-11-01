@@ -14,7 +14,11 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "~shared/*": ["../shared/*"]
+    },
+    "rootDirs": ["./src", "../shared"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
