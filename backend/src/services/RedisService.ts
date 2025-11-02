@@ -86,7 +86,11 @@ export class RedisService {
         if (Object.keys(playlistData).length > 0) {
           const playlist = convertFromRedisPlaylist(playlistData);
 
-          playlists.push(playlist);
+          const trackCount = await redisClient.lLen(
+            this.getRedisKey(userId, "playlist", playlist.id, "tracks")
+          );
+
+          playlists.push({ ...playlist, trackCount });
         }
       } catch (error) {
         console.error(
@@ -110,7 +114,14 @@ export class RedisService {
       return null;
     }
 
-    return convertFromRedisPlaylist(playlistData);
+    const trackCount = await redisClient.lLen(
+      this.getRedisKey(userId, "playlist", playlistId, "tracks")
+    );
+
+    return {
+      ...convertFromRedisPlaylist(playlistData),
+      trackCount,
+    };
   }
 
   // Track operations
@@ -279,7 +290,14 @@ export class RedisService {
         if (Object.keys(artistData).length > 0) {
           const artist = convertFromRedisArtist(artistData);
 
-          artists.push(artist);
+          const trackIds = await redisClient.sMembers(
+            this.getRedisKey(userId, "artist", artist.id, "tracks")
+          );
+
+          artists.push({
+            ...convertFromRedisArtist(artistData),
+            trackCount: trackIds.length,
+          });
         }
       } catch (error) {
         console.error(
@@ -300,7 +318,14 @@ export class RedisService {
       return null;
     }
 
-    return convertFromRedisArtist(artistData);
+    const trackIds = await redisClient.sMembers(
+      this.getRedisKey(userId, "artist", artistId, "tracks")
+    );
+
+    return {
+      ...convertFromRedisArtist(artistData),
+      trackCount: trackIds.length,
+    };
   }
 
   // Helper method to delete all user data
