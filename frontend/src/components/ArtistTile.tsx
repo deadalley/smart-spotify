@@ -23,10 +23,7 @@ export function ArtistTile({ artist }: { artist: Artist }) {
           )}
         </div>
 
-        <h3
-          className="font-semibold text-base mb-1 truncate"
-          title={artist.name}
-        >
+        <h3 className="font-semibold text-base mb-1" title={artist.name}>
           {artist.name}
         </h3>
 
