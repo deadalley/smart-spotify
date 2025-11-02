@@ -4,7 +4,7 @@
   "description": "A React + Express Spotify integration app with authentication, playlist viewing, and library search",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"pnpm --filter shared dev\" \"pnpm --filter frontend dev\" \"pnpm --filter backend dev\"",
+    "dev": "concurrently \"pnpm --filter frontend dev\" \"pnpm --filter backend dev\"",
     "dev:backend": "pnpm --filter backend dev",
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:shared": "pnpm --filter shared dev",
