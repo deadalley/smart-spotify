@@ -15,7 +15,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="/search" replace />} />
+          <Route index element={<Navigate to="/playlists" replace />} />
           <Route path="playlists" element={<Playlists />} />
           <Route path="playlists/:id" element={<PlaylistView />} />
           <Route path="artists" element={<Artists />} />
