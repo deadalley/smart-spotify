@@ -29,6 +29,9 @@ importers:
 
   backend:
     dependencies:
+      '@smart-spotify/shared':
+        specifier: workspace:*
+        version: link:../shared
       axios:
         specifier: ^1.6.0
         version: 1.12.2
@@ -75,6 +78,9 @@ importers:
 
   frontend:
     dependencies:
+      '@smart-spotify/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@tanstack/react-query':
         specifier: ^5.17.0
         version: 5.90.5(react@19.2.0)
@@ -130,6 +136,24 @@ importers:
       vite:
         specifier: ^7.1.7
         version: 7.1.12(@types/node@20.19.23)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)
+
+  shared:
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.38.0
+        version: 9.38.0
+      eslint:
+        specifier: ^9.38.0
+        version: 9.38.0(jiti@2.6.1)
+      globals:
+        specifier: ^16.4.0
+        version: 16.4.0
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.46.2
+        version: 8.46.2(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3)
 
 packages:
 

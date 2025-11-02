@@ -1,4 +1,4 @@
-import { Track } from "../types";
+import { Track } from "@smart-spotify/shared";
 import { formatDuration } from "../utils";
 
 interface TrackRowProps {

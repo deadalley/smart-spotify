@@ -1,9 +1,8 @@
 import js from "@eslint/js";
-import { defineConfig } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-export default defineConfig([
+export default [
   ...tseslint.configs.recommended,
   {
     ignores: [
@@ -26,8 +25,5 @@ export default defineConfig([
         tsconfigRootDir: import.meta.dirname,
       },
     },
-    rules: {
-      "no-console": "off",
-    },
   },
-]);
+];

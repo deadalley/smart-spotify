@@ -1,5 +1,5 @@
+import { Playlist } from "@smart-spotify/shared";
 import { Music } from "lucide-react";
-import { Playlist } from "../types";
 import { Tile } from "./Tile";
 
 export function PlaylistTile({ playlist }: { playlist: Playlist }) {

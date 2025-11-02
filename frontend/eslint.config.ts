@@ -19,22 +19,16 @@ export default defineConfig([
   {
     files: ["**/*.{js,ts}"],
     plugins: { js },
-    extends: ["js/recommended"],
   },
   {
     files: ["**/*.{js,ts,jsx,tsx}"],
     languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
       globals: {
         ...globals.browser,
         ...globals.es2022,
-      },
-    },
-  },
-  {
-    files: ["src/**/*.{ts,tsx}"],
-    languageOptions: {
-      parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
       },
     },
   },

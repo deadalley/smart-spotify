@@ -1,6 +1,22 @@
+import {
+  Artist,
+  convertFromRedisArtist,
+  convertFromRedisPlaylist,
+  convertFromRedisTrack,
+  convertFromRedisUser,
+  convertSpotifyArtistToRedis,
+  convertSpotifyPlaylistToRedis,
+  convertSpotifyTrackToRedis,
+  convertSpotifyUserToRedis,
+  Playlist,
+  SpotifyArtist,
+  SpotifyPlaylist,
+  SpotifyTrack,
+  SpotifyUser,
+  Track,
+  User,
+} from "@smart-spotify/shared";
 import { redisClient } from "../redis";
-import { Artist, Playlist, Track, User } from "../types";
-import { ParserService } from "./ParserService";
 
 export class RedisService {
   // Generic function to generate Redis keys
@@ -19,9 +35,9 @@ export class RedisService {
   }
 
   // User operations
-  async storeUser(user: User): Promise<void> {
+  async storeUser(user: SpotifyUser): Promise<void> {
     const userKey = this.getRedisKey(user.id, "user");
-    const userData = ParserService.convertToRedisUser(user);
+    const userData = convertSpotifyUserToRedis(user);
 
     await redisClient.hSet(userKey, userData);
   }
@@ -34,14 +50,17 @@ export class RedisService {
       return null;
     }
 
-    return ParserService.convertFromRedisUser(userData);
+    return convertFromRedisUser(userData);
   }
 
   // Playlist operations
-  async storePlaylists(userId: string, playlists: Playlist[]): Promise<void> {
+  async storePlaylists(
+    userId: string,
+    playlists: SpotifyPlaylist[]
+  ): Promise<void> {
     for (const playlist of playlists) {
       const playlistKey = this.getRedisKey(userId, "playlist", playlist.id);
-      const playlistData = ParserService.convertToRedisPlaylist(playlist);
+      const playlistData = convertSpotifyPlaylistToRedis(playlist);
 
       await redisClient.hSet(playlistKey, playlistData);
     }
@@ -65,7 +84,7 @@ export class RedisService {
       try {
         const playlistData = await redisClient.hGetAll(playlistKey);
         if (Object.keys(playlistData).length > 0) {
-          const playlist = ParserService.convertFromRedisPlaylist(playlistData);
+          const playlist = convertFromRedisPlaylist(playlistData);
 
           playlists.push(playlist);
         }
@@ -91,20 +110,20 @@ export class RedisService {
       return null;
     }
 
-    return ParserService.convertFromRedisPlaylist(playlistData);
+    return convertFromRedisPlaylist(playlistData);
   }
 
   // Track operations
   async storeTracks(
     userId: string,
     playlistId: string,
-    tracks: Track[]
+    tracks: SpotifyTrack[]
   ): Promise<void> {
     const trackIds: string[] = [];
 
     for (const track of tracks) {
       const trackKey = this.getRedisKey(userId, "track", track.id);
-      const trackData = ParserService.convertToRedisTrack(track);
+      const trackData = convertSpotifyTrackToRedis(track);
 
       // Store track metadata
       await redisClient.hSet(trackKey, trackData);
@@ -118,8 +137,8 @@ export class RedisService {
       );
 
       // Store artist relationships
-      for (let i = 0; i < track.artistIds.length; i++) {
-        const artistId = track.artistIds[i];
+      for (let i = 0; i < track.artists.length; i++) {
+        const artistId = track.artists[i].id;
 
         // Store artist-track relationship
         await redisClient.sAdd(
@@ -172,7 +191,7 @@ export class RedisService {
         const trackData = await redisClient.hGetAll(trackKey);
 
         if (Object.keys(trackData).length > 0) {
-          const track = ParserService.convertFromRedisTrack(trackData);
+          const track = convertFromRedisTrack(trackData);
 
           tracks.push(track);
         }
@@ -201,7 +220,7 @@ export class RedisService {
       );
 
       if (Object.keys(trackData).length > 0) {
-        const track = ParserService.convertFromRedisTrack(trackData);
+        const track = convertFromRedisTrack(trackData);
 
         tracks.push(track);
       }
@@ -221,7 +240,7 @@ export class RedisService {
         this.getRedisKey(userId, "track", trackId)
       );
       if (Object.keys(trackData).length > 0) {
-        const track = ParserService.convertFromRedisTrack(trackData);
+        const track = convertFromRedisTrack(trackData);
 
         tracks.push(track);
       }
@@ -231,10 +250,10 @@ export class RedisService {
   }
 
   // Artist operations
-  async storeArtists(userId: string, artists: Artist[]): Promise<void> {
+  async storeArtists(userId: string, artists: SpotifyArtist[]): Promise<void> {
     for (const artist of artists) {
       const artistKey = this.getRedisKey(userId, "artist", artist.id);
-      const artistData = ParserService.convertToRedisArtist(artist);
+      const artistData = convertSpotifyArtistToRedis(artist);
 
       await redisClient.hSet(artistKey, artistData);
     }
@@ -258,7 +277,7 @@ export class RedisService {
       try {
         const artistData = await redisClient.hGetAll(artistKey);
         if (Object.keys(artistData).length > 0) {
-          const artist = ParserService.convertFromRedisArtist(artistData);
+          const artist = convertFromRedisArtist(artistData);
 
           artists.push(artist);
         }
@@ -281,7 +300,7 @@ export class RedisService {
       return null;
     }
 
-    return ParserService.convertFromRedisArtist(artistData);
+    return convertFromRedisArtist(artistData);
   }
 
   // Helper method to delete all user data

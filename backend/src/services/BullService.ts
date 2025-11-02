@@ -4,7 +4,7 @@ import {
   PersistJobData,
   persistUserDataJob,
 } from "../jobs/persistUserData";
-import { JobProgress, JobQueues, Jobs, JobStatus } from "../types/index";
+import { JobProgress, JobQueues, Jobs, JobStatus } from "../types";
 
 export class BullService {
   private persistQueue: Queue;

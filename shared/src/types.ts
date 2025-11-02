@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-
 // Base types
 export interface User {
   id: string;
@@ -180,28 +178,4 @@ export interface SpotifySearchResponse {
 
 export interface SpotifyArtistsResponse {
   artists: SpotifyArtist[];
-}
-
-// BullMQ types
-export enum JobQueues {
-  PERSIST_USER_DATA = "smart-spotify-persist-user-data",
-}
-
-export enum Jobs {
-  PERSIST_USER_DATA = "persist-user-data",
-}
-
-export enum JobStatus {
-  WAITING = "waiting",
-  ACTIVE = "active",
-  COMPLETED = "completed",
-  FAILED = "failed",
-}
-
-export interface JobProgress {
-  status: JobStatus;
-  progress: number;
-  startedAt?: Date;
-  completedAt?: Date;
-  error?: string;
 }

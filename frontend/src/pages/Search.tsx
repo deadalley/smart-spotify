@@ -1,3 +1,8 @@
+import {
+  SpotifySearchResponse,
+  SpotifyTrack,
+  Track,
+} from "@smart-spotify/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Music, Search as SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -6,7 +11,6 @@ import { Loading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { TrackList } from "../components/TrackList";
 import { spotifyAPI } from "../services/api";
-import { SpotifySearchResponse, SpotifyTrack, Track } from "../types";
 
 export function Search() {
   const [searchQuery, setSearchQuery] = useState("");

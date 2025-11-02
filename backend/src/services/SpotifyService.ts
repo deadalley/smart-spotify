@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   SpotifyArtist,
   SpotifyArtistsResponse,
@@ -8,12 +7,12 @@ import {
   SpotifySearchResponse,
   SpotifyTrack,
   SpotifyUser,
-} from "../types/index";
+} from "@smart-spotify/shared";
+import axios from "axios";
 
 export class SpotifyService {
   private baseURL = "https://api.spotify.com/v1";
 
-  // eslint-disable-next-line no-unused-vars
   constructor(private accessToken: string) {}
 
   private getHeaders() {

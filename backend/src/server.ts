@@ -3,8 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import { connectRedis } from "./redis";
+import { indexRouter } from "./routes";
 import { authRouter } from "./routes/auth";
-import { indexRouter } from "./routes/index";
 import { persistRouter } from "./routes/persist";
 import { spotifyRouter } from "./routes/spotify";
 

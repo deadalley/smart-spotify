@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
   Artist,
   PersistResponse,
@@ -9,7 +8,8 @@ import {
   SpotifyPlaylistTracksResponse,
   SpotifySearchResponse,
   Track,
-} from "../types";
+} from "@smart-spotify/shared";
+import axios from "axios";
 
 const api = axios.create({
   baseURL: "/api",

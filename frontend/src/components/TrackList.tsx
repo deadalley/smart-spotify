@@ -1,5 +1,5 @@
+import { Track } from "@smart-spotify/shared";
 import { Clock } from "lucide-react";
-import { Track } from "../types";
 import { TrackRow } from "./TrackRow";
 
 export function TrackList({ tracks }: { tracks: Track[] }) {

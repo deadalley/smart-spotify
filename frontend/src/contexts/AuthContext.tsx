@@ -1,3 +1,4 @@
+import { SpotifyUser } from "@smart-spotify/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
@@ -7,7 +8,6 @@ import {
   useState,
 } from "react";
 import { authAPI } from "../services/api";
-import { SpotifyUser } from "../types";
 
 interface AuthContextType {
   user: SpotifyUser | null;

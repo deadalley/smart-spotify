@@ -1,5 +1,5 @@
+import { Artist } from "@smart-spotify/shared";
 import { Music, User } from "lucide-react";
-import { Artist } from "../types";
 import { Tile } from "./Tile";
 
 export function ArtistTile({ artist }: { artist: Artist }) {
