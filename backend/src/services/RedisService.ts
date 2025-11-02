@@ -86,11 +86,11 @@ export class RedisService {
         if (Object.keys(playlistData).length > 0) {
           const playlist = convertFromRedisPlaylist(playlistData);
 
-          const trackCount = await redisClient.lLen(
+          const trackIds = await redisClient.sMembers(
             this.getRedisKey(userId, "playlist", playlist.id, "tracks")
           );
 
-          playlists.push({ ...playlist, trackCount });
+          playlists.push({ ...playlist, trackCount: trackIds.length });
         }
       } catch (error) {
         console.error(
@@ -114,13 +114,13 @@ export class RedisService {
       return null;
     }
 
-    const trackCount = await redisClient.lLen(
+    const trackIds = await redisClient.sMembers(
       this.getRedisKey(userId, "playlist", playlistId, "tracks")
     );
 
     return {
       ...convertFromRedisPlaylist(playlistData),
-      trackCount,
+      trackCount: trackIds.length,
     };
   }
 
@@ -171,14 +171,14 @@ export class RedisService {
       }
     }
 
-    // Store playlist tracks as an ordered list
+    // Store playlist-track relationships
     if (trackIds.length > 0) {
       await redisClient.del(
         this.getRedisKey(userId, "playlist", playlistId, "tracks")
       );
-      await redisClient.lPush(
+      await redisClient.sAdd(
         this.getRedisKey(userId, "playlist", playlistId, "tracks"),
-        trackIds.reverse()
+        trackIds
       );
     }
   }
@@ -218,10 +218,8 @@ export class RedisService {
     userId: string,
     playlistId: string
   ): Promise<Track[]> {
-    const trackIds = await redisClient.lRange(
-      this.getRedisKey(userId, "playlist", playlistId, "tracks"),
-      0,
-      -1
+    const trackIds = await redisClient.sMembers(
+      this.getRedisKey(userId, "playlist", playlistId, "tracks")
     );
     const tracks: Track[] = [];
 
