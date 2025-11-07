@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Music } from "lucide-react";
+import { Music, Timer } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
@@ -9,6 +9,7 @@ import { PlaylistAnalysisResult } from "../components/PlaylistAnalysisResult";
 import { SpotifyLink } from "../components/SpotifyLink";
 import { TrackList } from "../components/TrackList";
 import { baseAPI } from "../services/api";
+import { formatDuration } from "../utils";
 
 export function PlaylistView() {
   const { id } = useParams<{ id: string }>();
@@ -63,10 +64,17 @@ export function PlaylistView() {
           </div>
         }
         subtitle={
-          <span className="flex gap-2 items-center justify-start text-zinc-400">
-            <Music size={16} />
-            {tracks.length} track{tracks.length !== 1 ? "s" : ""}
-          </span>
+          <div className="flex gap-2 items-center">
+            <span className="flex gap-2 items-center justify-start text-zinc-400">
+              <Music size={16} />
+              {tracks.length} track{tracks.length !== 1 ? "s" : ""}
+            </span>
+            •
+            <span className="flex gap-2 items-center justify-start text-zinc-400">
+              <Timer size={16} />
+              {formatDuration(analysisResult.totalDurationMs)}
+            </span>
+          </div>
         }
       />
 
