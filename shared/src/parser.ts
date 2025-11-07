@@ -60,6 +60,7 @@ export function convertFromSpotifyArtist(spotifyArtist: SpotifyArtist): Artist {
     images: spotifyArtist.images || [],
     externalUrls: spotifyArtist.external_urls || { spotify: "" },
     trackCount: 0, // Default to 0, can be updated later
+    genres: spotifyArtist.genres || [],
   };
 }
 
@@ -124,6 +125,7 @@ export function convertToRedisArtist(artist: Artist): Record<string, string> {
     images: JSON.stringify(artist.images),
     externalUrls: JSON.stringify(artist.externalUrls),
     trackCount: artist.trackCount.toString(),
+    genres: JSON.stringify(artist.genres),
   };
 }
 
@@ -176,6 +178,7 @@ export function convertFromRedisArtist(data: Record<string, string>): Artist {
     images: JSON.parse(data.images || "[]"),
     externalUrls: JSON.parse(data.externalUrls || "{}"),
     trackCount: parseInt(data.trackCount || "0"),
+    genres: JSON.parse(data.genres || "[]"),
   };
 }
 
@@ -238,5 +241,6 @@ export function convertSpotifyArtistToRedis(
       spotifyArtist.external_urls || { spotify: "" }
     ),
     trackCount: "0", // Default to 0, will be calculated later
+    genres: JSON.stringify(spotifyArtist.genres || []),
   };
 }

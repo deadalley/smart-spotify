@@ -15,10 +15,24 @@ export class PlaylistService {
 
     const duration = tracks.reduce((acc, track) => acc + track.durationMs, 0);
 
+    const genres = Object.entries(
+      artists.reduce<Record<string, number>>((acc, artist) => {
+        artist.genres.forEach((genre) => {
+          if (acc[genre]) {
+            acc[genre] += 1;
+          } else {
+            acc[genre] = 1;
+          }
+        });
+        return acc;
+      }, {})
+    ).map(([name, count]) => ({ name, count }));
+
     return {
       playlistId: playlistId,
       tracks,
       artists,
+      genres,
       totalDurationMs: duration,
     };
   }

@@ -49,6 +49,7 @@ export interface Artist {
   images: Image[];
   externalUrls: ExternalUrls;
   trackCount: number;
+  genres: string[];
 }
 
 export interface Album {
@@ -95,6 +96,7 @@ export interface PlaylistAnalysis {
   playlistId: string;
   tracks: Track[];
   artists: Artist[];
+  genres: { name: string; count: number }[];
   totalDurationMs: number;
 }
 
