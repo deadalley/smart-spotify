@@ -64,6 +64,9 @@ export async function persistUserDataJob(
     // Start job
     await job.updateProgress(JobProgressPercentage.START);
 
+    // Delete old data
+    await redisService.deleteUserData(userId);
+
     // Store user info
     const user = await spotifyService.getCurrentUser();
     await redisService.storeUser(user);

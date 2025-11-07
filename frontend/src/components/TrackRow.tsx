@@ -27,6 +27,14 @@ export function TrackRow({ track, index }: TrackRowProps) {
           </div>
         </div>
 
+        <div className="col-span-3 flex items-center space-x-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-medium truncate text-base-content">
+              {track.album.name}
+            </p>
+          </div>
+        </div>
+
         <div className="col-span-2 flex items-center justify-end">
           <span className="text-base-content/60 text-sm tabular-nums">
             {formatDuration(track.durationMs)}

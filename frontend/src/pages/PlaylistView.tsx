@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Music, Timer } from "lucide-react";
+import { Clock, Music } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
@@ -71,7 +71,7 @@ export function PlaylistView() {
             </span>
             •
             <span className="flex gap-2 items-center justify-start text-zinc-400">
-              <Timer size={16} />
+              <Clock size={16} />
               {formatDuration(analysisResult.totalDurationMs)}
             </span>
           </div>

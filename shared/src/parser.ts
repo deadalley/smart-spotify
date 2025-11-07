@@ -1,6 +1,8 @@
 import {
+  Album,
   Artist,
   Playlist,
+  SpotifyAlbum,
   SpotifyArtist,
   SpotifyPlaylist,
   SpotifyTrack,
@@ -47,6 +49,7 @@ export function convertFromSpotifyTrack(spotifyTrack: SpotifyTrack): Track {
     externalUrls: spotifyTrack.external_urls || { spotify: "" },
     artistIds: spotifyTrack.artists.map((a) => a.id),
     artistNames: spotifyTrack.artists.map((a) => a.name),
+    album: convertFromSpotifyAlbum(spotifyTrack.album),
   };
 }
 
@@ -57,6 +60,18 @@ export function convertFromSpotifyArtist(spotifyArtist: SpotifyArtist): Artist {
     images: spotifyArtist.images || [],
     externalUrls: spotifyArtist.external_urls || { spotify: "" },
     trackCount: 0, // Default to 0, can be updated later
+  };
+}
+
+export function convertFromSpotifyAlbum(spotifyAlbum: SpotifyAlbum): Album {
+  return {
+    id: spotifyAlbum.id,
+    name: spotifyAlbum.name,
+    type: spotifyAlbum.album_type,
+    releaseDate: spotifyAlbum.release_date,
+    totalTracks: spotifyAlbum.total_tracks,
+    images: spotifyAlbum.images || [],
+    externalUrls: spotifyAlbum.external_urls || { spotify: "" },
   };
 }
 
@@ -98,6 +113,7 @@ export function convertToRedisTrack(track: Track): Record<string, string> {
     externalUrls: JSON.stringify(track.externalUrls),
     artistIds: JSON.stringify(track.artistIds),
     artistNames: JSON.stringify(track.artistNames),
+    album: JSON.stringify(track.album),
   };
 }
 
@@ -149,6 +165,7 @@ export function convertFromRedisTrack(data: Record<string, string>): Track {
     externalUrls: JSON.parse(data.externalUrls || "{}"),
     artistIds: JSON.parse(data.artistIds || "[]"),
     artistNames: JSON.parse(data.artistNames || "[]"),
+    album: JSON.parse(data.album || "{}") as Album,
   };
 }
 
@@ -206,6 +223,7 @@ export function convertSpotifyTrackToRedis(
     externalUrls: JSON.stringify(spotifyTrack.external_urls || { spotify: "" }),
     artistIds: JSON.stringify(spotifyTrack.artists.map((a) => a.id)),
     artistNames: JSON.stringify(spotifyTrack.artists.map((a) => a.name)),
+    album: JSON.stringify(convertFromSpotifyAlbum(spotifyTrack.album)),
   };
 }
 

@@ -40,6 +40,7 @@ export interface Track {
   externalUrls: ExternalUrls;
   artistIds: string[];
   artistNames: string[];
+  album: Album;
 }
 
 export interface Artist {
@@ -48,6 +49,22 @@ export interface Artist {
   images: Image[];
   externalUrls: ExternalUrls;
   trackCount: number;
+}
+
+export interface Album {
+  id: string;
+  name: string;
+  type: string;
+  releaseDate?: string;
+  totalTracks?: number;
+  images?: Image[];
+  externalUrls?: { spotify: string };
+}
+
+export interface AlbumImage {
+  url: string;
+  height?: number;
+  width?: number;
 }
 
 // Response types
