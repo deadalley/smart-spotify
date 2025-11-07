@@ -308,6 +308,49 @@ export class RedisService {
     return artists;
   }
 
+  async getArtistsByIds(
+    userId: string,
+    artistIds: string[]
+  ): Promise<Artist[]> {
+    if (artistIds.length === 0) return [];
+
+    const pipeline = redisClient.multi();
+
+    const artistKeys = artistIds.map((id) =>
+      this.getRedisKey(userId, "artist", id)
+    );
+    artistKeys.forEach((key) => pipeline.hGetAll(key));
+
+    const trackKeys = artistIds.map((id) =>
+      this.getRedisKey(userId, "artist", id, "tracks")
+    );
+    trackKeys.forEach((key) => pipeline.sCard(key));
+
+    const results = await pipeline.exec();
+
+    if (!results) return [];
+
+    const artistDataResults = results.slice(0, artistIds.length);
+    const trackCountResults = results.slice(artistIds.length);
+
+    return artistDataResults
+      .map((artistData, index) => {
+        if (!artistData) {
+          return null;
+        }
+
+        const trackCount = trackCountResults[index];
+
+        return {
+          ...convertFromRedisArtist(
+            artistData as unknown as Record<string, string>
+          ),
+          trackCount,
+        };
+      })
+      .filter((data): data is Artist => !!data);
+  }
+
   async getArtist(userId: string, artistId: string): Promise<Artist | null> {
     const artistKey = this.getRedisKey(userId, "artist", artistId);
     const artistData = await redisClient.hGetAll(artistKey);
@@ -324,6 +367,99 @@ export class RedisService {
       ...convertFromRedisArtist(artistData),
       trackCount: trackIds.length,
     };
+  }
+
+  async getPlaylistData(
+    userId: string,
+    playlistId: string
+  ): Promise<{ artists: Artist[]; tracks: Track[] }> {
+    const trackIds = await redisClient.sMembers(
+      this.getRedisKey(userId, "playlist", playlistId, "tracks")
+    );
+
+    if (trackIds.length === 0) return { artists: [], tracks: [] };
+
+    const pipeline = redisClient.multi();
+
+    // Get track data
+    const trackKeys = trackIds.map((id) =>
+      this.getRedisKey(userId, "track", id)
+    );
+    trackKeys.forEach((key) => pipeline.hGetAll(key));
+
+    // Get artist IDs for each track
+    const trackArtistKeys = trackIds.map((id) =>
+      this.getRedisKey(userId, "track", id, "artists")
+    );
+    trackArtistKeys.forEach((key) => pipeline.sMembers(key));
+
+    const results = await pipeline.exec();
+
+    if (!results) return { artists: [], tracks: [] };
+
+    const trackDataResults = results.slice(0, trackIds.length);
+    const trackArtistResults = results.slice(trackIds.length);
+
+    const artistTrackCount = new Map<string, number>();
+    const uniqueArtistIds = new Set<string>();
+
+    // Build tracks array
+    const tracks = trackDataResults
+      .map((trackData, index) => {
+        const artistIds = trackArtistResults[index] as string[];
+
+        if (trackData && Object.keys(trackData).length > 0) {
+          // Count tracks per artist within this playlist
+          artistIds.forEach((artistId) => {
+            uniqueArtistIds.add(artistId);
+            artistTrackCount.set(
+              artistId,
+              (artistTrackCount.get(artistId) || 0) + 1
+            );
+          });
+
+          const track = convertFromRedisTrack(
+            trackData as unknown as Record<string, string>
+          );
+
+          return track;
+        }
+
+        return null;
+      })
+      .filter((track): track is Track => track !== null);
+
+    // Get artist data for all unique artists
+    const artists: Artist[] = [];
+    if (uniqueArtistIds.size > 0) {
+      const artistPipeline = redisClient.multi();
+      const uniqueArtistIdArray = Array.from(uniqueArtistIds);
+
+      uniqueArtistIdArray.forEach((artistId) => {
+        artistPipeline.hGetAll(this.getRedisKey(userId, "artist", artistId));
+      });
+
+      const artistResults = await artistPipeline.exec();
+
+      if (artistResults) {
+        for (let i = 0; i < uniqueArtistIdArray.length; i++) {
+          const artistData = artistResults[i] as unknown as Record<
+            string,
+            string
+          >;
+          const artistId = uniqueArtistIdArray[i];
+
+          if (artistData && Object.keys(artistData).length > 0) {
+            const artist = convertFromRedisArtist(artistData);
+            const trackCount = artistTrackCount.get(artistId) || 0;
+
+            artists.push({ ...artist, trackCount });
+          }
+        }
+      }
+    }
+
+    return { artists, tracks };
   }
 
   // Helper method to delete all user data

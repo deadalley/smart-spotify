@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
-import { RedisService, SpotifyService } from "../services";
+import { PlaylistService, RedisService, SpotifyService } from "../services";
 
 const router: Router = Router();
 const redisService = new RedisService();
+const playlistService = new PlaylistService(redisService);
 
 router.get("/tracks", requireAuth, async (req: Request, res: Response) => {
   try {
@@ -129,6 +130,49 @@ router.get(
     } catch (error: any) {
       console.error("Error fetching cached artist tracks:", error);
       res.status(500).json({ error: "Failed to fetch cached artist tracks" });
+    }
+  }
+);
+
+router.get(
+  "/playlists/:id/analyze",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
+
+      const playlistId = req.params.id;
+
+      const playlistAnalysis = await playlistService.analyzePlaylist(
+        user.id,
+        playlistId
+      );
+
+      res.json(playlistAnalysis);
+    } catch (error: any) {
+      console.error("Error analyzing playlist:", error);
+      res.status(500).json({ error: "Failed to analyze playlist" });
+    }
+  }
+);
+
+router.get(
+  "/playlists/aggregate",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
+
+      const aggregatedPlaylists = await playlistService.aggregatePlaylists(
+        user.id
+      );
+
+      res.json(aggregatedPlaylists);
+    } catch (error: any) {
+      console.error("Error fetching aggregated playlists:", error);
+      res.status(500).json({ error: "Failed to fetch aggregated playlists" });
     }
   }
 );

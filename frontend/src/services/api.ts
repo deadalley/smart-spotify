@@ -58,7 +58,11 @@ export const baseAPI = {
   persist: () => api.post<PersistResponse>("/persist"),
   getSyncStatus: () => api.get("/persist/status"),
 
-  // Cached data
+  // Analysis and aggregation
+  analyzePlaylist: (playlistId: string) =>
+    api.get(`/playlists/${playlistId}/analyze`),
+  aggregatePlaylists: () => api.post<Playlist[]>("/playlists/aggregate"),
+
   // Playlists
   getPlaylists: (offset = 0) =>
     api.get<Playlist[]>(`/playlists?offset=${offset}`),
@@ -75,21 +79,21 @@ export const baseAPI = {
 };
 
 // Axios interceptors for error handling
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      // Try to refresh token
-      try {
-        await authAPI.refreshToken();
-        // Retry the original request
-        return api.request(error.config);
-      } catch (refreshError) {
-        // Redirect to login if refresh fails
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+// api.interceptors.response.use(
+//   (response) => response,
+//   async (error) => {
+//     if (error.response?.status === 401) {
+//       // Try to refresh token
+//       try {
+//         await authAPI.refreshToken();
+//         // Retry the original request
+//         return api.request(error.config);
+//       } catch (refreshError) {
+//         // Redirect to login if refresh fails
+//         window.location.href = "/login";
+//         return Promise.reject(refreshError);
+//       }
+//     }
+//     return Promise.reject(error);
+//   }
+// );

@@ -73,6 +73,14 @@ export interface PersistResponse {
   };
 }
 
+// Aggregation types
+export interface PlaylistAnalysis {
+  playlistId: string;
+  tracks: Track[];
+  artists: Artist[];
+  totalDurationMs: number;
+}
+
 // Spotify API types (raw from API)
 export interface SpotifyUser {
   id: string;

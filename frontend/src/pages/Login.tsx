@@ -1,14 +1,10 @@
 import { Navigate } from "react-router-dom";
 import { PageLoading } from "../components/Loading";
 import { SpotifyLogo } from "../components/SpotifyLogo";
+import { useAuth } from "../contexts/AuthContext";
 
 export function Login() {
-  // const { isAuthenticated, login, isLoading } = useAuth();
-  const isLoading = false;
-  const isAuthenticated = false;
-  const login = () => {
-    window.location.href = "/api/auth/login";
-  };
+  const { isAuthenticated, login, isLoading } = useAuth();
 
   if (isLoading) {
     return <PageLoading />;
