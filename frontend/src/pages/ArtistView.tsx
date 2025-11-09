@@ -84,12 +84,13 @@ export function ArtistView() {
                   </span>
                 </div>
               </div>
-
-              {artist?.externalUrls?.spotify && (
-                <SpotifyLink href={artist.externalUrls.spotify} />
-              )}
             </div>
           </>
+        }
+        action={
+          artist?.externalUrls?.spotify && (
+            <SpotifyLink href={artist.externalUrls.spotify} />
+          )
         }
       />
 

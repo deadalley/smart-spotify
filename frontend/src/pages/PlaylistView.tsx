@@ -57,12 +57,8 @@ export function PlaylistView() {
     <Page>
       <Page.Back to="/playlists" label="Playlists" />
       <Page.Header
-        title={
-          <div className="flex justify-between items-center">
-            {playlist?.name || "Playlist"}
-            <SpotifyLink href={playlist.externalUrls.spotify} />
-          </div>
-        }
+        title={playlist?.name || "Playlist"}
+        action={<SpotifyLink href={playlist.externalUrls.spotify} />}
         subtitle={
           <div className="flex gap-2 items-center">
             <span className="flex gap-2 items-center justify-start text-zinc-400">

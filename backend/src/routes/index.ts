@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { convertFromSpotifyTrack } from "@smart-spotify/shared";
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { PlaylistService, RedisService, SpotifyService } from "../services";
@@ -28,11 +27,12 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
 
-      // Get saved tracks from Spotify API since they're not stored in Redis yet
-      const savedTracksData = await spotifyService.getUserSavedTracks();
-      const savedTracks = savedTracksData.map((item) =>
-        convertFromSpotifyTrack(item.track)
+      // Get saved tracks from Redis (stored as "liked-songs" playlist)
+      const savedTracks = await redisService.getPlaylistTracks(
+        user.id,
+        "liked-songs"
       );
 
       res.json(savedTracks);

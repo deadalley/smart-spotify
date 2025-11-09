@@ -75,12 +75,47 @@ export async function persistUserDataJob(
     // Store playlists
     const playlists = await spotifyService.getUserOwnedPlaylists();
     await redisService.storePlaylists(userId, playlists);
+
+    // Get saved tracks to store as a special playlist
+    const savedTracksData = await spotifyService.getUserSavedTracks();
+    const savedTracks = savedTracksData
+      .filter((item) => item.track && !item.track.is_local)
+      .map((item) => item.track);
+
+    if (savedTracks.length > 0) {
+      // Create a virtual "Liked Songs" playlist
+      const likedSongsPlaylist = {
+        id: "liked-songs",
+        name: "Liked Songs",
+        description: "Your liked songs from Spotify",
+        owner: { id: userId },
+        public: false,
+        collaborative: false,
+        tracks: { total: savedTracks.length },
+        images: [
+          {
+            url: "https://misc.scdn.co/liked-songs/liked-songs-64.png",
+            height: 64,
+            width: 64,
+          },
+        ],
+        external_urls: { spotify: "" },
+        snapshot_id: "",
+      };
+
+      // Store the virtual playlist
+      await redisService.storePlaylists(userId, [likedSongsPlaylist]);
+      // Store the saved tracks under this virtual playlist
+      await redisService.storeTracks(userId, "liked-songs", savedTracks);
+    }
+
     await job.updateProgress(JobProgressPercentage.PLAYLISTS_STORED);
 
     // Store tracks
     const tracks: Track[] = [];
     const artistIdsSet: Set<string> = new Set();
 
+    // Process regular playlists
     for (let i = 0; i < playlists.length; i++) {
       const playlist = playlists[i];
 
@@ -105,7 +140,25 @@ export async function persistUserDataJob(
 
       const progress = calculateProgress({
         currentStep: i,
-        totalSteps: playlists.length,
+        totalSteps: playlists.length + (savedTracks.length > 0 ? 1 : 0),
+        startPercent: JobProgressPercentage.PLAYLISTS_STORED,
+        endPercent: JobProgressPercentage.TRACKS_STORED,
+      });
+      await job.updateProgress(progress);
+    }
+
+    // Process saved tracks (already stored above, just add to tracking)
+    if (savedTracks.length > 0) {
+      savedTracks.forEach((track) => {
+        tracks.push(convertFromSpotifyTrack(track));
+        track.artists.forEach((artist) => {
+          artistIdsSet.add(artist.id);
+        });
+      });
+
+      const progress = calculateProgress({
+        currentStep: playlists.length,
+        totalSteps: playlists.length + 1,
         startPercent: JobProgressPercentage.PLAYLISTS_STORED,
         endPercent: JobProgressPercentage.TRACKS_STORED,
       });
@@ -136,8 +189,10 @@ export async function persistUserDataJob(
 
     console.log(
       `Data persistence completed for user ${userId}: ${
-        playlists.length
-      } playlists, ${tracks.length} tracks, ${0} artists`
+        playlists.length + (savedTracks.length > 0 ? 1 : 0)
+      } playlists (including ${savedTracks.length} saved tracks), ${
+        tracks.length
+      } tracks, ${artistIds.length} artists`
     );
   } catch (error: any) {
     console.error("Error in persist job:", error);
