@@ -20,7 +20,7 @@ export function Accordion({
     useState<Record<number, boolean>>(defaultOpenState);
 
   return (
-    <div>
+    <div className="flex flex-col gap-y-2">
       {items.map(({ title, content }, index) => (
         <details
           key={name ? `${name}-item-${index}` : `accordion-item-${index}`}
