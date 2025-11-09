@@ -22,7 +22,7 @@ export function TrackRow({ track, index }: TrackRowProps) {
               {track.name}
             </p>
             <p className="text-base-content/60 text-sm truncate">
-              {/* {track.artists.map((artist) => artist.name).join(", ")} */}
+              {track.artistNames.join(", ")}
             </p>
           </div>
         </div>
