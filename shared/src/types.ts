@@ -37,6 +37,7 @@ export interface Track {
   previewUrl: string | null;
   trackNumber: number;
   discNumber: number;
+  playlistPosition?: number; // Position in the playlist (0-based index)
   externalUrls: ExternalUrls;
   artistIds: string[];
   artistNames: string[];

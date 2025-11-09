@@ -36,7 +36,10 @@ export function convertFromSpotifyPlaylist(
   };
 }
 
-export function convertFromSpotifyTrack(spotifyTrack: SpotifyTrack): Track {
+export function convertFromSpotifyTrack(
+  spotifyTrack: SpotifyTrack,
+  playlistPosition?: number
+): Track {
   return {
     id: spotifyTrack.id,
     name: spotifyTrack.name,
@@ -46,6 +49,7 @@ export function convertFromSpotifyTrack(spotifyTrack: SpotifyTrack): Track {
     previewUrl: spotifyTrack.preview_url || null,
     trackNumber: spotifyTrack.track_number,
     discNumber: spotifyTrack.disc_number,
+    playlistPosition,
     externalUrls: spotifyTrack.external_urls || { spotify: "" },
     artistIds: spotifyTrack.artists.map((a) => a.id),
     artistNames: spotifyTrack.artists.map((a) => a.name),
@@ -111,6 +115,7 @@ export function convertToRedisTrack(track: Track): Record<string, string> {
     previewUrl: track.previewUrl || "",
     trackNumber: track.trackNumber.toString(),
     discNumber: track.discNumber.toString(),
+    playlistPosition: track.playlistPosition?.toString() || "",
     externalUrls: JSON.stringify(track.externalUrls),
     artistIds: JSON.stringify(track.artistIds),
     artistNames: JSON.stringify(track.artistNames),
@@ -164,6 +169,9 @@ export function convertFromRedisTrack(data: Record<string, string>): Track {
     previewUrl: data.previewUrl || null,
     trackNumber: parseInt(data.trackNumber || "0"),
     discNumber: parseInt(data.discNumber || "0"),
+    playlistPosition: data.playlistPosition
+      ? parseInt(data.playlistPosition)
+      : undefined,
     externalUrls: JSON.parse(data.externalUrls || "{}"),
     artistIds: JSON.parse(data.artistIds || "[]"),
     artistNames: JSON.parse(data.artistNames || "[]"),
@@ -212,7 +220,8 @@ export function convertSpotifyPlaylistToRedis(
 }
 
 export function convertSpotifyTrackToRedis(
-  spotifyTrack: SpotifyTrack
+  spotifyTrack: SpotifyTrack,
+  playlistPosition?: number
 ): Record<string, string> {
   return {
     id: spotifyTrack.id,
@@ -223,6 +232,7 @@ export function convertSpotifyTrackToRedis(
     previewUrl: spotifyTrack.preview_url || "",
     trackNumber: spotifyTrack.track_number.toString(),
     discNumber: spotifyTrack.disc_number.toString(),
+    playlistPosition: playlistPosition?.toString() || "",
     externalUrls: JSON.stringify(spotifyTrack.external_urls || { spotify: "" }),
     artistIds: JSON.stringify(spotifyTrack.artists.map((a) => a.id)),
     artistNames: JSON.stringify(spotifyTrack.artists.map((a) => a.name)),
