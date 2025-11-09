@@ -7,6 +7,7 @@ import { ArtistView } from "./pages/ArtistView";
 import { Login } from "./pages/Login";
 import { Playlists } from "./pages/Playlists";
 import { PlaylistView } from "./pages/PlaylistView";
+import { SavedTracks } from "./pages/SavedTracks";
 import { Search } from "./pages/Search";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           <Route index element={<Navigate to="/playlists" replace />} />
           <Route path="playlists" element={<Playlists />} />
           <Route path="playlists/:id" element={<PlaylistView />} />
+          <Route path="saved-tracks" element={<SavedTracks />} />
           <Route path="artists" element={<Artists />} />
           <Route path="artists/:id" element={<ArtistView />} />
           <Route path="search" element={<Search />} />

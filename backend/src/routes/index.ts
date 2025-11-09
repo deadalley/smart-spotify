@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { convertFromSpotifyTrack } from "@smart-spotify/shared";
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { PlaylistService, RedisService, SpotifyService } from "../services";
@@ -20,6 +21,27 @@ router.get("/tracks", requireAuth, async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch cached tracks" });
   }
 });
+
+router.get(
+  "/tracks/saved",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+
+      // Get saved tracks from Spotify API since they're not stored in Redis yet
+      const savedTracksData = await spotifyService.getUserSavedTracks();
+      const savedTracks = savedTracksData.map((item) =>
+        convertFromSpotifyTrack(item.track)
+      );
+
+      res.json(savedTracks);
+    } catch (error: any) {
+      console.error("Error fetching saved tracks:", error);
+      res.status(500).json({ error: "Failed to fetch saved tracks" });
+    }
+  }
+);
 
 router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
   try {

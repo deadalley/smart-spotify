@@ -77,6 +77,9 @@ export const baseAPI = {
   getArtist: (artistId: string) => api.get<Artist>(`/artists/${artistId}`),
   getArtistTracks: (artistId: string) =>
     api.get<Track[]>(`/artists/${artistId}/tracks`),
+
+  // Saved tracks
+  getSavedTracks: () => api.get<Track[]>("/tracks/saved"),
 };
 
 // Axios interceptors for error handling

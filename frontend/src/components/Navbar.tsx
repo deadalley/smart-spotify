@@ -25,6 +25,9 @@ export function Navbar() {
             <a href="/playlists">Playlists</a>
           </li>
           <li>
+            <a href="/saved-tracks">Liked Songs</a>
+          </li>
+          <li>
             <a href="/artists">Artists</a>
           </li>
           <li>
