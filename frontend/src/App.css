@@ -70,6 +70,10 @@
   .badge-primary {
     @apply bg-primary/10 text-primary rounded-md border border-primary/20;
   }
+
+  .collapse {
+    @apply border-base-200 border-1;
+  }
 }
 
 html {
