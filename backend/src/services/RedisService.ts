@@ -473,7 +473,7 @@ export class RedisService {
     const artistResults = await artistPipeline.exec();
 
     const artists: { artist: Artist; trackCount: number }[] = [];
-    const genreCount = new Map<string, number>();
+    const artistGenres = new Map<string, Set<string>>();
 
     if (artistResults) {
       artistResults.forEach((artistData, index) => {
@@ -484,12 +484,28 @@ export class RedisService {
           const trackCount = artistTrackCount.get(uniqueArtistIds[index]) || 0;
           artists.push({ artist, trackCount });
 
-          artist.genres.forEach((genre) => {
-            genreCount.set(genre, (genreCount.get(genre) || 0) + trackCount);
-          });
+          // Store artist genres for later use
+          artistGenres.set(artist.id, new Set(artist.genres));
         }
       });
     }
+
+    // Count genres by track (not by artist track count)
+    const genreCount = new Map<string, number>();
+    tracks.forEach((track) => {
+      const trackGenres = new Set<string>();
+      // Collect all unique genres from all artists on this track
+      track.artistIds.forEach((artistId) => {
+        const genres = artistGenres.get(artistId);
+        if (genres) {
+          genres.forEach((genre) => trackGenres.add(genre));
+        }
+      });
+      // Increment count for each unique genre on this track
+      trackGenres.forEach((genre) => {
+        genreCount.set(genre, (genreCount.get(genre) || 0) + 1);
+      });
+    });
 
     const genres = Array.from(genreCount.entries())
       .map(([name, count]) => ({ name, count }))
