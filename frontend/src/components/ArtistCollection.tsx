@@ -29,7 +29,7 @@ export function ArtistCollection({ artists }: { artists: Artist[] }) {
 
   return (
     <>
-      <div className="flex items-center mb-4">
+      <div className="flex items-center gap-2 mb-4">
         <Sort
           sortBy={sortBy}
           setSortBy={setSortBy}

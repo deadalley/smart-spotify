@@ -29,7 +29,7 @@ export function PlaylistCollection({ playlists }: { playlists: Playlist[] }) {
 
   return (
     <>
-      <div className="flex items-center mb-4">
+      <div className="flex items-center gap-2 mb-4">
         <Sort
           sortBy={sortBy}
           setSortBy={setSortBy}

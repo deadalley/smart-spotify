@@ -15,23 +15,28 @@ export function Sort({
   setSortDirection: (value: SortDirection) => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <ArrowUpDown size={16} className="text-zinc-400" />
-      <span className="text-zinc-400 text-sm">Sort by:</span>
+    <div className="flex items-center gap-2 bg-base-200 border border-zinc-800/50 rounded-lg px-3 py-2 whitespace-nowrap">
+      <ArrowUpDown size={14} className="text-base-content/40 shrink-0" />
+      <span className="text-base-content/50 text-xs font-medium uppercase tracking-wider shrink-0">
+        Sort by:
+      </span>
       <select
         value={sortBy}
         onChange={(e) => setSortBy(e.target.value as SortOption)}
-        className="select select-sm w-32"
+        className="bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-medium text-base-content min-w-20 h-auto py-0 pr-6 cursor-pointer appearance-none"
+        style={{ boxShadow: "none" }}
       >
         <option value="name">Name</option>
         <option value="trackCount">Tracks</option>
       </select>
 
+      <div className="w-px h-4 bg-zinc-800/50 shrink-0" />
+
       <button
         onClick={() =>
           setSortDirection(sortDirection === "asc" ? "desc" : "asc")
         }
-        className="btn btn-sm"
+        className="flex items-center gap-1.5 hover:text-primary transition-colors text-base-content/70 shrink-0"
         title={`Sort ${sortDirection === "asc" ? "descending" : "ascending"}`}
       >
         {sortDirection === "asc" ? (
@@ -39,7 +44,7 @@ export function Sort({
         ) : (
           <ArrowDown size={14} />
         )}
-        <span className="text-xs">
+        <span className="text-xs font-medium">
           {sortBy === "name" && (
             <span>{sortDirection === "asc" ? "A-Z" : "Z-A"}</span>
           )}
