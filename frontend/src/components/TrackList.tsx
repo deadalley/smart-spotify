@@ -10,14 +10,14 @@ export function TrackList({
   aggregatedTracks?: TrackAggregationResult[];
 }) {
   return (
-    <div className="bg-base-200 shadow-xl">
+    <div className="bg-base-200 rounded-lg overflow-hidden border border-zinc-800/50">
       <div className="p-0">
-        <div className="grid grid-cols-12 gap-4 p-4 border-b border-zinc-900 text-base-content/60 text-sm font-medium bg-zinc-900">
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/50 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-100/50">
           <div className="col-span-1">#</div>
-          <div className="col-span-6">TITLE</div>
-          <div className="col-span-3">ALBUM</div>
+          <div className="col-span-6">Title</div>
+          <div className="col-span-3">Album</div>
           <div className="col-span-2 flex items-center justify-end">
-            <Clock size={16} />
+            <Clock size={14} />
           </div>
         </div>
 

@@ -11,17 +11,17 @@ export function PlaylistList({
   const { suggestedPlaylists } = trackAnalysisResult || {};
 
   return (
-    <div className="bg-base-200 shadow-xl w-full flex flex-col h-full">
-      <div className="grid grid-cols-12 gap-4 p-4 border-b border-zinc-900 text-base-content/60 text-sm font-medium bg-zinc-900">
+    <div className="bg-base-200 rounded-lg overflow-hidden border border-zinc-800/50 w-full flex flex-col h-full">
+      <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/50 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-100/50">
         {suggestedPlaylists ? (
           <>
-            <div className="col-span-5">NAME</div>
-            <div className="col-span-3">TRACKS BY SAME ARTISTS</div>
-            <div className="col-span-2">SAME GENRES</div>
+            <div className="col-span-5">Name</div>
+            <div className="col-span-3">Tracks by Same Artists</div>
+            <div className="col-span-2">Same Genres</div>
             <div className="col-span-2"></div>
           </>
         ) : (
-          <div className="col-span-12">NAME</div>
+          <div className="col-span-12">Name</div>
         )}
       </div>
 
