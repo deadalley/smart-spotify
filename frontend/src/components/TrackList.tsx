@@ -23,12 +23,12 @@ export function TrackList({
 
         <div className="overflow-y-auto">
           {aggregatedTracks
-            ? aggregatedTracks.map((analysisResult, index) => (
+            ? aggregatedTracks.map((trackAnalysisResult, index) => (
                 <TrackRow
-                  key={`${analysisResult.track.id}-${index}`}
-                  track={analysisResult.track}
+                  key={`${trackAnalysisResult.track.id}-${index}`}
+                  track={trackAnalysisResult.track}
                   index={index}
-                  analysisResult={analysisResult}
+                  trackAnalysisResult={trackAnalysisResult}
                 />
               ))
             : tracks.map((track, index) => {

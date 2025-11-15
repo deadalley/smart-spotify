@@ -7,11 +7,11 @@ import { TrackAnalysisResult } from "./TrackAnalysisResult";
 export function TrackRow({
   track,
   index,
-  analysisResult,
+  trackAnalysisResult,
 }: {
   track: Track;
   index: number;
-  analysisResult?: TrackAggregationResult;
+  trackAnalysisResult?: TrackAggregationResult;
 }) {
   const [seeSuggestions, setSeeSuggestions] = useState(false);
 
@@ -30,7 +30,7 @@ export function TrackRow({
               <p className="font-medium truncate text-base-content group-hover:text-primary">
                 {track.name}
               </p>
-              {analysisResult && (
+              {trackAnalysisResult && (
                 <button
                   className="btn btn-primary btn-soft btn-xs"
                   onClick={() => setSeeSuggestions(!seeSuggestions)}
@@ -60,11 +60,11 @@ export function TrackRow({
           </span>
         </div>
       </div>
-      {analysisResult && seeSuggestions && (
+      {trackAnalysisResult && seeSuggestions && (
         <div className="grid grid-cols-12 gap-4 p-4">
           <div className="col-span-1 flex items-center"></div>
           <div className="col-span-11 flex items-center">
-            <TrackAnalysisResult result={analysisResult} />
+            <TrackAnalysisResult trackAnalysisResult={trackAnalysisResult} />
           </div>
         </div>
       )}
