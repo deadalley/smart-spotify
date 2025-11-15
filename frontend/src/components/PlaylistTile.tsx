@@ -5,27 +5,31 @@ import { Tile } from "./Tile";
 export function PlaylistTile({ playlist }: { playlist: Playlist }) {
   return (
     <Tile to={`/playlists/${playlist.id}`}>
-      <div className="aspect-square mb-4 relative overflow-hidden rounded-lg h-full">
+      <div className="aspect-square relative overflow-hidden">
         {playlist.images && playlist.images.length > 0 ? (
           <img
             src={playlist.images[0].url}
             alt={playlist.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full bg-zinc-700 flex items-center justify-center">
-            <Music size={48} className="text-zinc-500" />
+          <div className="w-full h-full bg-base-100/50 flex items-center justify-center">
+            <Music size={48} className="text-base-content/30" />
           </div>
         )}
       </div>
 
-      <h3 className="text-white font-semibold truncate mb-1">
-        {playlist.name}
-      </h3>
+      <div className="p-4">
+        <h3 className="font-semibold truncate mb-1.5 text-base-content group-hover:text-primary transition-colors">
+          {playlist.name}
+        </h3>
 
-      <div className="flex items-center gap-2 text-xs text-zinc-500">
-        <Music size={12} />
-        <span>{playlist.trackCount} tracks</span>
+        <div className="flex items-center gap-1.5 text-xs text-base-content/50">
+          <Music size={12} />
+          <span>
+            {playlist.trackCount} track{playlist.trackCount !== 1 ? "s" : ""}
+          </span>
+        </div>
       </div>
     </Tile>
   );

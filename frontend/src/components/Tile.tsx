@@ -9,7 +9,7 @@ export function Tile({
   return (
     <Link
       to={to}
-      className={`bg-zinc-800 p-4 rounded-lg hover:bg-zinc-700 transition-colors duration-200 group flex flex-col ${
+      className={`bg-base-200 border border-zinc-800/50 rounded-lg hover:bg-base-100/30 hover:border-primary/50 transition-all duration-150 group flex flex-col overflow-hidden ${
         className ?? ""
       }`}
     >

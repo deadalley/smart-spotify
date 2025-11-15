@@ -8,32 +8,37 @@ export function ArtistTile({ artist }: { artist: Artist }) {
 
   return (
     <Tile key={artist.id} to={`/artists/${artist.id}`}>
-      <div className="p-4 text-center">
-        <div className="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden">
+      <div className="p-6 text-center flex flex-col items-center gap-3">
+        <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-zinc-800/50 group-hover:ring-primary/30 transition-all duration-150">
           {artistImage ? (
             <img
               src={artistImage}
               alt={artist.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-br from-green-400 to-green-600 flex items-center justify-center text-white">
-              <User className="w-8 h-8" />
+            <div className="w-full h-full bg-linear-to-br from-primary/40 to-primary/60 flex items-center justify-center">
+              <User className="w-10 h-10 text-base-content" />
             </div>
           )}
         </div>
 
-        <h3 className="font-semibold text-base mb-1" title={artist.name}>
-          {artist.name}
-        </h3>
+        <div className="w-full">
+          <h3
+            className="font-semibold text-base mb-1.5 truncate text-base-content group-hover:text-primary transition-colors"
+            title={artist.name}
+          >
+            {artist.name}
+          </h3>
 
-        <span className="flex gap-2 items-center justify-center">
-          <Music size={12} />
-          <p className="text-sm text-base-content/70">
-            {artist.trackCount ?? "--"} track
-            {artist.trackCount !== 1 ? "s" : ""}
-          </p>
-        </span>
+          <div className="flex gap-1.5 items-center justify-center text-xs text-base-content/50">
+            <Music size={12} />
+            <span>
+              {artist.trackCount ?? 0} track
+              {artist.trackCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
       </div>
     </Tile>
   );
