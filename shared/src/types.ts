@@ -93,10 +93,10 @@ export interface PersistResponse {
 }
 
 // Aggregation types
-export interface PlaylistAnalysis {
-  playlistId: string;
+export interface PlaylistData {
+  playlist: Playlist;
   tracks: Track[];
-  artists: Artist[];
+  artists: { artist: Artist; trackCount: number }[];
   genres: { name: string; count: number }[];
   totalDurationMs: number;
 }

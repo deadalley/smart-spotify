@@ -9,6 +9,7 @@ import {
   convertSpotifyTrackToRedis,
   convertSpotifyUserToRedis,
   Playlist,
+  PlaylistData,
   SpotifyArtist,
   SpotifyPlaylist,
   SpotifyTrack,
@@ -398,101 +399,111 @@ export class RedisService {
   async getPlaylistData(
     userId: string,
     playlistId: string
-  ): Promise<{ artists: Artist[]; tracks: Track[] }> {
-    const tracksKey = this.getRedisKey(
-      userId,
-      "playlist",
-      playlistId,
-      "tracks"
-    );
-    const trackIds = await redisClient.zRange(tracksKey, 0, -1);
+  ): Promise<PlaylistData> {
+    // Fetch playlist and track IDs
+    const [playlistData, trackIds] = await Promise.all([
+      redisClient.hGetAll(this.getRedisKey(userId, "playlist", playlistId)),
+      redisClient.zRange(
+        this.getRedisKey(userId, "playlist", playlistId, "tracks"),
+        0,
+        -1
+      ),
+    ]);
 
-    if (trackIds.length === 0) return { artists: [], tracks: [] };
+    const playlist = convertFromRedisPlaylist(playlistData);
 
-    const pipeline = redisClient.multi();
-
-    // Get track data
-    const trackKeys = trackIds.map((id) =>
-      this.getRedisKey(userId, "track", id)
-    );
-    trackKeys.forEach((key) => pipeline.hGetAll(key));
-
-    // Get artist IDs for each track
-    const trackArtistKeys = trackIds.map((id) =>
-      this.getRedisKey(userId, "track", id, "artists")
-    );
-    trackArtistKeys.forEach((key) => pipeline.sMembers(key));
-
-    const results = await pipeline.exec();
-
-    if (!results) return { artists: [], tracks: [] };
-
-    const trackDataResults = results.slice(0, trackIds.length);
-    const trackArtistResults = results.slice(trackIds.length);
-
-    const artistTrackCount = new Map<string, number>();
-    const uniqueArtistIds = new Set<string>();
-
-    // Build tracks array
-    const tracks = trackDataResults
-      .map((trackData, index) => {
-        const artistIds = trackArtistResults[index] as string[];
-
-        if (trackData && Object.keys(trackData).length > 0) {
-          // Count tracks per artist within this playlist
-          artistIds.forEach((artistId) => {
-            uniqueArtistIds.add(artistId);
-            artistTrackCount.set(
-              artistId,
-              (artistTrackCount.get(artistId) || 0) + 1
-            );
-          });
-
-          const track = convertFromRedisTrack(
-            trackData as unknown as Record<string, string>
-          );
-
-          // Set position from the sorted set order
-          track.playlistPosition = index;
-
-          return track;
-        }
-
-        return null;
-      })
-      .filter((track): track is Track => track !== null);
-
-    // Get artist data for all unique artists
-    const artists: Artist[] = [];
-    if (uniqueArtistIds.size > 0) {
-      const artistPipeline = redisClient.multi();
-      const uniqueArtistIdArray = Array.from(uniqueArtistIds);
-
-      uniqueArtistIdArray.forEach((artistId) => {
-        artistPipeline.hGetAll(this.getRedisKey(userId, "artist", artistId));
-      });
-
-      const artistResults = await artistPipeline.exec();
-
-      if (artistResults) {
-        for (let i = 0; i < uniqueArtistIdArray.length; i++) {
-          const artistData = artistResults[i] as unknown as Record<
-            string,
-            string
-          >;
-          const artistId = uniqueArtistIdArray[i];
-
-          if (artistData && Object.keys(artistData).length > 0) {
-            const artist = convertFromRedisArtist(artistData);
-            const trackCount = artistTrackCount.get(artistId) || 0;
-
-            artists.push({ ...artist, trackCount });
-          }
-        }
-      }
+    if (trackIds.length === 0) {
+      return {
+        playlist,
+        tracks: [],
+        artists: [],
+        genres: [],
+        totalDurationMs: 0,
+      };
     }
 
-    return { artists, tracks };
+    // Fetch all track data and artist IDs
+    const trackPipeline = redisClient.multi();
+    trackIds.forEach((id) => {
+      trackPipeline.hGetAll(this.getRedisKey(userId, "track", id));
+      trackPipeline.sMembers(this.getRedisKey(userId, "track", id, "artists"));
+    });
+
+    const results = await trackPipeline.exec();
+    if (!results) {
+      return {
+        playlist,
+        tracks: [],
+        artists: [],
+        genres: [],
+        totalDurationMs: 0,
+      };
+    }
+
+    // Process tracks and collect stats
+    const tracks: Track[] = [];
+    const artistTrackCount = new Map<string, number>();
+    let totalDurationMs = 0;
+
+    trackIds.forEach((_, index) => {
+      const trackData = results[index * 2] as unknown as Record<string, string>;
+      const artistIds = results[index * 2 + 1] as string[];
+
+      if (trackData) {
+        const track = convertFromRedisTrack(trackData);
+        track.playlistPosition = index;
+        tracks.push(track);
+        totalDurationMs += track.durationMs;
+
+        artistIds.forEach((artistId) => {
+          artistTrackCount.set(
+            artistId,
+            (artistTrackCount.get(artistId) || 0) + 1
+          );
+        });
+      }
+    });
+
+    // Fetch artist data
+    const uniqueArtistIds = Array.from(artistTrackCount.keys());
+    const artistPipeline = redisClient.multi();
+    uniqueArtistIds.forEach((artistId) => {
+      artistPipeline.hGetAll(this.getRedisKey(userId, "artist", artistId));
+    });
+    const artistResults = await artistPipeline.exec();
+
+    const artists: { artist: Artist; trackCount: number }[] = [];
+    const genreCount = new Map<string, number>();
+
+    if (artistResults) {
+      artistResults.forEach((artistData, index) => {
+        const data = artistData as unknown as Record<string, string>;
+
+        if (data) {
+          const artist = convertFromRedisArtist(data);
+          const trackCount = artistTrackCount.get(uniqueArtistIds[index]) || 0;
+          artists.push({ artist, trackCount });
+
+          artist.genres.forEach((genre) => {
+            genreCount.set(genre, (genreCount.get(genre) || 0) + trackCount);
+          });
+        }
+      });
+    }
+
+    const genres = Array.from(genreCount.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
+    artists.sort((a, b) => b.trackCount - a.trackCount);
+
+    return {
+      playlist,
+      tracks,
+      artists,
+      genres,
+      totalDurationMs,
+    };
   }
 
   // Helper method to delete all user data

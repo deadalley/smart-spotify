@@ -168,7 +168,7 @@ router.get(
 
       const playlistId = req.params.id;
 
-      const playlistAnalysis = await playlistService.analyzePlaylist(
+      const playlistAnalysis = await redisService.getPlaylistData(
         user.id,
         playlistId
       );

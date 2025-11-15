@@ -1,51 +1,9 @@
-import {
-  Playlist,
-  PlaylistAnalysis,
-  TrackAggregationResult,
-} from "@smart-spotify/shared";
+import { Playlist, TrackAggregationResult } from "@smart-spotify/shared";
+import { getGenres } from "../utils";
 import { RedisService } from "./RedisService";
 
 export class PlaylistService {
   constructor(private redisService: RedisService) {}
-
-  private getGenres(
-    artists: { genres: string[] }[]
-  ): { name: string; count: number }[] {
-    return Object.entries(
-      artists.reduce<Record<string, number>>((acc, artist) => {
-        artist.genres.forEach((genre) => {
-          if (acc[genre]) {
-            acc[genre] += 1;
-          } else {
-            acc[genre] = 1;
-          }
-        });
-        return acc;
-      }, {})
-    ).map(([name, count]) => ({ name, count }));
-  }
-
-  async analyzePlaylist(
-    userId: string,
-    playlistId: string
-  ): Promise<PlaylistAnalysis> {
-    const { tracks, artists } = await this.redisService.getPlaylistData(
-      userId,
-      playlistId
-    );
-
-    const duration = tracks.reduce((acc, track) => acc + track.durationMs, 0);
-
-    const genres = this.getGenres(artists);
-
-    return {
-      playlistId: playlistId,
-      tracks,
-      artists,
-      genres,
-      totalDurationMs: duration,
-    };
-  }
 
   async aggregatePlaylists(userId: string): Promise<Playlist[]> {
     const playlists = await this.redisService.getUserPlaylists(userId);
@@ -65,17 +23,15 @@ export class PlaylistService {
         break;
       }
 
-      const { artists, genres, tracks } = await this.analyzePlaylist(
-        userId,
-        playlist.id
-      );
+      const { artists, genres, tracks } =
+        await this.redisService.getPlaylistData(userId, playlist.id);
 
       playlistGenreMap[playlist.id] = genres
         .sort((a, b) => b.count - a.count)
         .map((g) => g.name);
       playlistArtistMap[playlist.id] = artists
         .sort((a, b) => b.trackCount - a.trackCount)
-        .map((a) => a.name);
+        .map((a) => a.artist.name);
       playlistTrackMap[playlist.id] = tracks.map((t) => t.id);
     }
 
@@ -92,7 +48,7 @@ export class PlaylistService {
         track.artistIds
       );
 
-      const genres = this.getGenres(artists);
+      const genres = getGenres(artists);
 
       const currentPlaylists = playlists.filter(
         (p) =>
