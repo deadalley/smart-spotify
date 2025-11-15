@@ -87,9 +87,20 @@ export class PlaylistService {
             suggestion !== null
         )
         .sort((a, b) => {
-          const genreDiff = b.similarGenres.length - a.similarGenres.length;
-          if (genreDiff !== 0) return genreDiff;
-          return b.similarArtists.length - a.similarArtists.length;
+          // First sort by total track count of similar artists
+          const aArtistTrackCount = a.similarArtists.reduce(
+            (sum, artist) => sum + artist.trackCount,
+            0
+          );
+          const bArtistTrackCount = b.similarArtists.reduce(
+            (sum, artist) => sum + artist.trackCount,
+            0
+          );
+          const artistTrackDiff = bArtistTrackCount - aArtistTrackCount;
+          if (artistTrackDiff !== 0) return artistTrackDiff;
+
+          // Then sort by genre count
+          return b.similarGenres.length - a.similarGenres.length;
         });
 
       result.push({
