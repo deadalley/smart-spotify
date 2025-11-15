@@ -1,8 +1,14 @@
-import { Track } from "@smart-spotify/shared";
+import { Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { Clock } from "lucide-react";
 import { TrackRow } from "./TrackRow";
 
-export function TrackList({ tracks }: { tracks: Track[] }) {
+export function TrackList({
+  tracks,
+  aggregatedTracks,
+}: {
+  tracks: Track[];
+  aggregatedTracks?: TrackAggregationResult[];
+}) {
   return (
     <div className="bg-base-200 shadow-xl">
       <div className="p-0">
@@ -16,15 +22,24 @@ export function TrackList({ tracks }: { tracks: Track[] }) {
         </div>
 
         <div className="overflow-y-auto">
-          {tracks.map((track, index) => {
-            return (
-              <TrackRow
-                key={`${track.id}-${index}`}
-                track={track}
-                index={index}
-              />
-            );
-          })}
+          {aggregatedTracks
+            ? aggregatedTracks.map(({ track, suggestedPlaylists }, index) => (
+                <TrackRow
+                  key={`${track.id}-${index}`}
+                  track={track}
+                  index={index}
+                  suggestedPlaylists={suggestedPlaylists}
+                />
+              ))
+            : tracks.map((track, index) => {
+                return (
+                  <TrackRow
+                    key={`${track.id}-${index}`}
+                    track={track}
+                    index={index}
+                  />
+                );
+              })}
         </div>
       </div>
     </div>

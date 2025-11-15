@@ -5,7 +5,7 @@ import { Tile } from "./Tile";
 export function PlaylistTile({ playlist }: { playlist: Playlist }) {
   return (
     <Tile to={`/playlists/${playlist.id}`}>
-      <div className="aspect-square mb-4 relative overflow-hidden rounded-lg">
+      <div className="aspect-square mb-4 relative overflow-hidden rounded-lg h-full">
         {playlist.images && playlist.images.length > 0 ? (
           <img
             src={playlist.images[0].url}

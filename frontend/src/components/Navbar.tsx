@@ -22,10 +22,10 @@ export function Navbar() {
       <div className="flex items-center">
         <ul className="menu menu-horizontal px-1 mr-4">
           <li>
-            <a href="/playlists">Playlists</a>
+            <a href="/saved-tracks">Liked Songs</a>
           </li>
           <li>
-            <a href="/saved-tracks">Liked Songs</a>
+            <a href="/playlists">Playlists</a>
           </li>
           <li>
             <a href="/artists">Artists</a>

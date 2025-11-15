@@ -1,12 +1,18 @@
-import { Track } from "@smart-spotify/shared";
+import { Track, TrackAggregationResult } from "@smart-spotify/shared";
+import { Eye, EyeClosed } from "lucide-react";
+import { useState } from "react";
 import { formatDuration } from "../utils";
+import { PlaylistTile } from "./PlaylistTile";
 
 interface TrackRowProps {
   track: Track;
   index: number;
+  suggestedPlaylists?: TrackAggregationResult["suggestedPlaylists"];
 }
 
-export function TrackRow({ track, index }: TrackRowProps) {
+export function TrackRow({ track, index, suggestedPlaylists }: TrackRowProps) {
+  const [seeSuggestions, setSeeSuggestions] = useState(false);
+
   return (
     <>
       <div className="grid grid-cols-12 gap-4 p-4 hover:bg-zinc-900 transition-colors duration-200 group">
@@ -18,12 +24,32 @@ export function TrackRow({ track, index }: TrackRowProps) {
 
         <div className="col-span-6 flex items-center space-x-3">
           <div className="min-w-0 flex-1">
-            <p className="font-medium truncate text-base-content group-hover:text-primary">
-              {track.name}
-            </p>
+            <div className="flex gap-x-2 items-center">
+              <p className="font-medium truncate text-base-content group-hover:text-primary">
+                {track.name}
+              </p>
+              {suggestedPlaylists && (
+                <button
+                  className="btn btn-primary btn-soft btn-xs"
+                  onClick={() => setSeeSuggestions(!seeSuggestions)}
+                >
+                  {seeSuggestions ? <EyeClosed size={14} /> : <Eye size={14} />}
+                  Analysis
+                </button>
+              )}
+            </div>
             <p className="text-base-content/60 text-sm truncate">
               {track.artistNames.join(", ")}
             </p>
+            {suggestedPlaylists && seeSuggestions && (
+              <div>
+                <span className="flex gap-x-2 h-96">
+                  {suggestedPlaylists.map(({ playlist }) => (
+                    <PlaylistTile key={playlist.id} playlist={playlist} />
+                  ))}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

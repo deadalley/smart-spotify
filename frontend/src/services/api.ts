@@ -9,6 +9,7 @@ import {
   SpotifyPlaylistTracksResponse,
   SpotifySearchResponse,
   Track,
+  TrackAggregationResult,
 } from "@smart-spotify/shared";
 import axios from "axios";
 
@@ -80,6 +81,8 @@ export const baseAPI = {
 
   // Saved tracks
   getSavedTracks: () => api.get<Track[]>("/tracks/saved"),
+  getAggregatedLikedSongs: () =>
+    api.get<TrackAggregationResult[]>("/tracks/aggregate"),
 };
 
 // Axios interceptors for error handling

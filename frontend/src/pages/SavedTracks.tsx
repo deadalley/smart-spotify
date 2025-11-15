@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { Heart } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Heart, Search } from "lucide-react";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
-import { PageLoading } from "../components/Loading";
+import { Loading, PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { TrackList } from "../components/TrackList";
 import { baseAPI } from "../services/api";
@@ -20,6 +20,18 @@ export function SavedTracks() {
     },
   });
 
+  const {
+    mutate: aggregateLikedSongs,
+    data: aggregatedData,
+    error: aggregatedError,
+    isPending: isAggregatedLoading,
+  } = useMutation({
+    mutationFn: async () => {
+      const response = await baseAPI.getAggregatedLikedSongs();
+      return response.data;
+    },
+  });
+
   if (isLoading) {
     return <PageLoading />;
   }
@@ -29,22 +41,25 @@ export function SavedTracks() {
   }
 
   if (!tracks || tracks.length === 0) {
-    return (
-      <Empty Icon={Heart}>
-        <div className="text-center">
-          <p className="text-lg mb-2">No saved tracks found</p>
-          <p className="text-zinc-500">
-            Like some songs on Spotify to see them here.
-          </p>
-        </div>
-      </Empty>
-    );
+    return <Empty Icon={Heart}>No saved tracks found</Empty>;
   }
 
   return (
     <Page>
       <Page.Header
         title="Liked Songs"
+        action={
+          <button
+            className={`btn btn-primary btn-sm ${
+              isAggregatedLoading ? "btn-disabled" : ""
+            }`}
+            disabled={isAggregatedLoading}
+            onClick={() => aggregateLikedSongs()}
+          >
+            {isAggregatedLoading ? <Loading size="sm" /> : <Search size={14} />}
+            Analyze
+          </button>
+        }
         subtitle={
           <span className="flex gap-2 items-center">
             <Heart size={16} />
@@ -53,7 +68,11 @@ export function SavedTracks() {
         }
       />
 
-      <TrackList tracks={tracks} />
+      {aggregatedError && (
+        <Error>Failed to load aggregated liked songs. Please try again.</Error>
+      )}
+
+      <TrackList aggregatedTracks={aggregatedData} tracks={tracks} />
     </Page>
   );
 }

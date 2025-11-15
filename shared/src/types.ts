@@ -101,6 +101,15 @@ export interface PlaylistAnalysis {
   totalDurationMs: number;
 }
 
+export interface TrackAggregationResult {
+  track: Track;
+  suggestedPlaylists: {
+    playlist: Playlist;
+    similarGenres: string[];
+    similarArtists: Artist[];
+  }[];
+}
+
 // Spotify API types (raw from API)
 export interface SpotifyUser {
   id: string;

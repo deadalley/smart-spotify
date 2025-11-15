@@ -48,7 +48,9 @@ router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
     const spotifyService = new SpotifyService((req as any).accessToken);
     const user = await spotifyService.getCurrentUser();
 
-    const playlistsResponse = await redisService.getUserPlaylists(user.id);
+    const playlistsResponse = (
+      await redisService.getUserPlaylists(user.id)
+    ).filter((p) => p.id !== "liked-songs");
 
     res.json(playlistsResponse);
   } catch (error: any) {
@@ -195,6 +197,26 @@ router.get(
     } catch (error: any) {
       console.error("Error fetching aggregated playlists:", error);
       res.status(500).json({ error: "Failed to fetch aggregated playlists" });
+    }
+  }
+);
+
+router.get(
+  "/tracks/aggregate",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
+
+      const aggregatedLikedSongs = await playlistService.aggregateLikedSongs(
+        user.id
+      );
+
+      res.json(aggregatedLikedSongs);
+    } catch (error: any) {
+      console.error("Error fetching aggregated liked songs:", error);
+      res.status(500).json({ error: "Failed to fetch aggregated liked songs" });
     }
   }
 );

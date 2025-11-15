@@ -1,7 +1,9 @@
-export function Loading() {
+export function Loading({ size = "lg" }: { size?: "sm" | "lg" }) {
   return (
     <div className="flex items-center justify-center min-h-96">
-      <span className="loading loading-spinner loading-lg text-primary"></span>
+      <span
+        className={`loading loading-spinner loading-${size} text-primary`}
+      ></span>
     </div>
   );
 }
