@@ -1,46 +1,71 @@
-import { LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Heart, LogOut, Music, Search, Users } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { SpotifyLogo } from "./SpotifyLogo";
 import { SyncModal } from "./SyncModal";
 
 export function Navbar() {
   const { logout } = useAuth();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
+  const navLinks = [
+    { path: "/saved-tracks", label: "Liked Songs", icon: Heart },
+    { path: "/playlists", label: "Playlists", icon: Music },
+    { path: "/artists", label: "Artists", icon: Users },
+    { path: "/search", label: "Search", icon: Search },
+  ];
+
   return (
-    <div className="navbar bg-zinc-900">
-      <div className="flex-1">
-        <Link to="/" className="flex font-bold text-xl gap-2 px-4 items-center">
-          <SpotifyLogo className="size-5" />
-          Smart Spotify
-        </Link>
-      </div>
-      <div className="flex items-center">
-        <ul className="menu menu-horizontal px-1 mr-4">
-          <li>
-            <a href="/saved-tracks">Liked Songs</a>
-          </li>
-          <li>
-            <a href="/playlists">Playlists</a>
-          </li>
-          <li>
-            <a href="/artists">Artists</a>
-          </li>
-          <li>
-            <a href="/search">Search</a>
-          </li>
-        </ul>
-        <div className="flex items-center gap-4">
-          <SyncModal />
-          <button onClick={handleLogout} className="btn btn-ghost btn-sm">
-            <LogOut className="w-4 h-4" />
-          </button>
+    <nav className="bg-base-200 border-b border-zinc-800/50 sticky top-0 z-50">
+      <div className="px-6 py-3">
+        <div className="flex items-center justify-between">
+          <Link
+            to="/"
+            className="flex font-bold text-lg gap-2 items-center text-base-content hover:text-primary transition-colors group"
+          >
+            <SpotifyLogo className="size-6 group-hover:scale-110 transition-transform" />
+            <span>Smart Spotify</span>
+          </Link>
+
+          <div className="flex items-center gap-6">
+            <ul className="flex items-center gap-1">
+              {navLinks.map(({ path, label, icon: Icon }) => (
+                <li key={path}>
+                  <Link
+                    to={path}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 ${
+                      isActive(path)
+                        ? "bg-primary/10 text-primary"
+                        : "text-base-content/70 hover:text-base-content hover:bg-base-100/50"
+                    }`}
+                  >
+                    <Icon size={16} />
+                    <span>{label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex items-center gap-2 pl-4 border-l border-zinc-800/50">
+              <SyncModal />
+              <button
+                onClick={handleLogout}
+                className="btn btn-ghost btn-sm gap-2"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </nav>
   );
 }
