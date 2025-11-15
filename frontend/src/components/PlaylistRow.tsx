@@ -1,5 +1,6 @@
 import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { Music, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function PlaylistRow({
   playlist,
@@ -9,8 +10,21 @@ export function PlaylistRow({
   track?: Track;
   suggestedPlaylist?: TrackAggregationResult["suggestedPlaylists"][number];
 }) {
+  const navigate = useNavigate();
+
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on a button or badge
+    if ((e.target as HTMLElement).closest("button")) {
+      return;
+    }
+    navigate(`/playlists/${playlist.id}`);
+  };
+
   return (
-    <div className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-100/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0">
+    <div
+      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-100/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0 cursor-pointer"
+      onClick={handleRowClick}
+    >
       <div
         className={`flex items-center ${
           suggestedPlaylist ? "col-span-5" : "col-span-12"
@@ -36,7 +50,9 @@ export function PlaylistRow({
                   key={artist.artist.id}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-md border border-primary/20"
                 >
-                  <span className="truncate max-w-[120px]">{artist.artist.name}</span>
+                  <span className="truncate max-w-[120px]">
+                    {artist.artist.name}
+                  </span>
                   <span className="flex items-center gap-0.5 text-primary/70">
                     <Music size={10} />
                     {artist.trackCount}
