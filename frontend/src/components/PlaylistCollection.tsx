@@ -19,8 +19,13 @@ export function PlaylistCollection({ playlists }: { playlists: Playlist[] }) {
 
       if (sortBy === "name") {
         comparison = a.name.localeCompare(b.name);
-      } else {
+      } else if (sortBy === "trackCount") {
         comparison = a.trackCount - b.trackCount;
+      } else if (sortBy === "type") {
+        // Sort by type, with playlists without a type at the end
+        const typeA = a.playlistType || "zzz"; // Put untyped playlists at the end
+        const typeB = b.playlistType || "zzz";
+        comparison = typeA.localeCompare(typeB);
       }
 
       return sortDirection === "asc" ? comparison : -comparison;

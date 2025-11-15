@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
-export type SortOption = "name" | "trackCount";
+export type SortOption = "name" | "trackCount" | "type";
 export type SortDirection = "asc" | "desc";
 
 export function Sort({
@@ -28,6 +28,7 @@ export function Sort({
       >
         <option value="name">Name</option>
         <option value="trackCount">Tracks</option>
+        <option value="type">Type</option>
       </select>
 
       <div className="divider" />
@@ -50,6 +51,9 @@ export function Sort({
           )}
           {sortBy === "trackCount" && (
             <span>{sortDirection === "asc" ? "0-9" : "9-0"}</span>
+          )}
+          {sortBy === "type" && (
+            <span>{sortDirection === "asc" ? "A-Z" : "Z-A"}</span>
           )}
         </span>
       </button>
