@@ -10,7 +10,7 @@ export function TrackAnalysisResult({
     <div className="w-full flex gap-6 py-3">
       {trackAnalysisResult.currentPlaylists.length > 0 && (
         <div className="flex-1 flex flex-col gap-2 min-h-0">
-          <h4 className="text-base-content/60 text-xs font-medium uppercase tracking-wider">
+          <h4 className="text-base-content/50 text-xs font-medium uppercase tracking-wider">
             Current Playlists
           </h4>
           <div className="flex-1 min-h-0">

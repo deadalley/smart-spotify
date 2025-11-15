@@ -24,7 +24,7 @@ export function Accordion({
       {items.map(({ title, content }, index) => (
         <details
           key={name ? `${name}-item-${index}` : `accordion-item-${index}`}
-          className="collapse collapse-arrow bg-base-100 border border-base-300"
+          className="collapse collapse-arrow bg-base-300 border border-base-300"
           onClick={() => setIsOpen((s) => ({ ...s, [index]: !s[index] }))}
           open={isOpen[index]}
         >

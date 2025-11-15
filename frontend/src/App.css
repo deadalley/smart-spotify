@@ -8,9 +8,9 @@
   color-scheme: dark; /* color of browser-provided UI */
 
   /* Spotify Dark Theme Base Colors */
-  --color-base-100: oklch(10% 0.01 0); /* #191414 - Spotify black */
-  --color-base-200: oklch(7% 0.01 0); /* #121212 - darker background */
-  --color-base-300: oklch(20% 0.01 0); /* #0a0a0a - darkest background */
+  --color-base-100: oklch(14.1% 0.005 285.823);
+  --color-base-200: oklch(27.4% 0.006 286.033);
+  --color-base-300: oklch(10% 0.01 0); /* #191414 - Spotify black */
   --color-base-content: oklch(98% 0.01 0); /* #ffffff - white text */
 
   /* Spotify Brand Green */
@@ -40,16 +40,14 @@
   --color-error-content: oklch(98% 0.01 30);
 
   /* border radius */
-  --radius-selector: 1rem;
-  --radius-field: 0.25rem;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
   --radius-box: 0.5rem;
+  --radius-btn: 0.5rem;
 
   /* base sizes */
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
-
-  /* border size */
-  --border: 1px;
 
   /* effects */
   --depth: 1;
@@ -60,57 +58,20 @@
   .modal-backdrop {
     @apply bg-zinc-950/90 backdrop-blur-xs;
   }
-}
 
-#root {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+  .btn-outline {
+    @apply border-zinc-800;
   }
-  to {
-    transform: rotate(360deg);
+
+  .badge-sm {
+    @apply px-2 py-3 text-xs;
+  }
+
+  .badge-primary {
+    @apply bg-primary/10 text-primary rounded-md border border-primary/20;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-/* Spotify-themed scrollbar styles */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #121212; /* base-200 */
-}
-
-::-webkit-scrollbar-thumb {
-  background: #535353; /* neutral */
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #1ed760; /* primary (Spotify green) */
+html {
+  @apply bg-base-300;
 }

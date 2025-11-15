@@ -22,7 +22,7 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="bg-base-200 border-b border-zinc-800/50 sticky top-0 z-50">
+    <nav className="bg-base-300 border-b border-zinc-800/50 sticky top-0 z-50">
       <div className="px-6 py-3">
         <div className="flex items-center justify-between">
           <Link
@@ -42,7 +42,7 @@ export function Navbar() {
                     className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 ${
                       isActive(path)
                         ? "bg-primary/10 text-primary"
-                        : "text-base-content/70 hover:text-base-content hover:bg-base-100/50"
+                        : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                     }`}
                   >
                     <Icon size={16} />

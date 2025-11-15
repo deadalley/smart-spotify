@@ -13,7 +13,7 @@ export function ArtistRow({ artist }: { artist: Artist }) {
 
   return (
     <div
-      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-100/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0 cursor-pointer"
+      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0 cursor-pointer"
       onClick={handleRowClick}
     >
       <div className="col-span-10 flex items-center">

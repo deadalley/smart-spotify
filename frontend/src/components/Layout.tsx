@@ -7,7 +7,7 @@ export function Layout() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-100">
+      <div className="min-h-screen flex items-center justify-center bg-base-300">
         <div className="text-center">
           <span className="loading loading-spinner loading-lg text-primary"></span>
           <p className="mt-4 text-base-content">Loading...</p>
@@ -21,7 +21,7 @@ export function Layout() {
   }
 
   return (
-    <div className="size-screen bg-base-100">
+    <div className="size-screen bg-base-300">
       <Navbar />
       <Outlet />
     </div>

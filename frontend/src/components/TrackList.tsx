@@ -10,9 +10,9 @@ export function TrackList({
   aggregatedTracks?: TrackAggregationResult[];
 }) {
   return (
-    <div className="bg-base-200 rounded-lg overflow-hidden border border-zinc-800/50">
+    <div className="bg-base-300 rounded-lg overflow-hidden border border-zinc-800/50">
       <div className="p-0">
-        <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/50 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-100/50">
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/50 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-300/50">
           <div className="col-span-1">#</div>
           <div className="col-span-6">Title</div>
           <div className="col-span-3">Album</div>

@@ -8,8 +8,8 @@ export function ArtistTile({ artist }: { artist: Artist }) {
 
   return (
     <Tile key={artist.id} to={`/artists/${artist.id}`}>
-      <div className="p-6 text-center flex flex-col items-center gap-3">
-        <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-zinc-800/50 group-hover:ring-primary/30 transition-all duration-150">
+      <div className="card-body flex flex-col items-center text-center gap-3">
+        <div className="w-20 h-20 rounded-full overflow-hidden">
           {artistImage ? (
             <img
               src={artistImage}
@@ -17,15 +17,15 @@ export function ArtistTile({ artist }: { artist: Artist }) {
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full bg-linear-to-br from-primary/40 to-primary/60 flex items-center justify-center">
+            <div className="w-full h-full bg-primary flex items-center justify-center">
               <User className="w-10 h-10 text-base-content" />
             </div>
           )}
         </div>
 
-        <div className="w-full">
+        <div className="flex flex-col items-center w-full">
           <h3
-            className="font-semibold text-base mb-1.5 truncate text-base-content group-hover:text-primary transition-colors"
+            className="card-title group-hover:text-primary transition-colors"
             title={artist.name}
           >
             {artist.name}

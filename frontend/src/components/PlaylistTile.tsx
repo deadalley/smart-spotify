@@ -13,16 +13,14 @@ export function PlaylistTile({ playlist }: { playlist: Playlist }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full bg-base-100/50 flex items-center justify-center">
+          <div className="w-full h-full bg-base-300/50 flex items-center justify-center">
             <Music size={48} className="text-base-content/30" />
           </div>
         )}
       </div>
 
-      <div className="p-4">
-        <h3 className="font-semibold truncate mb-1.5 text-base-content group-hover:text-primary transition-colors">
-          {playlist.name}
-        </h3>
+      <div className="card-body">
+        <h3 className="card-title">{playlist.name}</h3>
 
         <div className="flex items-center gap-1.5 text-xs text-base-content/50">
           <Music size={12} />

@@ -17,7 +17,7 @@ export function TrackRow({
 
   return (
     <>
-      <div className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-100/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0">
+      <div className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0">
         <div className="col-span-1 flex items-center">
           <span className="text-base-content/50 text-sm group-hover:text-base-content/70 transition-colors">
             {index + 1}
@@ -32,7 +32,7 @@ export function TrackRow({
               </p>
               {trackAnalysisResult && (
                 <button
-                  className="btn btn-ghost btn-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="btn btn-ghost btn-xs"
                   onClick={() => setSeeSuggestions(!seeSuggestions)}
                 >
                   {seeSuggestions ? (
@@ -63,9 +63,11 @@ export function TrackRow({
           </span>
         </div>
       </div>
+
       {trackAnalysisResult && seeSuggestions && (
-        <div className="border-b border-zinc-800/30 bg-base-100/20">
-          <div className="px-4 py-4">
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 group border-b border-zinc-800/30 last:border-b-0">
+          <div className="col-span-1"></div>
+          <div className="col-span-11">
             <TrackAnalysisResult trackAnalysisResult={trackAnalysisResult} />
           </div>
         </div>
