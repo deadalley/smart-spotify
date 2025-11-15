@@ -1,4 +1,4 @@
-import { Artist } from "@smart-spotify/shared";
+import { Artist, Playlist, PlaylistData } from "@smart-spotify/shared";
 
 export function getGenres(
   artists: Artist[]
@@ -15,4 +15,26 @@ export function getGenres(
       return acc;
     }, {})
   ).map(([name, count]) => ({ name, count }));
+}
+
+export function isTrackInPlaylist(
+  trackId: string,
+  playlistData: Record<string, PlaylistData>
+) {
+  return (playlist: Playlist) =>
+    playlist.id !== "liked-songs" &&
+    (playlistData[playlist.id]?.tracks || []).some(
+      (track) => track.id === trackId
+    );
+}
+
+export function isTrackNotInPlaylist(
+  trackId: string,
+  playlistData: Record<string, PlaylistData>
+) {
+  return (playlist: Playlist) =>
+    playlist.id === "liked-songs" ||
+    !(playlistData[playlist.id]?.tracks || []).some(
+      (track) => track.id === trackId
+    );
 }

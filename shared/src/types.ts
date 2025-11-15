@@ -106,8 +106,8 @@ export interface TrackAggregationResult {
   currentPlaylists: Playlist[];
   suggestedPlaylists: {
     playlist: Playlist;
-    similarGenres: string[];
-    similarArtists: Artist[];
+    similarGenres: { name: string; count: number }[];
+    similarArtists: { artist: Artist; trackCount: number }[];
   }[];
 }
 

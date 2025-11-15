@@ -2,7 +2,7 @@ import {
   Artist,
   PersistResponse,
   Playlist,
-  PlaylistAnalysis,
+  PlaylistData,
   SpotifyArtistsResponse,
   SpotifyPlaylist,
   SpotifyPlaylistsResponse,
@@ -62,7 +62,7 @@ export const baseAPI = {
 
   // Analysis and aggregation
   analyzePlaylist: (playlistId: string) =>
-    api.get<PlaylistAnalysis>(`/playlists/${playlistId}/analyze`),
+    api.get<PlaylistData>(`/playlists/${playlistId}/analyze`),
   aggregatePlaylists: () => api.post<Playlist[]>("/playlists/aggregate"),
 
   // Playlists

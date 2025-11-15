@@ -35,10 +35,10 @@ export function PlaylistRow({
             {suggestedPlaylist.similarArtists.length > 0 ? (
               suggestedPlaylist.similarArtists.map((artist) => (
                 <span
-                  key={artist.id}
+                  key={artist.artist.id}
                   className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
                 >
-                  {artist.name}
+                  {artist.artist.name} ({artist.trackCount})
                 </span>
               ))
             ) : (
@@ -49,10 +49,10 @@ export function PlaylistRow({
             {suggestedPlaylist.similarGenres.length > 0 ? (
               suggestedPlaylist.similarGenres.map((genre) => (
                 <span
-                  key={genre}
+                  key={genre.name}
                   className="bg-secondary/10 text-secondary text-xs px-2 py-1 rounded-full"
                 >
-                  {genre}
+                  {genre.name} ({genre.count})
                 </span>
               ))
             ) : (
