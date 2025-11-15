@@ -221,4 +221,38 @@ router.get(
   }
 );
 
+router.patch(
+  "/playlists/:id/type",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
+
+      const playlistId = req.params.id;
+      const { playlistType } = req.body;
+
+      if (!playlistType) {
+        return res.status(400).json({ error: "playlistType is required" });
+      }
+
+      // Validate playlist type
+      const validTypes = ["mood", "genre", "collection", "artist", "other"];
+      if (!validTypes.includes(playlistType)) {
+        return res.status(400).json({
+          error: "Invalid playlist type",
+          validTypes,
+        });
+      }
+
+      await redisService.updatePlaylistType(user.id, playlistId, playlistType);
+
+      res.json({ success: true, playlistType });
+    } catch (error: any) {
+      console.error("Error updating playlist type:", error);
+      res.status(500).json({ error: "Failed to update playlist type" });
+    }
+  }
+);
+
 export { router as indexRouter };

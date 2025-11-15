@@ -1,3 +1,4 @@
+import { PlaylistType } from "@smart-spotify/shared";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 
@@ -17,3 +18,11 @@ export function formatDuration(ms: number): string {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
 }
+
+export const PLAYLIST_TYPES = [
+  { value: PlaylistType.MOOD, label: "Mood" },
+  { value: PlaylistType.GENRE, label: "Genre" },
+  { value: PlaylistType.COLLECTION, label: "Collection" },
+  { value: PlaylistType.ARTIST, label: "Artist" },
+  { value: PlaylistType.OTHER, label: "Other" },
+];

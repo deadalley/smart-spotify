@@ -15,13 +15,17 @@ export function PlaylistList({
       <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/50 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-300/50">
         {suggestedPlaylists ? (
           <>
-            <div className="col-span-5">Name</div>
+            <div className="col-span-3">Name</div>
+            <div className="col-span-2">Type</div>
             <div className="col-span-3">Tracks by Same Artists</div>
             <div className="col-span-2">Similar Genres</div>
             <div className="col-span-2"></div>
           </>
         ) : (
-          <div className="col-span-12">Name</div>
+          <>
+            <div className="col-span-10">Name</div>
+            <div className="col-span-2">Type</div>
+          </>
         )}
       </div>
 

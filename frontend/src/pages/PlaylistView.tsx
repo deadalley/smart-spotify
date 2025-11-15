@@ -6,6 +6,7 @@ import { Error } from "../components/Error";
 import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { PlaylistAnalysisResult } from "../components/PlaylistAnalysisResult";
+import { PlaylistTypeSelector } from "../components/PlaylistTypeSelector";
 import { SpotifyLink } from "../components/SpotifyLink";
 import { TrackList } from "../components/TrackList";
 import { baseAPI } from "../services/api";
@@ -58,7 +59,15 @@ export function PlaylistView() {
       <Page.Back to="/playlists" label="Playlists" />
       <Page.Header
         title={playlist?.name || "Playlist"}
-        action={<SpotifyLink href={playlist.externalUrls.spotify} />}
+        action={
+          <div className="flex gap-2 items-center">
+            <PlaylistTypeSelector
+              playlistId={id!}
+              currentType={playlist.playlistType}
+            />
+            <SpotifyLink href={playlist.externalUrls.spotify} />
+          </div>
+        }
         subtitle={
           <div className="flex gap-2 items-center">
             <span className="flex gap-2 items-center justify-start text-zinc-400">
@@ -74,7 +83,7 @@ export function PlaylistView() {
         }
       />
 
-      <div className="flex gap-x-8">
+      <div className="flex gap-x-4">
         <div className="flex-1">
           {tracks.length === 0 ? (
             <Empty Icon={Music}>No tracks found</Empty>

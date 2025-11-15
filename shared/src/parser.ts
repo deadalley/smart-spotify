@@ -2,6 +2,7 @@ import {
   Album,
   Artist,
   Playlist,
+  PlaylistType,
   SpotifyAlbum,
   SpotifyArtist,
   SpotifyPlaylist,
@@ -102,6 +103,7 @@ export function convertToRedisPlaylist(
     images: JSON.stringify(playlist.images),
     externalUrls: JSON.stringify(playlist.externalUrls),
     snapshotId: playlist.snapshotId,
+    playlistType: playlist.playlistType || "",
   };
 }
 
@@ -156,6 +158,9 @@ export function convertFromRedisPlaylist(
     images: JSON.parse(data.images || "[]"),
     externalUrls: JSON.parse(data.externalUrls || "{}"),
     snapshotId: data.snapshotId,
+    playlistType: data.playlistType
+      ? (data.playlistType as PlaylistType)
+      : undefined,
   };
 }
 
@@ -216,6 +221,7 @@ export function convertSpotifyPlaylistToRedis(
       spotifyPlaylist.external_urls || { spotify: "" }
     ),
     snapshotId: spotifyPlaylist.snapshot_id || "",
+    playlistType: "",
   };
 }
 

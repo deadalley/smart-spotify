@@ -1,6 +1,7 @@
 import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { Music, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { PLAYLIST_TYPES } from "../utils";
 
 export function PlaylistRow({
   playlist,
@@ -32,7 +33,7 @@ export function PlaylistRow({
     >
       <div
         className={`flex items-center ${
-          suggestedPlaylist ? "col-span-5" : "col-span-12"
+          suggestedPlaylist ? "col-span-3" : "col-span-10"
         }`}
       >
         <div className="min-w-0 flex-1 flex items-center gap-3">
@@ -59,6 +60,15 @@ export function PlaylistRow({
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center col-span-2">
+        {playlist.playlistType && (
+          <span className="badge badge-sm capitalize">
+            {PLAYLIST_TYPES.find((type) => type.value === playlist.playlistType)
+              ?.label ?? playlist.playlistType}
+          </span>
+        )}
       </div>
 
       {suggestedPlaylist && (

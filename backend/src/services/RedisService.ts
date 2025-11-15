@@ -129,6 +129,15 @@ export class RedisService {
     };
   }
 
+  async updatePlaylistType(
+    userId: string,
+    playlistId: string,
+    playlistType: string
+  ): Promise<void> {
+    const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
+    await redisClient.hSet(playlistKey, { playlistType });
+  }
+
   // Track operations
   async storeTracks(
     userId: string,

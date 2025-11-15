@@ -83,6 +83,10 @@ export const baseAPI = {
   getSavedTracks: () => api.get<Track[]>("/tracks/saved"),
   getAggregatedLikedSongs: () =>
     api.get<TrackAggregationResult[]>("/tracks/aggregate"),
+
+  // Playlist type management
+  updatePlaylistType: (playlistId: string, playlistType: string) =>
+    api.patch(`/playlists/${playlistId}/type`, { playlistType }),
 };
 
 // Axios interceptors for error handling

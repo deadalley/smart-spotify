@@ -15,6 +15,14 @@ export interface ExternalUrls {
   spotify: string;
 }
 
+export enum PlaylistType {
+  MOOD = "mood",
+  GENRE = "genre",
+  COLLECTION = "collection",
+  ARTIST = "artist",
+  OTHER = "other",
+}
+
 export interface Playlist {
   id: string;
   name: string;
@@ -26,6 +34,7 @@ export interface Playlist {
   images: Image[];
   externalUrls: ExternalUrls;
   snapshotId: string;
+  playlistType?: PlaylistType;
 }
 
 export interface Track {

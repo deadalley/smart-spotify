@@ -1,5 +1,6 @@
 import { Playlist } from "@smart-spotify/shared";
 import { Music } from "lucide-react";
+import { PLAYLIST_TYPES } from "../utils";
 import { Tile } from "./Tile";
 
 export function PlaylistTile({ playlist }: { playlist: Playlist }) {
@@ -22,11 +23,24 @@ export function PlaylistTile({ playlist }: { playlist: Playlist }) {
       <div className="card-body">
         <h3 className="card-title">{playlist.name}</h3>
 
-        <div className="flex items-center gap-1.5 text-xs text-base-content/50">
-          <Music size={12} />
-          <span>
-            {playlist.trackCount} track{playlist.trackCount !== 1 ? "s" : ""}
-          </span>
+        <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-1 text-xs text-base-content/50">
+            <Music size={12} />
+            <span>
+              {playlist.trackCount} track{playlist.trackCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {playlist.playlistType && (
+            <>
+              •{" "}
+              <span className="text-xs text-base-content/50 capitalize">
+                {PLAYLIST_TYPES.find(
+                  (type) => type.value === playlist.playlistType
+                )?.label ?? playlist.playlistType}
+              </span>
+            </>
+          )}
         </div>
       </div>
     </Tile>

@@ -72,7 +72,7 @@
   }
 
   .collapse {
-    @apply border-base-200 border-1;
+    @apply border-base-200/50 border;
   }
 }
 
