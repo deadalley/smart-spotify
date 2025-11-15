@@ -20,6 +20,11 @@ export function PlaylistRow({
     navigate(`/playlists/${playlist.id}`);
   };
 
+  const playlistImage =
+    playlist.images && playlist.images.length > 0
+      ? playlist.images[0].url
+      : null;
+
   return (
     <div
       className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-100/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0 cursor-pointer"
@@ -30,14 +35,29 @@ export function PlaylistRow({
           suggestedPlaylist ? "col-span-5" : "col-span-12"
         }`}
       >
-        <div className="min-w-0 flex-1">
-          <p className="font-medium truncate text-base-content group-hover:text-primary transition-colors">
-            {playlist.name}
-          </p>
-          <p className="text-base-content/50 text-sm flex items-center gap-1.5 mt-0.5">
-            <Music size={12} />
-            <span>{playlist.trackCount} tracks</span>
-          </p>
+        <div className="min-w-0 flex-1 flex items-center gap-3">
+          <div className="w-10 h-10 rounded overflow-hidden shrink-0 bg-base-100/50">
+            {playlistImage ? (
+              <img
+                src={playlistImage}
+                alt={playlist.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Music size={20} className="text-base-content/30" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium truncate text-base-content group-hover:text-primary transition-colors">
+              {playlist.name}
+            </p>
+            <p className="text-base-content/50 text-sm flex items-center gap-1.5 mt-0.5">
+              <Music size={12} />
+              <span>{playlist.trackCount} tracks</span>
+            </p>
+          </div>
         </div>
       </div>
 
