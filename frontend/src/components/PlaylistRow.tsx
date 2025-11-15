@@ -1,5 +1,5 @@
 import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
-import { Music } from "lucide-react";
+import { Music, Plus } from "lucide-react";
 
 export function PlaylistRow({
   playlist,
@@ -13,7 +13,7 @@ export function PlaylistRow({
     <div className="grid grid-cols-12 gap-4 p-4 hover:bg-zinc-900 transition-colors duration-200 group">
       <div
         className={`flex items-center space-x-3 ${
-          suggestedPlaylist ? "col-span-6" : "col-span-12"
+          suggestedPlaylist ? "col-span-5" : "col-span-12"
         }`}
       >
         <div className="min-w-0 flex-1">
@@ -31,33 +31,47 @@ export function PlaylistRow({
 
       {suggestedPlaylist && (
         <>
-          <div className="col-span-3">
+          <div className="col-span-3 flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarArtists.length > 0 ? (
               suggestedPlaylist.similarArtists.map((artist) => (
                 <span
                   key={artist.artist.id}
-                  className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
+                  className="badge badge-sm badge-primary h-fit"
                 >
-                  {artist.artist.name} ({artist.trackCount})
+                  {artist.artist.name}
+                  <span className="flex items-center gap-x-1">
+                    <Music size={10} />
+                    {artist.trackCount}
+                  </span>
                 </span>
               ))
             ) : (
               <span className="text-base-content/60 text-xs">None</span>
             )}
           </div>
-          <div className="col-span-3">
+          <div className="col-span-2 flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarGenres.length > 0 ? (
               suggestedPlaylist.similarGenres.map((genre) => (
                 <span
                   key={genre.name}
-                  className="bg-secondary/10 text-secondary text-xs px-2 py-1 rounded-full"
+                  className="badge badge-sm badge-primary h-fit"
                 >
-                  {genre.name} ({genre.count})
+                  {genre.name}
+                  <span className="flex items-center gap-x-1">
+                    <Music size={10} />
+                    {genre.count}
+                  </span>
                 </span>
               ))
             ) : (
               <span className="text-base-content/60 text-xs">None</span>
             )}
+          </div>
+          <div className="col-span-2 flex gap-2 items-center justify-end">
+            <button className="btn btn-sm btn-primary btn-outline">
+              <Plus size={14} />
+              Add to playlist
+            </button>
           </div>
         </>
       )}
