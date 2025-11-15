@@ -2,13 +2,7 @@ import { Artist } from "@smart-spotify/shared";
 import { Music, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export function ArtistRow({
-  artist,
-  index,
-}: {
-  artist: Artist;
-  index: number;
-}) {
+export function ArtistRow({ artist }: { artist: Artist }) {
   const navigate = useNavigate();
   const artistImage =
     artist.images && artist.images.length > 0 ? artist.images[0].url : null;
@@ -22,13 +16,7 @@ export function ArtistRow({
       className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-100/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0 cursor-pointer"
       onClick={handleRowClick}
     >
-      <div className="col-span-1 flex items-center">
-        <span className="text-base-content/50 text-sm group-hover:text-base-content/70 transition-colors">
-          {index + 1}
-        </span>
-      </div>
-
-      <div className="col-span-9 flex items-center">
+      <div className="col-span-10 flex items-center">
         <div className="min-w-0 flex-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
             {artistImage ? (
