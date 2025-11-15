@@ -11,7 +11,7 @@ export function PlaylistViewSwitch({
   playlists: Playlist[];
 }) {
   if (view === "list") {
-    return <PlaylistList playslists={playlists} />;
+    return <PlaylistList playlists={playlists} />;
   }
 
   return (

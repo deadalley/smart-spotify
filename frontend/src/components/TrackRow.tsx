@@ -2,15 +2,17 @@ import { Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
 import { formatDuration } from "../utils";
-import { PlaylistTile } from "./PlaylistTile";
+import { TrackAnalysisResult } from "./TrackAnalysisResult";
 
-interface TrackRowProps {
+export function TrackRow({
+  track,
+  index,
+  analysisResult,
+}: {
   track: Track;
   index: number;
-  suggestedPlaylists?: TrackAggregationResult["suggestedPlaylists"];
-}
-
-export function TrackRow({ track, index, suggestedPlaylists }: TrackRowProps) {
+  analysisResult?: TrackAggregationResult;
+}) {
   const [seeSuggestions, setSeeSuggestions] = useState(false);
 
   return (
@@ -28,7 +30,7 @@ export function TrackRow({ track, index, suggestedPlaylists }: TrackRowProps) {
               <p className="font-medium truncate text-base-content group-hover:text-primary">
                 {track.name}
               </p>
-              {suggestedPlaylists && (
+              {analysisResult && (
                 <button
                   className="btn btn-primary btn-soft btn-xs"
                   onClick={() => setSeeSuggestions(!seeSuggestions)}
@@ -41,30 +43,6 @@ export function TrackRow({ track, index, suggestedPlaylists }: TrackRowProps) {
             <p className="text-base-content/60 text-sm truncate">
               {track.artistNames.join(", ")}
             </p>
-            {suggestedPlaylists && seeSuggestions && (
-              <div className="flex gap-x-3">
-                <div className="flex-1 flex flex-col gap-y-2">
-                  <h4 className="text-base-content font-semibold">
-                    Current Playlists:
-                  </h4>
-                  <div className="flex flex-col gap-y-2">
-                    {suggestedPlaylists.map(({ playlist }) => (
-                      <PlaylistTile key={playlist.id} playlist={playlist} />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex-1 flex flex-col gap-y-2">
-                  <h4 className="text-base-content font-semibold">
-                    Suggested Playlists:
-                  </h4>
-                  <div className="flex flex-col gap-y-2">
-                    {suggestedPlaylists.map(({ playlist }) => (
-                      <PlaylistTile key={playlist.id} playlist={playlist} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -82,6 +60,14 @@ export function TrackRow({ track, index, suggestedPlaylists }: TrackRowProps) {
           </span>
         </div>
       </div>
+      {analysisResult && seeSuggestions && (
+        <div className="grid grid-cols-12 gap-4 p-4">
+          <div className="col-span-1 flex items-center"></div>
+          <div className="col-span-11 flex items-center">
+            <TrackAnalysisResult result={analysisResult} />
+          </div>
+        </div>
+      )}
     </>
   );
 }
