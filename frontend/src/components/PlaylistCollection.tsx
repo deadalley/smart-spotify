@@ -1,20 +1,20 @@
-import { Artist } from "@smart-spotify/shared";
+import { Playlist } from "@smart-spotify/shared";
 import { useMemo, useState } from "react";
-import { ArtistList } from "./ArtistList";
-import { ArtistTile } from "./ArtistTile";
 import { Grid } from "./Grid";
+import { PlaylistList } from "./PlaylistList";
+import { PlaylistTile } from "./PlaylistTile";
 import { Sort, SortDirection, SortOption } from "./Sort";
 import { ViewSwitch } from "./ViewSwitch";
 
-export function ArtistCollection({ artists }: { artists: Artist[] }) {
+export function PlaylistCollection({ playlists }: { playlists: Playlist[] }) {
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const sortedArtists = useMemo(() => {
-    if (!artists) return [];
+  const sortedPlaylists = useMemo(() => {
+    if (!playlists) return [];
 
-    return [...artists].sort((a, b) => {
+    return [...playlists].sort((a, b) => {
       let comparison = 0;
 
       if (sortBy === "name") {
@@ -25,7 +25,7 @@ export function ArtistCollection({ artists }: { artists: Artist[] }) {
 
       return sortDirection === "asc" ? comparison : -comparison;
     });
-  }, [artists, sortBy, sortDirection]);
+  }, [playlists, sortBy, sortDirection]);
 
   return (
     <>
@@ -41,12 +41,12 @@ export function ArtistCollection({ artists }: { artists: Artist[] }) {
 
       {view === "grid" ? (
         <Grid>
-          {sortedArtists.map((artist) => (
-            <ArtistTile key={artist.id} artist={artist} />
+          {sortedPlaylists.map((playlist) => (
+            <PlaylistTile key={playlist.id} playlist={playlist} />
           ))}
         </Grid>
       ) : (
-        <ArtistList artists={sortedArtists} />
+        <PlaylistList playlists={sortedPlaylists} />
       )}
     </>
   );

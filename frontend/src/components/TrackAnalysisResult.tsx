@@ -1,5 +1,5 @@
 import { TrackAggregationResult } from "@smart-spotify/shared";
-import { PlaylistViewSwitch } from "./PlaylistViewSwitch";
+import { PlaylistList } from "./PlaylistList";
 
 export function TrackAnalysisResult({
   trackAnalysisResult,
@@ -14,10 +14,7 @@ export function TrackAnalysisResult({
             Current Playlists
           </h4>
           <div className="flex-1 min-h-0">
-            <PlaylistViewSwitch
-              view="list"
-              playlists={trackAnalysisResult.currentPlaylists}
-            />
+            <PlaylistList playlists={trackAnalysisResult.currentPlaylists} />
           </div>
         </div>
       )}
@@ -26,8 +23,7 @@ export function TrackAnalysisResult({
           Suggested Playlists
         </h4>
         <div className="flex-1 min-h-0">
-          <PlaylistViewSwitch
-            view="list"
+          <PlaylistList
             playlists={[]}
             trackAnalysisResult={trackAnalysisResult}
           />
