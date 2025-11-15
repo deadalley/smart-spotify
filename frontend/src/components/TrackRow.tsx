@@ -42,12 +42,27 @@ export function TrackRow({ track, index, suggestedPlaylists }: TrackRowProps) {
               {track.artistNames.join(", ")}
             </p>
             {suggestedPlaylists && seeSuggestions && (
-              <div>
-                <span className="flex gap-x-2 h-96">
-                  {suggestedPlaylists.map(({ playlist }) => (
-                    <PlaylistTile key={playlist.id} playlist={playlist} />
-                  ))}
-                </span>
+              <div className="flex gap-x-3">
+                <div className="flex-1 flex flex-col gap-y-2">
+                  <h4 className="text-base-content font-semibold">
+                    Current Playlists:
+                  </h4>
+                  <div className="flex flex-col gap-y-2">
+                    {suggestedPlaylists.map(({ playlist }) => (
+                      <PlaylistTile key={playlist.id} playlist={playlist} />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col gap-y-2">
+                  <h4 className="text-base-content font-semibold">
+                    Suggested Playlists:
+                  </h4>
+                  <div className="flex flex-col gap-y-2">
+                    {suggestedPlaylists.map(({ playlist }) => (
+                      <PlaylistTile key={playlist.id} playlist={playlist} />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>

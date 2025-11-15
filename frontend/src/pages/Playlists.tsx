@@ -3,16 +3,17 @@ import { Music } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
-import { Grid } from "../components/Grid";
 import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
-import { PlaylistTile } from "../components/PlaylistTile";
+import { PlaylistViewSwitch } from "../components/PlaylistViewSwitch";
 import { Sort, SortDirection, SortOption } from "../components/Sort";
+import { ViewSwitch } from "../components/ViewSwitch";
 import { baseAPI } from "../services/api";
 
 export function Playlists() {
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [view, setView] = useState<"grid" | "list">("grid");
 
   const {
     data: playlists,
@@ -67,18 +68,17 @@ export function Playlists() {
         }
       />
 
-      <Sort
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
-      />
+      <div className="flex gap-x-2 items-center mb-6">
+        <Sort
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          sortDirection={sortDirection}
+          setSortDirection={setSortDirection}
+        />
+        <ViewSwitch view={view} setView={setView} />
+      </div>
 
-      <Grid>
-        {sortedPlaylists.map((playlist) => (
-          <PlaylistTile key={playlist.id} playlist={playlist} />
-        ))}
-      </Grid>
+      <PlaylistViewSwitch view={view} playlists={sortedPlaylists} />
 
       {sortedPlaylists.length === 0 && (
         <div className="text-center py-12">

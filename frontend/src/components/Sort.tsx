@@ -15,7 +15,7 @@ export function Sort({
   setSortDirection: (value: SortDirection) => void;
 }) {
   return (
-    <div className="mb-6 flex items-center gap-2">
+    <div className="flex items-center gap-2">
       <ArrowUpDown size={16} className="text-zinc-400" />
       <span className="text-zinc-400 text-sm">Sort by:</span>
       <select
