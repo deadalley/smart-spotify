@@ -76,7 +76,7 @@ export class RedisService {
     const directplaylistKeys = playlistKeys.filter((key) => {
       const parts = key.split(":");
       // playlist hash keys have exactly 4 parts: smart-spotify:userId:playlist:playlistId
-      // Relationship keys have 5+ parts: smart-spotify:userId:playlist:playlistId:tracks/playlists
+      // Relationship keys have 5+ parts: smart-spotify:userId:playlist:playlistId:tracks
       return parts.length === 4;
     });
 
@@ -86,8 +86,10 @@ export class RedisService {
         if (Object.keys(playlistData).length > 0) {
           const playlist = convertFromRedisPlaylist(playlistData);
 
-          const trackIds = await redisClient.sMembers(
-            this.getRedisKey(userId, "playlist", playlist.id, "tracks")
+          const trackIds = await redisClient.zRange(
+            this.getRedisKey(userId, "playlist", playlist.id, "tracks"),
+            0,
+            -1
           );
 
           playlists.push({ ...playlist, trackCount: trackIds.length });
@@ -114,8 +116,10 @@ export class RedisService {
       return null;
     }
 
-    const trackIds = await redisClient.sMembers(
-      this.getRedisKey(userId, "playlist", playlistId, "tracks")
+    const trackIds = await redisClient.zRange(
+      this.getRedisKey(userId, "playlist", playlistId, "tracks"),
+      0,
+      -1
     );
 
     return {
@@ -176,13 +180,7 @@ export class RedisService {
 
     // Store playlist-track relationships using a sorted set to maintain order
     if (trackIds.length > 0) {
-      const orderedTracksKey = this.getRedisKey(
-        userId,
-        "playlist",
-        playlistId,
-        "tracks_ordered"
-      );
-      const unorderedTracksKey = this.getRedisKey(
+      const tracksKey = this.getRedisKey(
         userId,
         "playlist",
         playlistId,
@@ -190,8 +188,7 @@ export class RedisService {
       );
 
       // Clear existing data
-      await redisClient.del(orderedTracksKey);
-      await redisClient.del(unorderedTracksKey);
+      await redisClient.del(tracksKey);
 
       // Store in sorted set with position as score for ordering
       const sortedSetData: { score: number; value: string }[] = [];
@@ -200,11 +197,8 @@ export class RedisService {
       }
 
       if (sortedSetData.length > 0) {
-        await redisClient.zAdd(orderedTracksKey, sortedSetData);
+        await redisClient.zAdd(tracksKey, sortedSetData);
       }
-
-      // Also maintain the old set for backwards compatibility
-      await redisClient.sAdd(unorderedTracksKey, trackIds);
     }
   }
 
@@ -243,48 +237,31 @@ export class RedisService {
     userId: string,
     playlistId: string
   ): Promise<Track[]> {
-    // Try to get tracks from the ordered set first
-    const orderedTracksKey = this.getRedisKey(
+    const tracksKey = this.getRedisKey(
       userId,
       "playlist",
       playlistId,
-      "tracks_ordered"
+      "tracks"
     );
-    const orderedTrackIds = await redisClient.zRange(orderedTracksKey, 0, -1);
-
-    let trackIds: string[];
-    if (orderedTrackIds.length > 0) {
-      trackIds = orderedTrackIds;
-    } else {
-      // Fallback to unordered set for backwards compatibility
-      trackIds = await redisClient.sMembers(
-        this.getRedisKey(userId, "playlist", playlistId, "tracks")
-      );
-    }
+    const trackIds = await redisClient.zRange(tracksKey, 0, -1);
 
     const tracks: Track[] = [];
 
-    for (const trackId of trackIds) {
+    for (let i = 0; i < trackIds.length; i++) {
+      const trackId = trackIds[i];
       const trackData = await redisClient.hGetAll(
         this.getRedisKey(userId, "track", trackId)
       );
 
       if (Object.keys(trackData).length > 0) {
         const track = convertFromRedisTrack(trackData);
+        // Set position from the sorted set order
+        track.playlistPosition = i;
         tracks.push(track);
       }
     }
 
-    // Sort by playlist position if available, otherwise maintain the order from Redis
-    return tracks.sort((a, b) => {
-      if (
-        a.playlistPosition !== undefined &&
-        b.playlistPosition !== undefined
-      ) {
-        return a.playlistPosition - b.playlistPosition;
-      }
-      return 0; // Maintain original order if no position data
-    });
+    return tracks;
   }
 
   async getArtistTracks(userId: string, artistId: string): Promise<Track[]> {
@@ -422,21 +399,13 @@ export class RedisService {
     userId: string,
     playlistId: string
   ): Promise<{ artists: Artist[]; tracks: Track[] }> {
-    // Try to get tracks from the ordered set first
-    const orderedTracksKey = this.getRedisKey(
+    const tracksKey = this.getRedisKey(
       userId,
       "playlist",
       playlistId,
-      "tracks_ordered"
+      "tracks"
     );
-    let trackIds = await redisClient.zRange(orderedTracksKey, 0, -1);
-
-    if (trackIds.length === 0) {
-      // Fallback to unordered set for backwards compatibility
-      trackIds = await redisClient.sMembers(
-        this.getRedisKey(userId, "playlist", playlistId, "tracks")
-      );
-    }
+    const trackIds = await redisClient.zRange(tracksKey, 0, -1);
 
     if (trackIds.length === 0) return { artists: [], tracks: [] };
 
@@ -483,22 +452,15 @@ export class RedisService {
             trackData as unknown as Record<string, string>
           );
 
+          // Set position from the sorted set order
+          track.playlistPosition = index;
+
           return track;
         }
 
         return null;
       })
-      .filter((track): track is Track => track !== null)
-      .sort((a, b) => {
-        // Sort by playlist position if available
-        if (
-          a.playlistPosition !== undefined &&
-          b.playlistPosition !== undefined
-        ) {
-          return a.playlistPosition - b.playlistPosition;
-        }
-        return 0; // Maintain original order if no position data
-      });
+      .filter((track): track is Track => track !== null);
 
     // Get artist data for all unique artists
     const artists: Artist[] = [];
