@@ -1,5 +1,5 @@
 import { Track, TrackAggregationResult } from "@smart-spotify/shared";
-import { Eye, EyeClosed } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { formatDuration } from "../utils";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
@@ -35,8 +35,12 @@ export function TrackRow({
                   className="btn btn-primary btn-soft btn-xs"
                   onClick={() => setSeeSuggestions(!seeSuggestions)}
                 >
-                  {seeSuggestions ? <EyeClosed size={14} /> : <Eye size={14} />}
-                  Analysis
+                  {seeSuggestions ? (
+                    <ChevronUp size={14} />
+                  ) : (
+                    <ChevronDown size={14} />
+                  )}
+                  <span className="text-xs">Analysis</span>
                 </button>
               )}
             </div>
@@ -61,9 +65,8 @@ export function TrackRow({
         </div>
       </div>
       {trackAnalysisResult && seeSuggestions && (
-        <div className="grid grid-cols-12 gap-4 p-4">
-          <div className="col-span-1 flex items-center"></div>
-          <div className="col-span-11 flex items-center">
+        <div className="border-t border-zinc-800/30 bg-zinc-900/30">
+          <div className="px-6 py-3">
             <TrackAnalysisResult trackAnalysisResult={trackAnalysisResult} />
           </div>
         </div>

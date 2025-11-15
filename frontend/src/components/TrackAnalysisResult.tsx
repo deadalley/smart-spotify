@@ -7,11 +7,11 @@ export function TrackAnalysisResult({
   trackAnalysisResult: TrackAggregationResult;
 }) {
   return (
-    <div className="flex gap-x-3 w-full border-y border-zinc-800 py-4 px-8 ">
+    <div className="w-full flex gap-6 py-3">
       {trackAnalysisResult.currentPlaylists.length > 0 && (
-        <div className="flex-1 flex flex-col gap-y-2 min-h-0">
-          <h4 className="text-base-content font-semibold">
-            Current Playlists:
+        <div className="flex-1 flex flex-col gap-2 min-h-0">
+          <h4 className="text-base-content/60 text-xs font-medium uppercase tracking-wider">
+            Current Playlists
           </h4>
           <div className="flex-1 min-h-0">
             <PlaylistViewSwitch
@@ -21,9 +21,9 @@ export function TrackAnalysisResult({
           </div>
         </div>
       )}
-      <div className="flex-[4] flex flex-col gap-y-2 min-h-0">
-        <h4 className="text-base-content font-semibold">
-          Suggested Playlists:
+      <div className="flex-2 flex flex-col gap-2 min-h-0">
+        <h4 className="text-primary text-xs font-medium uppercase tracking-wider">
+          Suggested Playlists
         </h4>
         <div className="flex-1 min-h-0">
           <PlaylistViewSwitch

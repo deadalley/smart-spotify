@@ -1,8 +1,8 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Heart, Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Heart } from "lucide-react";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
-import { Loading, PageLoading } from "../components/Loading";
+import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { TrackList } from "../components/TrackList";
 import { baseAPI } from "../services/api";
@@ -21,15 +21,16 @@ export function SavedTracks() {
   });
 
   const {
-    mutate: aggregateLikedSongs,
     data: aggregatedData,
     error: aggregatedError,
-    isPending: isAggregatedLoading,
-  } = useMutation({
-    mutationFn: async () => {
+    isLoading: isAggregatedLoading,
+  } = useQuery({
+    queryKey: ["aggregated-liked-songs"],
+    queryFn: async () => {
       const response = await baseAPI.getAggregatedLikedSongs();
       return response.data;
     },
+    enabled: !!tracks && tracks.length > 0,
   });
 
   if (isLoading) {
@@ -48,22 +49,15 @@ export function SavedTracks() {
     <Page>
       <Page.Header
         title="Liked Songs"
-        action={
-          <button
-            className={`btn btn-primary btn-sm ${
-              isAggregatedLoading ? "btn-disabled" : ""
-            }`}
-            disabled={isAggregatedLoading}
-            onClick={() => aggregateLikedSongs()}
-          >
-            {isAggregatedLoading ? <Loading size="sm" /> : <Search size={14} />}
-            Analyze
-          </button>
-        }
         subtitle={
           <span className="flex gap-2 items-center">
             <Heart size={16} />
             {tracks.length} track{tracks.length !== 1 ? "s" : ""}
+            {isAggregatedLoading && (
+              <span className="text-primary text-sm ml-2">
+                • Analyzing tracks...
+              </span>
+            )}
           </span>
         }
       />
