@@ -56,6 +56,7 @@ export class PlaylistService {
   async aggregateLikedSongs(userId: string): Promise<TrackAggregationResult[]> {
     const playlistGenreMap: Record<string, string[]> = {};
     const playlistArtistMap: Record<string, string[]> = {};
+    const playlistTrackMap: Record<string, string[]> = {};
 
     const playlists = await this.redisService.getUserPlaylists(userId);
 
@@ -64,7 +65,7 @@ export class PlaylistService {
         break;
       }
 
-      const { artists, genres } = await this.analyzePlaylist(
+      const { artists, genres, tracks } = await this.analyzePlaylist(
         userId,
         playlist.id
       );
@@ -75,6 +76,7 @@ export class PlaylistService {
       playlistArtistMap[playlist.id] = artists
         .sort((a, b) => b.trackCount - a.trackCount)
         .map((a) => a.name);
+      playlistTrackMap[playlist.id] = tracks.map((t) => t.id);
     }
 
     const likedTracks = await this.redisService.getPlaylistTracks(
@@ -92,8 +94,18 @@ export class PlaylistService {
 
       const genres = this.getGenres(artists);
 
+      const currentPlaylists = playlists.filter(
+        (p) =>
+          p.id !== "liked-songs" &&
+          (playlistTrackMap[p.id] || []).includes(track.id)
+      );
+
       const suggestedPlaylists = playlists
-        .filter((p) => p.id !== "liked-songs")
+        .filter(
+          (p) =>
+            p.id !== "liked-songs" &&
+            !(playlistTrackMap[p.id] || []).includes(track.id)
+        )
         .map((playlist) => {
           const similarGenres = genres
             .map((g) => g.name)
@@ -122,6 +134,7 @@ export class PlaylistService {
 
       result.push({
         track,
+        currentPlaylists,
         suggestedPlaylists,
       });
     }

@@ -11,7 +11,7 @@ export function TrackAnalysisResult({
       <div className="flex-1 flex flex-col gap-y-2 min-h-0">
         <h4 className="text-base-content font-semibold">Current Playlists:</h4>
         <div className="flex-1 min-h-0">
-          <PlaylistViewSwitch view="list" playlists={[]} />
+          <PlaylistViewSwitch view="list" playlists={result.currentPlaylists} />
         </div>
       </div>
       <div className="flex-1 flex flex-col gap-y-2 min-h-0">

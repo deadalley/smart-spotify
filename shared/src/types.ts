@@ -103,6 +103,7 @@ export interface PlaylistAnalysis {
 
 export interface TrackAggregationResult {
   track: Track;
+  currentPlaylists: Playlist[];
   suggestedPlaylists: {
     playlist: Playlist;
     similarGenres: string[];
