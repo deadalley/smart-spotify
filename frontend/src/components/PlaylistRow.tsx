@@ -61,7 +61,7 @@ export function PlaylistRow({
             <p className="font-medium truncate text-base-content group-hover/row:text-primary transition-colors">
               {playlist.name}
             </p>
-            <p className="text-base-content/50 text-sm flex items-center gap-1.5 mt-0.5">
+            <p className="text-base-content/50 text-sm flex items-center gap-2 mt-0.5">
               <Music size={12} />
               <span>{playlist.trackCount} tracks</span>
             </p>

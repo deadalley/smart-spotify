@@ -31,7 +31,7 @@ export function ArtistTile({ artist }: { artist: Artist }) {
             {artist.name}
           </h3>
 
-          <div className="flex gap-1.5 items-center justify-center text-xs text-base-content/50">
+          <div className="flex gap-2 items-center justify-center text-xs text-base-content/50">
             <Music size={12} />
             <span>
               {artist.trackCount ?? 0} track

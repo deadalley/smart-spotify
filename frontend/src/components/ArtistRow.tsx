@@ -38,7 +38,7 @@ export function ArtistRow({ artist }: { artist: Artist }) {
       </div>
 
       <div className="col-span-2 flex items-center justify-end">
-        <span className="text-base-content/50 text-sm flex items-center gap-1.5">
+        <span className="text-base-content/50 text-sm flex items-center gap-2">
           <Music size={12} />
           {artist.trackCount ?? 0}
         </span>

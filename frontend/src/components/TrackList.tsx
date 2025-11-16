@@ -1,6 +1,10 @@
 import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
-import { Clock } from "lucide-react";
-import { TrackRow } from "./TrackRow";
+import { ColumnDef } from "@tanstack/react-table";
+import { ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { useMemo, useState } from "react";
+import { formatDuration } from "../utils";
+import { Table } from "./Table";
+import { TrackAnalysisResult } from "./TrackAnalysisResult";
 
 export function TrackList({
   tracks,
@@ -11,40 +15,143 @@ export function TrackList({
   aggregatedTracks?: TrackAggregationResult[];
   playlists?: Playlist[];
 }) {
-  return (
-    <div className="bg-base-300 rounded-lg overflow-hidden border border-zinc-800/50">
-      <div className="p-0">
-        <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-800/50 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-300/50">
-          <div className="col-span-1">#</div>
-          <div className="col-span-6">Title</div>
-          <div className="col-span-3">Album</div>
-          <div className="col-span-2 flex items-center justify-end">
-            <Clock size={14} />
-          </div>
-        </div>
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-        <div className="overflow-y-auto">
-          {aggregatedTracks
-            ? aggregatedTracks.map((trackAnalysisResult, index) => (
-                <TrackRow
-                  key={`${trackAnalysisResult.track.id}-${index}`}
-                  track={trackAnalysisResult.track}
-                  index={index}
-                  trackAnalysisResult={trackAnalysisResult}
-                  playlists={playlists}
-                />
-              ))
-            : tracks.map((track, index) => {
-                return (
-                  <TrackRow
-                    key={`${track.id}-${index}`}
-                    track={track}
-                    index={index}
-                  />
-                );
-              })}
+  const data = useMemo(() => {
+    if (aggregatedTracks) {
+      return aggregatedTracks.map((result) => ({
+        track: result.track,
+        trackAnalysisResult: result,
+      }));
+    }
+    return tracks.map((track) => ({ track, trackAnalysisResult: undefined }));
+  }, [tracks, aggregatedTracks]);
+
+  const toggleRow = (rowKey: string) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(rowKey)) {
+        newSet.delete(rowKey);
+      } else {
+        newSet.add(rowKey);
+      }
+      return newSet;
+    });
+  };
+
+  const columns: ColumnDef<
+    {
+      track: Track;
+      trackAnalysisResult?: TrackAggregationResult;
+    },
+    unknown
+  >[] = [
+    {
+      id: "index",
+      header: "#",
+      meta: { span: 1 },
+      cell: ({ row }) => (
+        <span className="text-base-content/50 text-sm group-hover:text-base-content/70 transition-colors">
+          {row.index + 1}
+        </span>
+      ),
+    },
+    {
+      id: "title",
+      accessorKey: "track",
+      header: "Title",
+      meta: { span: 6 },
+      enableSorting: true,
+      cell: ({ row }) => {
+        const { track, trackAnalysisResult } = row.original;
+        const rowKey = `${track.id}-${row.index}`;
+        const isExpanded = expandedRows.has(rowKey);
+
+        return (
+          <div className="min-w-0 flex-1">
+            <div className="flex gap-2 items-center">
+              <p className="font-medium truncate text-base-content group-hover:text-primary transition-colors">
+                {track.name}
+              </p>
+              {trackAnalysisResult && (
+                <button
+                  className="btn btn-ghost btn-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRow(rowKey);
+                  }}
+                >
+                  {isExpanded ? (
+                    <ChevronUp size={12} />
+                  ) : (
+                    <ChevronDown size={12} />
+                  )}
+                </button>
+              )}
+            </div>
+            <p className="text-base-content/50 text-sm truncate mt-0.5">
+              {track.artistNames.join(", ")}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      id: "album",
+      accessorFn: (row) => row.track.album.name,
+      header: "Album",
+      meta: { span: 3 },
+      enableSorting: true,
+      cell: ({ row }) => (
+        <div className="min-w-0 flex-1">
+          <p className="text-base-content/70 text-sm truncate">
+            {row.original.track.album.name}
+          </p>
         </div>
-      </div>
-    </div>
+      ),
+    },
+    {
+      id: "duration",
+      accessorFn: (row) => row.track.durationMs,
+      header: () => <Clock size={14} />,
+      meta: { span: 2 },
+      enableSorting: true,
+      cell: ({ row }) => (
+        <span className="text-base-content/50 text-sm tabular-nums">
+          {formatDuration(row.original.track.durationMs)}
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <Table
+      data={data}
+      columns={columns}
+      getRowKey={(row, index) => `${row.track.id}-${index}`}
+      renderSubRow={
+        aggregatedTracks
+          ? (row) => {
+              const { trackAnalysisResult, track } = row.original;
+              const rowKey = `${track.id}-${row.index}`;
+
+              if (!trackAnalysisResult || !expandedRows.has(rowKey))
+                return null;
+
+              return (
+                <div className="grid grid-cols-12">
+                  <div className="col-span-1"></div>
+                  <div className="col-span-11">
+                    <TrackAnalysisResult
+                      trackAnalysisResult={trackAnalysisResult}
+                      playlists={playlists}
+                    />
+                  </div>
+                </div>
+              );
+            }
+          : undefined
+      }
+    />
   );
 }

@@ -27,36 +27,32 @@ export function TrackRow({
         </div>
 
         <div className="col-span-6 flex items-center">
-          <div className="min-w-0 flex-1">
-            <div className="flex gap-2 items-center">
-              <p className="font-medium truncate text-base-content group-hover:text-primary transition-colors">
-                {track.name}
-              </p>
-              {trackAnalysisResult && (
-                <button
-                  className="btn btn-ghost btn-xs"
-                  onClick={() => setSeeSuggestions(!seeSuggestions)}
-                >
-                  {seeSuggestions ? (
-                    <ChevronUp size={12} />
-                  ) : (
-                    <ChevronDown size={12} />
-                  )}
-                </button>
-              )}
-            </div>
-            <p className="text-base-content/50 text-sm truncate mt-0.5">
-              {track.artistNames.join(", ")}
+          <div className="flex gap-2 items-center">
+            <p className="font-medium truncate text-base-content group-hover:text-primary transition-colors">
+              {track.name}
             </p>
+            {trackAnalysisResult && (
+              <button
+                className="btn btn-ghost btn-xs"
+                onClick={() => setSeeSuggestions(!seeSuggestions)}
+              >
+                {seeSuggestions ? (
+                  <ChevronUp size={12} />
+                ) : (
+                  <ChevronDown size={12} />
+                )}
+              </button>
+            )}
           </div>
+          <p className="text-base-content/50 text-sm truncate mt-0.5">
+            {track.artistNames.join(", ")}
+          </p>
         </div>
 
         <div className="col-span-3 flex items-center">
-          <div className="min-w-0 flex-1">
-            <p className="text-base-content/70 text-sm truncate">
-              {track.album.name}
-            </p>
-          </div>
+          <p className="text-base-content/70 text-sm truncate">
+            {track.album.name}
+          </p>
         </div>
 
         <div className="col-span-2 flex items-center justify-end">
