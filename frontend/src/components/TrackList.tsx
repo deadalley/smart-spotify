@@ -115,7 +115,7 @@ export function TrackList({
       id: "duration",
       accessorFn: (row) => row.track.durationMs,
       header: () => <Clock size={14} />,
-      meta: { span: 2 },
+      meta: { span: 2, align: "right" },
       enableSorting: true,
       cell: ({ row }) => (
         <span className="text-base-content/50 text-sm tabular-nums">

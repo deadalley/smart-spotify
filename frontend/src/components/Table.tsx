@@ -12,6 +12,7 @@ import { ReactNode, useState } from "react";
 
 export interface TableColumnMeta {
   span?: number;
+  align?: "left" | "center" | "right";
 }
 
 export interface TableProps<T> {
@@ -68,6 +69,13 @@ export function Table<T>({
             const canSort = header.column.getCanSort();
             const sortDirection = header.column.getIsSorted();
 
+            const alignClass =
+              meta?.align === "right"
+                ? "justify-end"
+                : meta?.align === "center"
+                ? "justify-center"
+                : "justify-start";
+
             return (
               <div
                 key={header.id}
@@ -79,7 +87,7 @@ export function Table<T>({
                   canSort ? header.column.getToggleSortingHandler() : undefined
                 }
               >
-                <div className="flex items-center gap-1">
+                <div className={`flex items-center gap-1 ${alignClass}`}>
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -128,13 +136,19 @@ export function Table<T>({
                   const meta = cell.column.columnDef.meta as
                     | TableColumnMeta
                     | undefined;
+                  const alignClass =
+                    meta?.align === "right"
+                      ? "justify-end"
+                      : meta?.align === "center"
+                      ? "justify-center"
+                      : "justify-start";
                   return (
                     <div
                       key={cell.id}
                       style={{
                         gridColumn: `span ${meta?.span || 1}`,
                       }}
-                      className="flex items-center"
+                      className={`flex items-center ${alignClass}`}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
