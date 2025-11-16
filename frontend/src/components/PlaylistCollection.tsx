@@ -4,12 +4,26 @@ import { Grid } from "./Grid";
 import { PlaylistList } from "./PlaylistList";
 import { PlaylistTile } from "./PlaylistTile";
 import { Sort, SortDirection, SortOption } from "./Sort";
+import { TableSearch } from "./TableSearch";
 import { ViewSwitch } from "./ViewSwitch";
 
-export function PlaylistCollection({ playlists }: { playlists: Playlist[] }) {
+export function PlaylistCollection({
+  playlists,
+  globalFilter: externalGlobalFilter,
+  onGlobalFilterChange: externalOnGlobalFilterChange,
+}: {
+  playlists: Playlist[];
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
+}) {
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [internalGlobalFilter, setInternalGlobalFilter] = useState("");
+
+  const globalFilter = externalGlobalFilter ?? internalGlobalFilter;
+  const setGlobalFilter =
+    externalOnGlobalFilterChange ?? setInternalGlobalFilter;
 
   const sortedPlaylists = useMemo(() => {
     if (!playlists) return [];
@@ -44,6 +58,15 @@ export function PlaylistCollection({ playlists }: { playlists: Playlist[] }) {
         <ViewSwitch view={view} setView={setView} />
       </div>
 
+      {view === "list" && (
+        <TableSearch
+          value={globalFilter}
+          onChange={setGlobalFilter}
+          placeholder="Search playlist..."
+          className="mb-4"
+        />
+      )}
+
       {view === "grid" ? (
         <Grid>
           {sortedPlaylists.map((playlist) => (
@@ -51,7 +74,13 @@ export function PlaylistCollection({ playlists }: { playlists: Playlist[] }) {
           ))}
         </Grid>
       ) : (
-        <PlaylistList playlists={sortedPlaylists} />
+        <PlaylistList
+          playlists={sortedPlaylists}
+          enableFilter
+          externalFilter
+          globalFilter={globalFilter}
+          onGlobalFilterChange={setGlobalFilter}
+        />
       )}
     </>
   );

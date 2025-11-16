@@ -19,9 +19,17 @@ type PlaylistColumn = ColumnDef<
 export function PlaylistList({
   playlists,
   trackAnalysisResult,
+  enableFilter = false,
+  externalFilter = false,
+  globalFilter,
+  onGlobalFilterChange,
 }: {
   playlists: Playlist[];
   trackAnalysisResult?: TrackAggregationResult;
+  enableFilter?: boolean;
+  externalFilter?: boolean;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
 }) {
   const navigate = useNavigate();
   const { suggestedPlaylists } = trackAnalysisResult || {};
@@ -217,7 +225,7 @@ export function PlaylistList({
     },
   ];
 
-  // Columns for "show all" section
+  // Columns for "show all" section - used in analysis results and main playlist view
   const showAllColumns: ColumnDef<
     {
       playlist: Playlist;
@@ -229,7 +237,7 @@ export function PlaylistList({
       id: "name",
       accessorFn: (row) => row.playlist.name,
       header: "Name",
-      meta: { span: 8 },
+      meta: { span: suggestedPlaylists ? 8 : 10 },
       enableSorting: true,
       cell: ({ row }) => {
         const { playlist } = row.original;
@@ -299,13 +307,25 @@ export function PlaylistList({
     [playlists]
   );
 
+  // If no track analysis result, use the showAllColumns for regular playlist view
+  const columnsToUse = suggestedPlaylists
+    ? suggestedColumns
+    : enableFilter
+    ? showAllColumns
+    : simpleColumns;
+
   return (
     <TableWrapper>
       <Table
-        data={data}
-        columns={suggestedPlaylists ? suggestedColumns : simpleColumns}
+        data={enableFilter && !suggestedPlaylists ? showAllData : data}
+        columns={columnsToUse}
         onRowClick={(row) => navigate(`/playlists/${row.playlist.id}`)}
         getRowKey={(row) => row.playlist.id}
+        enableFilter={enableFilter && !externalFilter && !suggestedPlaylists}
+        filterPlaceholder="Search playlist..."
+        externalFilter={externalFilter}
+        globalFilter={globalFilter}
+        onGlobalFilterChange={onGlobalFilterChange}
       />
 
       {suggestedPlaylists && (

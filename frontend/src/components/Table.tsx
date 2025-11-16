@@ -8,8 +8,9 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, Search } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { ReactNode, useState } from "react";
+import { TableSearch } from "./TableSearch";
 
 export interface TableColumnMeta {
   span?: number;
@@ -27,6 +28,9 @@ export interface TableProps<T> {
   className?: string;
   filterClassName?: string;
   getRowKey?: (row: T, index: number) => string;
+  externalFilter?: boolean;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
 }
 
 export function Table<T>({
@@ -40,16 +44,26 @@ export function Table<T>({
   className = "",
   filterClassName = "",
   getRowKey,
+  externalFilter = false,
+  globalFilter: externalGlobalFilter,
+  onGlobalFilterChange: externalOnGlobalFilterChange,
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [internalGlobalFilter, setInternalGlobalFilter] = useState("");
+
+  const globalFilter = externalFilter
+    ? externalGlobalFilter ?? ""
+    : internalGlobalFilter;
+  const setGlobalFilter = externalFilter
+    ? externalOnGlobalFilterChange ?? setInternalGlobalFilter
+    : setInternalGlobalFilter;
 
   const table = useReactTable({
     data,
     columns,
     state: {
       sorting,
-      globalFilter,
+      globalFilter: globalFilter || "",
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
@@ -67,18 +81,13 @@ export function Table<T>({
 
   return (
     <div className={`w-full flex flex-col h-fit ${className}`}>
-      {enableFilter && (
-        <div className={`w-full px-4 py-3 ${filterClassName}`}>
-          <label className="input bg-base-300 w-full">
-            <Search size={14} />
-            <input
-              type="text"
-              value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              placeholder={filterPlaceholder}
-            />
-          </label>
-        </div>
+      {enableFilter && !externalFilter && (
+        <TableSearch
+          value={globalFilter || ""}
+          onChange={(value) => setGlobalFilter?.(value)}
+          placeholder={filterPlaceholder}
+          className={`w-full px-4 py-3 ${filterClassName}`}
+        />
       )}
 
       <div

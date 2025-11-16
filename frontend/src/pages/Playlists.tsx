@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Music } from "lucide-react";
+import { useState } from "react";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
 import { PageLoading } from "../components/Loading";
@@ -8,6 +9,8 @@ import { PlaylistCollection } from "../components/PlaylistCollection";
 import { baseAPI } from "../services/api";
 
 export function Playlists() {
+  const [globalFilter, setGlobalFilter] = useState("");
+
   const {
     data: playlists,
     isLoading,
@@ -45,7 +48,11 @@ export function Playlists() {
         }
       />
 
-      <PlaylistCollection playlists={playlists} />
+      <PlaylistCollection
+        playlists={playlists}
+        globalFilter={globalFilter}
+        onGlobalFilterChange={setGlobalFilter}
+      />
     </Page>
   );
 }
