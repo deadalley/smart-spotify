@@ -76,11 +76,8 @@ export function PlaylistRow({
           <div className="col-span-3 flex flex-wrap gap-1.5 items-center">
             {suggestedPlaylist.similarArtists.length > 0 ? (
               suggestedPlaylist.similarArtists.map((artist) => (
-                <span
-                  key={artist.artist.id}
-                  className="badge badge-sm badge-primary"
-                >
-                  <span>{artist.artist.name}</span>
+                <span key={artist.id} className="badge badge-sm badge-primary">
+                  <span>{artist.name}</span>
                   <span className="flex items-center gap-1 text-primary/70">
                     <Music size={10} />
                     {artist.trackCount}

@@ -481,7 +481,7 @@ export class RedisService {
     });
     const artistResults = await artistPipeline.exec();
 
-    const artists: { artist: Artist; trackCount: number }[] = [];
+    const artists: Artist[] = [];
     const artistGenres = new Map<string, Set<string>>();
 
     if (artistResults) {
@@ -491,7 +491,7 @@ export class RedisService {
         if (data) {
           const artist = convertFromRedisArtist(data);
           const trackCount = artistTrackCount.get(uniqueArtistIds[index]) || 0;
-          artists.push({ artist, trackCount });
+          artists.push({ ...artist, trackCount });
 
           // Store artist genres for later use
           artistGenres.set(artist.id, new Set(artist.genres));

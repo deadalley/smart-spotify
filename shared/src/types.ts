@@ -105,7 +105,7 @@ export interface PersistResponse {
 export interface PlaylistData {
   playlist: Playlist;
   tracks: Track[];
-  artists: { artist: Artist; trackCount: number }[];
+  artists: Artist[];
   genres: { name: string; count: number }[];
   totalDurationMs: number;
 }
@@ -116,7 +116,7 @@ export interface TrackAggregationResult {
   suggestedPlaylists: {
     playlist: Playlist;
     similarGenres: { name: string; count: number }[];
-    similarArtists: { artist: Artist; trackCount: number }[];
+    similarArtists: Artist[];
   }[];
 }
 

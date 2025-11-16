@@ -59,15 +59,13 @@ export class PlaylistService {
           const similarGenres = data.genres.filter((g) => {
             // Check if any of the track's artists have this genre
             return data.artists.some(
-              (a) =>
-                trackArtistIds.has(a.artist.id) &&
-                a.artist.genres.includes(g.name)
+              (a) => trackArtistIds.has(a.id) && a.genres.includes(g.name)
             );
           });
 
           // Find matching artists (with track counts from the playlist)
           const similarArtists = data.artists.filter((a) =>
-            trackArtistIds.has(a.artist.id)
+            trackArtistIds.has(a.id)
           );
 
           if (similarGenres.length === 0 && similarArtists.length === 0) {

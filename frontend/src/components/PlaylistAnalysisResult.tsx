@@ -7,7 +7,7 @@ export function PlaylistAnalysisResult({
   artists,
   genres,
 }: {
-  artists: { artist: Artist; trackCount: number }[];
+  artists: Artist[];
   genres: { name: string; count: number }[];
 }) {
   return (
@@ -15,9 +15,7 @@ export function PlaylistAnalysisResult({
       items={[
         {
           title: "Artists",
-          content: (
-            <ArtistCollection artists={artists.map(({ artist }) => artist)} />
-          ),
+          content: <ArtistCollection artists={artists} />,
           defaultOpen: true,
         },
         {
