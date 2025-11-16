@@ -3,6 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Music, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Table } from "./Table";
+import { TableWrapper } from "./TableWrapper";
 
 export function ArtistList({ artists }: { artists: Artist[] }) {
   const navigate = useNavigate();
@@ -61,11 +62,13 @@ export function ArtistList({ artists }: { artists: Artist[] }) {
   ];
 
   return (
-    <Table
-      data={artists}
-      columns={columns}
-      onRowClick={(artist) => navigate(`/artists/${artist.id}`)}
-      getRowKey={(artist) => artist.id}
-    />
+    <TableWrapper>
+      <Table
+        data={artists}
+        columns={columns}
+        onRowClick={(artist) => navigate(`/artists/${artist.id}`)}
+        getRowKey={(artist) => artist.id}
+      />
+    </TableWrapper>
   );
 }

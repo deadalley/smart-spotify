@@ -22,7 +22,7 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="bg-base-300 border-b border-zinc-800/50 sticky top-0 z-50">
+    <nav className="bg-base-300 border-b border-base-200 sticky top-0 z-50">
       <div className="px-6 py-3">
         <div className="flex items-center justify-between">
           <Link
@@ -52,7 +52,7 @@ export function Navbar() {
               ))}
             </ul>
 
-            <div className="flex items-center gap-2 pl-4 border-l border-zinc-800/50">
+            <div className="flex items-center gap-2 pl-4 border-l border-base-200">
               <SyncModal />
               <button
                 onClick={handleLogout}

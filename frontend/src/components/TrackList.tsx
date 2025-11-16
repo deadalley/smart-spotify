@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatDuration } from "../utils";
 import { Table } from "./Table";
+import { TableWrapper } from "./TableWrapper";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
 
 export function TrackList({
@@ -125,33 +126,35 @@ export function TrackList({
   ];
 
   return (
-    <Table
-      data={data}
-      columns={columns}
-      getRowKey={(row, index) => `${row.track.id}-${index}`}
-      renderSubRow={
-        aggregatedTracks
-          ? (row) => {
-              const { trackAnalysisResult, track } = row.original;
-              const rowKey = `${track.id}-${row.index}`;
+    <TableWrapper>
+      <Table
+        data={data}
+        columns={columns}
+        getRowKey={(row, index) => `${row.track.id}-${index}`}
+        renderSubRow={
+          aggregatedTracks
+            ? (row) => {
+                const { trackAnalysisResult, track } = row.original;
+                const rowKey = `${track.id}-${row.index}`;
 
-              if (!trackAnalysisResult || !expandedRows.has(rowKey))
-                return null;
+                if (!trackAnalysisResult || !expandedRows.has(rowKey))
+                  return null;
 
-              return (
-                <div className="grid grid-cols-12">
-                  <div className="col-span-1"></div>
-                  <div className="col-span-11">
-                    <TrackAnalysisResult
-                      trackAnalysisResult={trackAnalysisResult}
-                      playlists={playlists}
-                    />
+                return (
+                  <div className="grid grid-cols-12">
+                    <div className="col-span-1"></div>
+                    <div className="col-span-11">
+                      <TrackAnalysisResult
+                        trackAnalysisResult={trackAnalysisResult}
+                        playlists={playlists}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            }
-          : undefined
-      }
-    />
+                );
+              }
+            : undefined
+        }
+      />
+    </TableWrapper>
   );
 }

@@ -31,7 +31,7 @@ export function PlaylistRow({
 
   return (
     <div
-      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 border-b border-zinc-800/50 last:border-b-0 cursor-pointer group/row"
+      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 border-b border-base-200 last:border-b-0 cursor-pointer group/row"
       onClick={handleRowClick}
     >
       <div

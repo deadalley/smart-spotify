@@ -60,7 +60,7 @@
   }
 
   .btn-outline {
-    @apply border-zinc-800;
+    @apply border-base-200;
   }
 
   .badge-sm {
@@ -72,7 +72,7 @@
   }
 
   .collapse {
-    @apply border-base-200/50 border;
+    @apply border-base-200 border;
   }
 }
 

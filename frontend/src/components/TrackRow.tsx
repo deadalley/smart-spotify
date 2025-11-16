@@ -19,7 +19,7 @@ export function TrackRow({
 
   return (
     <>
-      <div className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 group border-b border-zinc-800/50 last:border-b-0">
+      <div className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 group border-b border-base-200 last:border-b-0">
         <div className="col-span-1 flex items-center">
           <span className="text-base-content/50 text-sm group-hover:text-base-content/70 transition-colors">
             {index + 1}
@@ -63,7 +63,7 @@ export function TrackRow({
       </div>
 
       {trackAnalysisResult && seeSuggestions && (
-        <div className="grid grid-cols-12 gap-4 px-4 py-3 group border-b border-zinc-800/50 last:border-b-0">
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 group border-b border-base-200 last:border-b-0">
           <div className="col-span-1"></div>
           <div className="col-span-11">
             <TrackAnalysisResult

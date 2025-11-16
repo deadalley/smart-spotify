@@ -1,10 +1,12 @@
 import { Playlist, TrackAggregationResult } from "@smart-spotify/shared";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, Music, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Music } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PLAYLIST_TYPES } from "../utils";
+import { SaveInPlaylist } from "./SaveInPlaylist";
 import { Table } from "./Table";
+import { TableWrapper } from "./TableWrapper";
 
 type PlaylistColumn = ColumnDef<
   {
@@ -154,7 +156,7 @@ export function PlaylistList({
       id: "actions",
       header: "",
       meta: { span: 2 },
-      cell: () => <div />,
+      cell: () => <SaveInPlaylist />,
     },
   ];
 
@@ -284,20 +286,7 @@ export function PlaylistList({
       id: "actions",
       header: "",
       meta: { span: 2 },
-      cell: () => (
-        <div className="flex gap-2 items-center justify-end">
-          <button
-            className="btn btn-sm btn-primary gap-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle add to playlist
-            }}
-          >
-            <Plus size={14} />
-            Add to playlist
-          </button>
-        </div>
-      ),
+      cell: () => <SaveInPlaylist />,
     },
   ];
 
@@ -311,7 +300,7 @@ export function PlaylistList({
   );
 
   return (
-    <div className="space-y-0">
+    <TableWrapper>
       <Table
         data={data}
         columns={suggestedPlaylists ? suggestedColumns : simpleColumns}
@@ -322,7 +311,11 @@ export function PlaylistList({
 
       {suggestedPlaylists && (
         <>
-          <div className="flex items-center justify-center text-sm border border-zinc-800/50 bg-base-300 px-4 py-3">
+          <div
+            className={`flex items-center justify-center text-sm px-4 py-3 ${
+              showAll ? "border-b border-base-200" : ""
+            }`}
+          >
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => setShowAll(!showAll)}
@@ -343,6 +336,6 @@ export function PlaylistList({
           )}
         </>
       )}
-    </div>
+    </TableWrapper>
   );
 }

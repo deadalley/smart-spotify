@@ -53,11 +53,9 @@ export function Table<T>({
   }, 0);
 
   return (
-    <div
-      className={`bg-base-300 rounded-lg overflow-hidden border border-zinc-800/50 w-full flex flex-col h-fit ${className}`}
-    >
+    <div className={`w-full flex flex-col h-fit ${className}`}>
       <div
-        className="grid gap-4 px-4 py-3 border-b border-zinc-800/50 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-300/50"
+        className="grid gap-4 px-4 py-3 border-b border-base-200 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-300/50"
         style={{
           gridTemplateColumns: `repeat(${totalSpan}, minmax(0, 1fr))`,
         }}
@@ -113,7 +111,7 @@ export function Table<T>({
           return (
             <div key={rowKey}>
               <div
-                className={`grid gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 border-b border-zinc-800/50 last:border-b-0 ${
+                className={`grid gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 border-b border-base-200 ${
                   onRowClick ? "cursor-pointer" : ""
                 } ${className.includes("playlist") ? "group/row" : "group"}`}
                 style={{
@@ -147,8 +145,10 @@ export function Table<T>({
                 })}
               </div>
 
-              {renderSubRow && (
-                <div className="px-4 py-3">{renderSubRow(row)}</div>
+              {renderSubRow && renderSubRow(row) && (
+                <div className="border-b border-base-200 px-4 py-3">
+                  {renderSubRow(row)}
+                </div>
               )}
             </div>
           );
