@@ -1,4 +1,4 @@
-import { Track, TrackAggregationResult } from "@smart-spotify/shared";
+import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { formatDuration } from "../utils";
@@ -8,16 +8,18 @@ export function TrackRow({
   track,
   index,
   trackAnalysisResult,
+  playlists,
 }: {
   track: Track;
   index: number;
   trackAnalysisResult?: TrackAggregationResult;
+  playlists?: Playlist[];
 }) {
   const [seeSuggestions, setSeeSuggestions] = useState(false);
 
   return (
     <>
-      <div className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/30 transition-colors duration-150 group border-b border-zinc-800/30 last:border-b-0">
+      <div className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 group border-b border-zinc-800/50 last:border-b-0">
         <div className="col-span-1 flex items-center">
           <span className="text-base-content/50 text-sm group-hover:text-base-content/70 transition-colors">
             {index + 1}
@@ -65,10 +67,13 @@ export function TrackRow({
       </div>
 
       {trackAnalysisResult && seeSuggestions && (
-        <div className="grid grid-cols-12 gap-4 px-4 py-3 group border-b border-zinc-800/30 last:border-b-0">
+        <div className="grid grid-cols-12 gap-4 px-4 py-3 group border-b border-zinc-800/50 last:border-b-0">
           <div className="col-span-1"></div>
           <div className="col-span-11">
-            <TrackAnalysisResult trackAnalysisResult={trackAnalysisResult} />
+            <TrackAnalysisResult
+              trackAnalysisResult={trackAnalysisResult}
+              playlists={playlists}
+            />
           </div>
         </div>
       )}

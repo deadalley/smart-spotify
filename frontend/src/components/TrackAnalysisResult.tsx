@@ -1,12 +1,14 @@
-import { TrackAggregationResult } from "@smart-spotify/shared";
+import { Playlist, TrackAggregationResult } from "@smart-spotify/shared";
 import { List } from "lucide-react";
 import { Empty } from "./Empty";
 import { PlaylistList } from "./PlaylistList";
 
 export function TrackAnalysisResult({
   trackAnalysisResult,
+  playlists,
 }: {
   trackAnalysisResult: TrackAggregationResult;
+  playlists?: Playlist[];
 }) {
   return (
     <div className="w-full flex gap-6 py-3">
@@ -27,7 +29,7 @@ export function TrackAnalysisResult({
         {trackAnalysisResult.suggestedPlaylists.length > 0 ? (
           <div className="flex-1 min-h-0">
             <PlaylistList
-              playlists={[]}
+              playlists={playlists || []}
               trackAnalysisResult={trackAnalysisResult}
             />
           </div>

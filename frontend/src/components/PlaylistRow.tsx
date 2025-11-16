@@ -5,11 +5,14 @@ import { PLAYLIST_TYPES } from "../utils";
 
 export function PlaylistRow({
   playlist,
+  track,
   suggestedPlaylist,
+  showAddButton,
 }: {
   playlist: Playlist;
   track?: Track;
   suggestedPlaylist?: TrackAggregationResult["suggestedPlaylists"][number];
+  showAddButton?: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -28,12 +31,16 @@ export function PlaylistRow({
 
   return (
     <div
-      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/30 transition-colors duration-150 border-b border-zinc-800/30 last:border-b-0 cursor-pointer group/row"
+      className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 border-b border-zinc-800/50 last:border-b-0 cursor-pointer group/row"
       onClick={handleRowClick}
     >
       <div
         className={`flex items-center ${
-          suggestedPlaylist ? "col-span-3" : "col-span-10"
+          suggestedPlaylist
+            ? "col-span-3"
+            : showAddButton
+            ? "col-span-8"
+            : "col-span-10"
         }`}
       >
         <div className="min-w-0 flex-1 flex items-center gap-3">
@@ -71,9 +78,18 @@ export function PlaylistRow({
         )}
       </div>
 
+      {showAddButton && track && (
+        <div className="col-span-2 flex gap-2 items-center justify-end">
+          <button className="btn btn-sm btn-primary gap-1">
+            <Plus size={14} />
+            Add to playlist
+          </button>
+        </div>
+      )}
+
       {suggestedPlaylist && (
         <>
-          <div className="col-span-3 flex flex-wrap gap-1.5 items-center">
+          <div className="col-span-3 flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarArtists.length > 0 ? (
               suggestedPlaylist.similarArtists.map((artist) => (
                 <span key={artist.id} className="badge badge-sm badge-primary">
@@ -88,7 +104,7 @@ export function PlaylistRow({
               <span className="text-base-content/40 text-xs">None</span>
             )}
           </div>
-          <div className="col-span-2 flex flex-wrap gap-1.5 items-center">
+          <div className="col-span-2 flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarGenres.length > 0 ? (
               suggestedPlaylist.similarGenres.map((genre) => (
                 <span key={genre.name} className="badge badge-sm badge-primary">
@@ -102,12 +118,6 @@ export function PlaylistRow({
             ) : (
               <span className="text-base-content/40 text-xs">None</span>
             )}
-          </div>
-          <div className="col-span-2 flex gap-2 items-center justify-end">
-            <button className="btn btn-sm btn-primary gap-1">
-              <Plus size={14} />
-              Add to playlist
-            </button>
           </div>
         </>
       )}

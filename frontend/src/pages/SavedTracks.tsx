@@ -20,6 +20,14 @@ export function SavedTracks() {
     },
   });
 
+  const { data: playlists } = useQuery({
+    queryKey: ["playlists"],
+    queryFn: async () => {
+      const response = await baseAPI.getPlaylists();
+      return response.data;
+    },
+  });
+
   const {
     data: aggregatedData,
     error: aggregatedError,
@@ -66,7 +74,11 @@ export function SavedTracks() {
         <Error>Failed to load aggregated liked songs. Please try again.</Error>
       )}
 
-      <TrackList aggregatedTracks={aggregatedData} tracks={tracks} />
+      <TrackList
+        aggregatedTracks={aggregatedData}
+        tracks={tracks}
+        playlists={playlists}
+      />
     </Page>
   );
 }
