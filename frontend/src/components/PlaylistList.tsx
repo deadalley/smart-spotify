@@ -227,7 +227,7 @@ export function PlaylistList({
   >[] = [
     {
       id: "name",
-      accessorKey: "playlist",
+      accessorFn: (row) => row.playlist.name,
       header: "Name",
       meta: { span: 8 },
       enableSorting: true,
@@ -306,7 +306,6 @@ export function PlaylistList({
         columns={suggestedPlaylists ? suggestedColumns : simpleColumns}
         onRowClick={(row) => navigate(`/playlists/${row.playlist.id}`)}
         getRowKey={(row) => row.playlist.id}
-        className="playlist"
       />
 
       {suggestedPlaylists && (
@@ -332,6 +331,8 @@ export function PlaylistList({
               onRowClick={(row) => navigate(`/playlists/${row.playlist.id}`)}
               getRowKey={(row) => `all-${row.playlist.id}`}
               className="playlist"
+              enableFilter
+              filterPlaceholder="Search playlist..."
             />
           )}
         </>

@@ -2,12 +2,13 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   Row,
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { ReactNode, useState } from "react";
 
 export interface TableColumnMeta {
@@ -20,8 +21,11 @@ export interface TableProps<T> {
   columns: ColumnDef<T, unknown>[];
   onRowClick?: (row: T) => void;
   enableSorting?: boolean;
+  enableFilter?: boolean;
+  filterPlaceholder?: string;
   renderSubRow?: (row: Row<T>) => ReactNode;
   className?: string;
+  filterClassName?: string;
   getRowKey?: (row: T, index: number) => string;
 }
 
@@ -30,22 +34,30 @@ export function Table<T>({
   columns,
   onRowClick,
   enableSorting = true,
+  enableFilter = false,
+  filterPlaceholder = "Filter...",
   renderSubRow,
   className = "",
+  filterClassName = "",
   getRowKey,
 }: TableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const table = useReactTable({
     data,
     columns,
     state: {
       sorting,
+      globalFilter,
     },
     onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
+    getFilteredRowModel: getFilteredRowModel(),
     enableSorting,
+    enableGlobalFilter: true,
   });
 
   const totalSpan = columns.reduce((sum, col) => {
@@ -55,6 +67,20 @@ export function Table<T>({
 
   return (
     <div className={`w-full flex flex-col h-fit ${className}`}>
+      {enableFilter && (
+        <div className={`w-full px-4 py-3 ${filterClassName}`}>
+          <label className="input bg-base-300 w-full">
+            <Search size={14} />
+            <input
+              type="text"
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder={filterPlaceholder}
+            />
+          </label>
+        </div>
+      )}
+
       <div
         className="grid gap-4 px-4 py-3 border-b border-base-200 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-300/50"
         style={{
@@ -121,7 +147,7 @@ export function Table<T>({
               <div
                 className={`grid gap-4 px-4 py-3 hover:bg-base-300/50 transition-colors duration-150 border-b border-base-200 ${
                   onRowClick ? "cursor-pointer" : ""
-                } ${className.includes("playlist") ? "group/row" : "group"}`}
+                }`}
                 style={{
                   gridTemplateColumns: `repeat(${totalSpan}, minmax(0, 1fr))`,
                 }}
