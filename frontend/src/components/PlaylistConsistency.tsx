@@ -189,18 +189,40 @@ export function PlaylistConsistency({
               <p className="text-xs text-base-content/60 mb-2">
                 Distribution by Decade
               </p>
-              <div className="flex flex-wrap gap-2">
-                {timeAnalysis.decadeDistribution.map((decade) => (
-                  <span
-                    key={decade.decade}
-                    className="badge badge-lg badge-primary"
-                  >
-                    {decade.decade}
-                    <span className="ml-1 opacity-70">
-                      ({decade.percentage}%)
-                    </span>
-                  </span>
-                ))}
+              <div className="card bg-base-300 border border-base-200 p-4 items-center">
+                <div className="w-fit flex items-center gap-4 h-48">
+                  {timeAnalysis.decadeDistribution.map((decade) => {
+                    const maxPercentage = Math.max(
+                      ...timeAnalysis.decadeDistribution.map(
+                        (d) => d.percentage
+                      )
+                    );
+                    const barHeight = (decade.percentage / maxPercentage) * 100;
+
+                    return (
+                      <div
+                        key={decade.decade}
+                        className="flex flex-col items-center justify-end flex-1 min-w-0 h-full"
+                      >
+                        <div className="flex flex-col items-center mb-1">
+                          <span className="text-xs font-semibold text-base-content">
+                            {decade.percentage}%
+                          </span>
+                          <span className="text-xs text-base-content/60">
+                            {decade.count}
+                          </span>
+                        </div>
+                        <div
+                          className="w-4 rounded-t-2xl bg-primary/20 border border-primary transition-all duration-500 ease-out"
+                          style={{ height: `${barHeight}%` }}
+                        />
+                        <span className="text-xs font-medium mt-2 text-center">
+                          {decade.decade}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
