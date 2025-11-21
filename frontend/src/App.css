@@ -71,6 +71,14 @@
     @apply bg-primary/10 text-primary rounded-md border border-primary/20;
   }
 
+  .badge-error {
+    @apply bg-error/10 text-error rounded-md border border-error/20;
+  }
+
+  .badge-warning {
+    @apply bg-warning/10 text-warning rounded-md border border-warning/20;
+  }
+
   .collapse {
     @apply border-base-200 border;
   }

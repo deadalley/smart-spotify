@@ -2,6 +2,7 @@ import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { Music, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PLAYLIST_TYPES } from "../utils";
+import { GenreBadge } from "./GenreBadge";
 
 export function PlaylistRow({
   playlist,
@@ -107,13 +108,7 @@ export function PlaylistRow({
           <div className="col-span-2 flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarGenres.length > 0 ? (
               suggestedPlaylist.similarGenres.map((genre) => (
-                <span key={genre.name} className="badge badge-sm badge-primary">
-                  <span>{genre.name}</span>
-                  <span className="flex items-center gap-1 text-primary/70">
-                    <Music size={10} />
-                    {genre.count}
-                  </span>
-                </span>
+                <GenreBadge key={genre.name} genre={genre} />
               ))
             ) : (
               <span className="text-base-content/40 text-xs">None</span>
