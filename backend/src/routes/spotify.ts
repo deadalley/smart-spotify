@@ -72,31 +72,6 @@ router.get(
   }
 );
 
-router.get("/search", requireAuth, async (req: Request, res: Response) => {
-  const { q, type = "track", limit = 20 } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ error: "Query parameter is required" });
-  }
-
-  try {
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const searchResults = await spotifyService.search(
-      q as string,
-      type as string,
-      Number(limit)
-    );
-
-    res.json(searchResults);
-  } catch (error: any) {
-    console.error("Error searching tracks:", error);
-    if (error.response?.status === 401) {
-      return res.status(401).json({ error: "Token expired" });
-    }
-    res.status(500).json({ error: "Failed to search tracks" });
-  }
-});
-
 router.get("/artists", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);

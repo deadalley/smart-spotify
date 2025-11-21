@@ -43,6 +43,7 @@ export function convertFromSpotifyTrack(
 ): Track {
   return {
     id: spotifyTrack.id,
+    uri: spotifyTrack.uri,
     name: spotifyTrack.name,
     durationMs: spotifyTrack.duration_ms,
     explicit: spotifyTrack.explicit,

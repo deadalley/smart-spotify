@@ -4,7 +4,6 @@ import {
   SpotifyPlaylist,
   SpotifyPlaylistsResponse,
   SpotifyPlaylistTracksResponse,
-  SpotifySearchResponse,
   SpotifyTrack,
   SpotifyUser,
 } from "@smart-spotify/shared";
@@ -148,23 +147,6 @@ export class SpotifyService {
   async getArtist(artistId: string): Promise<SpotifyArtist> {
     const response = await axios.get(`${this.baseURL}/artists/${artistId}`, {
       headers: this.getHeaders(),
-    });
-    return response.data;
-  }
-
-  async search(
-    query: string,
-    type: string = "track",
-    limit: number = 20
-  ): Promise<SpotifySearchResponse> {
-    const response = await axios.get(`${this.baseURL}/search`, {
-      headers: this.getHeaders(),
-      params: {
-        q: query,
-        type,
-        limit,
-        market: "from_token",
-      },
     });
     return response.data;
   }

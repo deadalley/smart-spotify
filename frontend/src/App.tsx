@@ -8,7 +8,6 @@ import { Login } from "./pages/Login";
 import { Playlists } from "./pages/Playlists";
 import { PlaylistView } from "./pages/PlaylistView";
 import { SavedTracks } from "./pages/SavedTracks";
-import { Search } from "./pages/Search";
 
 function App() {
   return (
@@ -22,7 +21,6 @@ function App() {
           <Route path="saved-tracks" element={<SavedTracks />} />
           <Route path="artists" element={<Artists />} />
           <Route path="artists/:id" element={<ArtistView />} />
-          <Route path="search" element={<Search />} />
         </Route>
       </Routes>
     </AuthProvider>

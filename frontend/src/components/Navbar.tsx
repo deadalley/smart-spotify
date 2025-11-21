@@ -1,4 +1,4 @@
-import { Heart, LogOut, Music, Search, Users } from "lucide-react";
+import { Heart, LogOut, Music, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { SpotifyLogo } from "./SpotifyLogo";
@@ -18,7 +18,6 @@ export function Navbar() {
     { path: "/saved-tracks", label: "Liked Songs", icon: Heart },
     { path: "/playlists", label: "Playlists", icon: Music },
     { path: "/artists", label: "Artists", icon: Users },
-    { path: "/search", label: "Search", icon: Search },
   ];
 
   return (

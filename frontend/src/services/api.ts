@@ -7,7 +7,6 @@ import {
   SpotifyPlaylist,
   SpotifyPlaylistsResponse,
   SpotifyPlaylistTracksResponse,
-  SpotifySearchResponse,
   Track,
   TrackAggregationResult,
 } from "@smart-spotify/shared";
@@ -44,14 +43,6 @@ export const spotifyAPI = {
   getArtists: () => api.get<SpotifyArtistsResponse>(`/spotify/artists`),
   getArtistTracks: (artistId: string) =>
     api.get<Track[]>(`/spotify/artists/${artistId}/tracks`),
-
-  // Search
-  search: (query: string, type = "track", limit = 20) =>
-    api.get<SpotifySearchResponse>(
-      `/spotify/search?q=${encodeURIComponent(
-        query
-      )}&type=${type}&limit=${limit}`
-    ),
 };
 
 // Base api endpoints
