@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, Music } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PLAYLIST_TYPES } from "../utils";
+import { GenreBadge } from "./GenreBadge";
 import { SaveInPlaylist } from "./SaveInPlaylist";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
@@ -118,13 +119,11 @@ export function PlaylistList({
           <div className="flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarArtists.length > 0 ? (
               suggestedPlaylist.similarArtists.map((artist) => (
-                <span key={artist.id} className="badge badge-sm badge-primary">
-                  <span>{artist.name}</span>
-                  <span className="flex items-center gap-1 text-primary/70">
-                    <Music size={10} />
-                    {artist.trackCount}
-                  </span>
-                </span>
+                <GenreBadge
+                  key={artist.name}
+                  genre={{ name: artist.name, count: artist.trackCount }}
+                  variant="primary"
+                />
               ))
             ) : (
               <span className="text-base-content/40 text-xs">None</span>
@@ -145,13 +144,7 @@ export function PlaylistList({
           <div className="flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarGenres.length > 0 ? (
               suggestedPlaylist.similarGenres.map((genre) => (
-                <span key={genre.name} className="badge badge-sm badge-primary">
-                  <span>{genre.name}</span>
-                  <span className="flex items-center gap-1 text-primary/70">
-                    <Music size={10} />
-                    {genre.count}
-                  </span>
-                </span>
+                <GenreBadge key={genre.name} genre={genre} />
               ))
             ) : (
               <span className="text-base-content/40 text-xs">None</span>
