@@ -93,7 +93,9 @@ export interface SyncStatus {
 export interface PersistResponse {
   success: boolean;
   message: string;
-  stats: {
+  jobId?: string;
+  status?: string;
+  stats?: {
     playlists: number;
     tracks: number;
     artists: number;

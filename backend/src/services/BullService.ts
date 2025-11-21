@@ -88,9 +88,11 @@ export class BullService {
           status = JobStatus.WAITING;
       }
 
+      const progressValue = Number(job.progress || 0);
       const progress: JobProgress = {
         status,
-        progress: Number(job.progress || 0),
+        progress: progressValue,
+        message: getPersistJobStatusMessage(progressValue),
         startedAt: job.processedOn ? new Date(job.processedOn) : undefined,
         completedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
       };

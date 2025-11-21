@@ -103,6 +103,16 @@ export function SyncModal() {
         const response = await baseAPI.getSyncStatus();
         const jobStatus = response.data;
 
+        // If no active job is found, the job might have completed and been cleaned up
+        if (!jobStatus.hasActiveJob) {
+          dispatch({
+            type: "COMPLETE_SYNC",
+            message: "Sync completed successfully!",
+          });
+          stopPolling();
+          return;
+        }
+
         dispatch({
           type: "UPDATE_PROGRESS",
           progress: jobStatus.progress || 0,
@@ -115,13 +125,6 @@ export function SyncModal() {
             message: "Sync completed successfully!",
           });
           stopPolling();
-
-          setTimeout(() => {
-            dispatch({ type: "RESET" });
-            (
-              document.getElementById("syncModal") as HTMLDialogElement
-            )?.close();
-          }, 1500);
         } else if (jobStatus.status === "failed") {
           dispatch({
             type: "FAIL_SYNC",
@@ -129,7 +132,8 @@ export function SyncModal() {
           });
           stopPolling();
         }
-      } catch {
+      } catch (error) {
+        console.error("Error polling job status:", error);
         dispatch({
           type: "FAIL_SYNC",
           error: "Failed to get job status",
@@ -147,7 +151,11 @@ export function SyncModal() {
       const response = await baseAPI.getSyncStatus();
       const activeJob = response.data;
 
-      if (activeJob.hasActiveJob && activeJob.status !== "completed") {
+      if (
+        activeJob.hasActiveJob &&
+        activeJob.status !== "completed" &&
+        activeJob.status !== "failed"
+      ) {
         dispatch({
           type: "RESUME_JOB",
           jobId: activeJob.jobId,
@@ -156,7 +164,9 @@ export function SyncModal() {
         });
         pollJobStatus();
       }
-    } catch {}
+    } catch (error) {
+      console.error("Error checking for active job:", error);
+    }
   };
 
   useEffect(() => {
@@ -172,7 +182,11 @@ export function SyncModal() {
       const activeJobResponse = await baseAPI.getSyncStatus();
       const activeJob = activeJobResponse.data;
 
-      if (activeJob.hasActiveJob) {
+      if (
+        activeJob.hasActiveJob &&
+        activeJob.status !== "completed" &&
+        activeJob.status !== "failed"
+      ) {
         dispatch({
           type: "RESUME_JOB",
           jobId: activeJob.jobId,
@@ -184,8 +198,8 @@ export function SyncModal() {
         const response = await baseAPI.persist();
         const jobData = response.data;
 
-        if (jobData.success) {
-          dispatch({ type: "SET_JOB_ID", jobId: "jobData.jobId" }); // TODO: fix jobId
+        if (jobData.success && jobData.jobId) {
+          dispatch({ type: "SET_JOB_ID", jobId: jobData.jobId });
           dispatch({
             type: "UPDATE_PROGRESS",
             progress: 0,
@@ -197,11 +211,14 @@ export function SyncModal() {
         }
       }
     } catch (err) {
+      console.error("Error starting sync:", err);
       let errorMessage = "Failed to sync data";
       if (err && typeof err === "object" && "response" in err) {
         const response = (err as { response?: { data?: { error?: string } } })
           .response;
         errorMessage = response?.data?.error || "Failed to sync data";
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
       }
       dispatch({ type: "FAIL_SYNC", error: errorMessage });
     }
@@ -219,7 +236,26 @@ export function SyncModal() {
         <div className="modal-box">
           <h3 className="text-lg font-bold">Sync Spotify data</h3>
 
-          {!state.isLoading ? (
+          {state.syncProgress === 100 && !state.error ? (
+            <div className="py-4">
+              <div className="alert alert-success">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 shrink-0 stroke-current"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span>{state.syncMessage}</span>
+              </div>
+            </div>
+          ) : !state.isLoading ? (
             <p className="py-4 text-sm text-base-content/70">
               For Smart Spotify to work, it has to store your Spotify data
               temporarily for faster access. By clicking the "Sync" button,
@@ -255,29 +291,37 @@ export function SyncModal() {
           )}
 
           <div className="modal-action">
-            <button
-              className="btn"
-              onClick={handleClose}
-              disabled={state.isLoading}
-            >
-              Close
-            </button>
-            <button className="btn btn-error" disabled={state.isLoading}>
-              <Trash size={14} />
-              Delete data
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleSync}
-              disabled={state.isLoading}
-            >
-              {state.isLoading ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : (
-                <RefreshCw size={14} />
-              )}
-              Sync
-            </button>
+            {state.syncProgress === 100 && !state.error ? (
+              <button className="btn btn-primary" onClick={handleClose}>
+                Close
+              </button>
+            ) : (
+              <>
+                <button
+                  className="btn"
+                  onClick={handleClose}
+                  disabled={state.isLoading}
+                >
+                  Close
+                </button>
+                <button className="btn btn-error" disabled={state.isLoading}>
+                  <Trash size={14} />
+                  Delete data
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSync}
+                  disabled={state.isLoading}
+                >
+                  {state.isLoading ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : (
+                    <RefreshCw size={14} />
+                  )}
+                  Sync
+                </button>
+              </>
+            )}
           </div>
         </div>
         <div className="modal-backdrop" onClick={handleClose}>

@@ -17,6 +17,7 @@ export enum JobStatus {
 export interface JobProgress {
   status: JobStatus;
   progress: number;
+  message?: string;
   startedAt?: Date;
   completedAt?: Date;
   error?: string;
