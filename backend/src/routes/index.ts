@@ -177,7 +177,8 @@ router.get(
       const consistencyAnalysis = playlistService.calculatePlaylistConsistency(
         playlistAnalysis.artists,
         playlistAnalysis.genres,
-        playlistAnalysis.tracks.length
+        playlistAnalysis.tracks.length,
+        playlistAnalysis.tracks
       );
 
       const analysis: PlaylistAnalysisResult = {

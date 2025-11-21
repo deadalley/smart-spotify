@@ -1,8 +1,11 @@
 import {
   Artist,
+  DecadeDistribution,
   GenreOutlier,
   Playlist,
   PlaylistData,
+  TimeOutlier,
+  Track,
   TrackAggregationResult,
 } from "@smart-spotify/shared";
 import { isTrackInPlaylist, isTrackNotInPlaylist } from "../utils";
@@ -116,7 +119,8 @@ export class PlaylistService {
   calculatePlaylistConsistency(
     artists: Artist[],
     sortedGenres: { name: string; count: number }[],
-    totalTracksInPlaylist: number
+    totalTracksInPlaylist: number,
+    tracks: Track[]
   ) {
     // Identify main genres: genres that appear in at least 10% of tracks
     // or at minimum the top 3 genres (to handle small playlists)
@@ -198,11 +202,99 @@ export class PlaylistService {
 
     const consistencyScore = Math.round(Math.max(0, 100 - avgDeviation));
 
+    // Calculate time analysis
+    const timeAnalysis = this.calculateTimeAnalysis(tracks);
+
     return {
       consistencyScore,
       outliers,
       mainGenres: topGenres,
       totalArtists: artists.length,
+      timeAnalysis,
+    };
+  }
+
+  private calculateTimeAnalysis(tracks: Track[]) {
+    // Extract years from tracks
+    const years: number[] = [];
+    const trackYears: Map<string, number> = new Map();
+
+    tracks.forEach((track) => {
+      const releaseDate = track.album.releaseDate;
+      if (releaseDate) {
+        const year = parseInt(releaseDate.substring(0, 4), 10);
+        if (!isNaN(year)) {
+          years.push(year);
+          trackYears.set(track.id, year);
+        }
+      }
+    });
+
+    if (years.length === 0) {
+      return undefined;
+    }
+
+    // Calculate median year
+    const sortedYears = [...years].sort((a, b) => a - b);
+    const medianYear =
+      sortedYears.length % 2 === 0
+        ? Math.round(
+            (sortedYears[sortedYears.length / 2 - 1] +
+              sortedYears[sortedYears.length / 2]) /
+              2
+          )
+        : sortedYears[Math.floor(sortedYears.length / 2)];
+
+    // Calculate year range
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+
+    // Calculate decade distribution
+    const decadeCounts = new Map<string, number>();
+    years.forEach((year) => {
+      const decade = `${Math.floor(year / 10) * 10}s`;
+      decadeCounts.set(decade, (decadeCounts.get(decade) || 0) + 1);
+    });
+
+    const decadeDistribution: DecadeDistribution[] = Array.from(
+      decadeCounts.entries()
+    )
+      .map(([decade, count]) => ({
+        decade,
+        count,
+        percentage: Math.round((count / years.length) * 100),
+      }))
+      .sort((a, b) => {
+        // Sort by decade chronologically
+        return parseInt(a.decade) - parseInt(b.decade);
+      });
+
+    // Find time outliers (tracks more than 15 years away from median)
+    const timeOutliers: TimeOutlier[] = [];
+    const outlierThreshold = 15;
+
+    tracks.forEach((track) => {
+      const year = trackYears.get(track.id);
+      if (year !== undefined) {
+        const deviationYears = Math.abs(year - medianYear);
+        if (deviationYears >= outlierThreshold) {
+          timeOutliers.push({
+            track,
+            releaseYear: year,
+            deviationYears,
+          });
+        }
+      }
+    });
+
+    // Sort outliers by deviation (most deviant first)
+    timeOutliers.sort((a, b) => b.deviationYears - a.deviationYears);
+
+    return {
+      medianYear,
+      yearRange: { min: minYear, max: maxYear },
+      decadeDistribution,
+      timeOutliers: timeOutliers.slice(0, 10), // Limit to top 10 outliers
     };
   }
 }

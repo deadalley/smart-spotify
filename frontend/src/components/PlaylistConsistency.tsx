@@ -9,7 +9,7 @@ export function PlaylistConsistency({
   consistencyAnalysis: PlaylistConsistencyAnalysis;
 }) {
   const navigate = useNavigate();
-  const { consistencyScore, outliers, mainGenres, totalArtists } =
+  const { consistencyScore, outliers, mainGenres, totalArtists, timeAnalysis } =
     consistencyAnalysis;
 
   const getConsistencyColor = (score: number) => {
@@ -157,6 +157,88 @@ export function PlaylistConsistency({
           </div>
         )}
       </div>
+
+      {/* Time Analysis */}
+      {timeAnalysis && (
+        <div>
+          <h4 className="text-sm font-medium text-base-content/70 uppercase tracking-wider mb-3">
+            Time Period Analysis
+          </h4>
+
+          {/* Era Summary */}
+          <div className="card bg-base-300 border border-base-200 p-4 mb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-base-content/60">Year Range</p>
+                <p className="text-lg font-semibold">
+                  {timeAnalysis.yearRange.min} - {timeAnalysis.yearRange.max}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-base-content/60">Median Year</p>
+                <p className="text-lg font-semibold">
+                  {timeAnalysis.medianYear}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Decade Distribution */}
+          {timeAnalysis.decadeDistribution.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs text-base-content/60 mb-2">
+                Distribution by Decade
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {timeAnalysis.decadeDistribution.map((decade) => (
+                  <span
+                    key={decade.decade}
+                    className="badge badge-lg badge-primary"
+                  >
+                    {decade.decade}
+                    <span className="ml-1 opacity-70">
+                      ({decade.percentage}%)
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Time Outliers */}
+          {timeAnalysis.timeOutliers.length > 0 && (
+            <div>
+              <p className="text-xs text-base-content/60 mb-2">
+                Time Period Outliers ({timeAnalysis.timeOutliers.length})
+              </p>
+              <div className="space-y-2">
+                {timeAnalysis.timeOutliers.map((outlier) => (
+                  <div
+                    key={outlier.track.id}
+                    className="card bg-base-300 border border-warning/20 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold truncate">
+                          {outlier.track.name}
+                        </p>
+                        <p className="text-xs text-base-content/60 truncate">
+                          {outlier.track.artistNames.join(", ")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="badge badge-warning">
+                          {outlier.releaseYear}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

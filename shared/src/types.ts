@@ -111,11 +111,29 @@ export interface GenreOutlier {
   uniqueGenres: string[]; // Genres this artist has that are uncommon in playlist
 }
 
+export interface DecadeDistribution {
+  decade: string; // e.g., "1960s", "1970s"
+  count: number;
+  percentage: number;
+}
+
+export interface TimeOutlier {
+  track: Track;
+  releaseYear: number;
+  deviationYears: number; // How many years away from median
+}
+
 export interface PlaylistConsistencyAnalysis {
   consistencyScore: number; // 0-100, higher is more consistent
   outliers: GenreOutlier[];
   mainGenres: string[]; // Top 5-10 most common genres
   totalArtists: number;
+  timeAnalysis?: {
+    medianYear: number;
+    yearRange: { min: number; max: number };
+    decadeDistribution: DecadeDistribution[];
+    timeOutliers: TimeOutlier[];
+  };
 }
 
 export interface PlaylistData {
