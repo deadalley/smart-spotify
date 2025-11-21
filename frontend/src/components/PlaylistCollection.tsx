@@ -25,10 +25,18 @@ export function PlaylistCollection({
   const setGlobalFilter =
     externalOnGlobalFilterChange ?? setInternalGlobalFilter;
 
-  const sortedPlaylists = useMemo(() => {
+  const sortedAndFilteredPlaylists = useMemo(() => {
     if (!playlists) return [];
 
-    return [...playlists].sort((a, b) => {
+    let filtered = playlists;
+    if (globalFilter) {
+      const lowerFilter = globalFilter.toLowerCase();
+      filtered = playlists.filter((playlist) =>
+        playlist.name.toLowerCase().includes(lowerFilter)
+      );
+    }
+
+    return [...filtered].sort((a, b) => {
       let comparison = 0;
 
       if (sortBy === "name") {
@@ -44,7 +52,7 @@ export function PlaylistCollection({
 
       return sortDirection === "asc" ? comparison : -comparison;
     });
-  }, [playlists, sortBy, sortDirection]);
+  }, [playlists, sortBy, sortDirection, globalFilter]);
 
   return (
     <>
@@ -58,24 +66,22 @@ export function PlaylistCollection({
         <ViewSwitch view={view} setView={setView} />
       </div>
 
-      {view === "list" && (
-        <TableSearch
-          value={globalFilter}
-          onChange={setGlobalFilter}
-          placeholder="Search playlist..."
-          className="mb-4"
-        />
-      )}
+      <TableSearch
+        value={globalFilter}
+        onChange={setGlobalFilter}
+        placeholder="Search playlist..."
+        className="mb-4"
+      />
 
       {view === "grid" ? (
         <Grid>
-          {sortedPlaylists.map((playlist) => (
+          {sortedAndFilteredPlaylists.map((playlist) => (
             <PlaylistTile key={playlist.id} playlist={playlist} />
           ))}
         </Grid>
       ) : (
         <PlaylistList
-          playlists={sortedPlaylists}
+          playlists={sortedAndFilteredPlaylists}
           enableFilter
           externalFilter
           globalFilter={globalFilter}
