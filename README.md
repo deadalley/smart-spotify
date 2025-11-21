@@ -14,13 +14,13 @@
 
 ## Screenshots
 
-<img src="./assets/images/preview-1.png" alt="Playlists View" width="800"/>
+<img src="./assets/images/preview-4.png" alt="Saved Tracks" width="800"/>
 
 <details>
 <summary>View more</summary>
+<img src="./assets/images/preview-1.png" alt="Playlists View" width="800"/>
 <img src="./assets/images/preview-2.png" alt="Playlist Analysis" width="800"/>
 <img src="./assets/images/preview-3.png" alt="Artists View" width="800"/>
-<img src="./assets/images/preview-4.png" alt="Saved Tracks" width="800"/>
 </details>
 
 ## Prerequisites
