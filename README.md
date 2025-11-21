@@ -1,17 +1,16 @@
-# Smart Spotify
+<div align="center">
+  <img src="./public/logo.svg" alt="Smart Spotify Logo" width="200"/>
+  <h1>Smart Spotify</h1>
+  <p>Smart playlist manager for your Spotify library.</p>
+  
+  [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg)](https://www.typescriptlang.org)
+  [![Node.js](https://img.shields.io/badge/Node.js-24-339933.svg)](https://nodejs.org)
+  [![Express](https://img.shields.io/badge/Express-4-000000.svg)](https://expressjs.com)
+  [![Redis](https://img.shields.io/badge/Redis-7-DC382D.svg)](https://redis.io)
+</div>
 
-A full-stack application for analyzing and managing your Spotify music library. Discover insights about your playlists, artists, and tracks, with intelligent playlist recommendations powered by genre and artist analysis.
-
-## Features
-
-- **Playlist Analysis**: View detailed statistics about your playlists including genre distribution, time period analysis, and consistency metrics
-- **Artist Insights**: Browse your favorite artists and see which tracks you have saved from each
-- **Saved Tracks**: View and analyze all your liked songs with intelligent playlist suggestions
-- **Smart Recommendations**: Get playlist suggestions for your tracks based on genre similarity and artist overlap
-- **Playlist Management**: Add tracks to playlists directly from the app
-- **Data Synchronization**: Sync your Spotify data to a local Redis cache for fast analysis
-- **Decade Distribution**: Visual breakdown of tracks by decade with outlier detection
-- **Search & Filter**: Quickly find playlists and artists with built-in search
+---
 
 ## Prerequisites
 
