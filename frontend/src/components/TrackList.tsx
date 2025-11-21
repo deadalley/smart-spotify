@@ -101,7 +101,7 @@ export function TrackList({
       id: "album",
       accessorFn: (row) => row.track.album.name,
       header: "Album",
-      meta: { span: 3 },
+      meta: { span: 2 },
       enableSorting: true,
       cell: ({ row }) => (
         <div className="min-w-0 flex-1">
@@ -110,6 +110,21 @@ export function TrackList({
           </p>
         </div>
       ),
+    },
+    {
+      id: "year",
+      accessorFn: (row) => row.track.album.releaseDate,
+      header: "Year",
+      meta: { span: 1, align: "center" },
+      enableSorting: true,
+      cell: ({ row }) => {
+        const year = row.original.track.album.releaseDate?.substring(0, 4);
+        return (
+          <span className="text-base-content/50 text-sm tabular-nums">
+            {year || "—"}
+          </span>
+        );
+      },
     },
     {
       id: "duration",
