@@ -59,6 +59,7 @@ export const baseAPI = {
   // Data persistence
   persist: () => api.post<PersistResponse>("/persist"),
   getSyncStatus: () => api.get("/persist/status"),
+  deleteData: () => api.delete("/persist"),
 
   // Analysis and aggregation
   analyzePlaylist: (playlistId: string) =>

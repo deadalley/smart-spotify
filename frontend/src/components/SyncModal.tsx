@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Trash } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
 import { baseAPI } from "../services/api";
@@ -89,6 +90,7 @@ function syncReducer(state: SyncState, action: SyncAction): SyncState {
 export function SyncModal() {
   const [state, dispatch] = useReducer(syncReducer, initialState);
   const pollingIntervalRef = useRef<number | null>(null);
+  const queryClient = useQueryClient();
 
   const stopPolling = () => {
     if (pollingIntervalRef.current) {
@@ -110,6 +112,8 @@ export function SyncModal() {
             message: "Sync completed successfully!",
           });
           stopPolling();
+          // Invalidate all queries to refresh data
+          queryClient.invalidateQueries();
           return;
         }
 
@@ -125,6 +129,8 @@ export function SyncModal() {
             message: "Sync completed successfully!",
           });
           stopPolling();
+          // Invalidate all queries to refresh data
+          queryClient.invalidateQueries();
         } else if (jobStatus.status === "failed") {
           dispatch({
             type: "FAIL_SYNC",
@@ -230,6 +236,39 @@ export function SyncModal() {
     (document.getElementById("syncModal") as HTMLDialogElement)?.close();
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete all synced data?")) {
+      return;
+    }
+
+    try {
+      dispatch({ type: "START_SYNC", message: "Deleting data..." });
+      await baseAPI.deleteData();
+
+      // Invalidate all queries to clear cached data
+      await queryClient.invalidateQueries();
+
+      dispatch({
+        type: "COMPLETE_SYNC",
+        message: "Data deleted successfully!",
+      });
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
+    } catch (error) {
+      console.error("Error deleting data:", error);
+      let errorMessage = "Failed to delete data";
+      if (error && typeof error === "object" && "response" in error) {
+        const response = (error as { response?: { data?: { error?: string } } })
+          .response;
+        errorMessage = response?.data?.error || "Failed to delete data";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      dispatch({ type: "FAIL_SYNC", error: errorMessage });
+    }
+  };
+
   return (
     <>
       <dialog id="syncModal" className="modal">
@@ -304,7 +343,11 @@ export function SyncModal() {
                 >
                   Close
                 </button>
-                <button className="btn btn-error" disabled={state.isLoading}>
+                <button
+                  className="btn btn-error"
+                  onClick={handleDelete}
+                  disabled={state.isLoading}
+                >
                   <Trash size={14} />
                   Delete data
                 </button>
