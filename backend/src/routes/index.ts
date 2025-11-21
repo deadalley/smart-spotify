@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { PlaylistAnalysisResult } from "@smart-spotify/shared";
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { PlaylistService, RedisService, SpotifyService } from "../services";
@@ -173,7 +174,18 @@ router.get(
         playlistId
       );
 
-      res.json(playlistAnalysis);
+      const consistencyAnalysis = playlistService.calculatePlaylistConsistency(
+        playlistAnalysis.artists,
+        playlistAnalysis.genres,
+        playlistAnalysis.tracks.length
+      );
+
+      const analysis: PlaylistAnalysisResult = {
+        ...playlistAnalysis,
+        consistencyAnalysis,
+      };
+
+      res.json(analysis);
     } catch (error: any) {
       console.error("Error analyzing playlist:", error);
       res.status(500).json({ error: "Failed to analyze playlist" });

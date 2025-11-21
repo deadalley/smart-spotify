@@ -52,7 +52,7 @@ export function PlaylistView() {
     return <Error>Failed to load playlist tracks. Please try again.</Error>;
   }
 
-  const { artists, genres, tracks } = analysisResult;
+  const { artists, genres, tracks, consistencyAnalysis } = analysisResult;
 
   return (
     <Page>
@@ -94,7 +94,11 @@ export function PlaylistView() {
 
         {analysisResult && (
           <div className="flex-1">
-            <PlaylistAnalysisResult artists={artists} genres={genres} />
+            <PlaylistAnalysisResult
+              artists={artists}
+              genres={genres}
+              consistencyAnalysis={consistencyAnalysis}
+            />
           </div>
         )}
       </div>

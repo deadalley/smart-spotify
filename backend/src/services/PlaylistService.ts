@@ -1,4 +1,6 @@
 import {
+  Artist,
+  GenreOutlier,
   Playlist,
   PlaylistData,
   TrackAggregationResult,
@@ -109,5 +111,98 @@ export class PlaylistService {
     }
 
     return result;
+  }
+
+  calculatePlaylistConsistency(
+    artists: Artist[],
+    sortedGenres: { name: string; count: number }[],
+    totalTracksInPlaylist: number
+  ) {
+    // Identify main genres: genres that appear in at least 10% of tracks
+    // or at minimum the top 3 genres (to handle small playlists)
+    const minAbsoluteCount = Math.max(
+      Math.ceil(totalTracksInPlaylist * 0.1),
+      1
+    );
+    const minTopGenres = 3; // Always include at least top 3 genres
+
+    const topGenres: string[] = [];
+
+    for (const genre of sortedGenres) {
+      // Stop if we have enough genres and this genre is below threshold
+      if (topGenres.length >= minTopGenres && genre.count < minAbsoluteCount) {
+        break;
+      }
+
+      topGenres.push(genre.name);
+    }
+
+    // Build genre frequency map for scoring
+    const genreFrequency = new Map<string, number>();
+    sortedGenres.forEach((g) => {
+      genreFrequency.set(g.name, g.count / totalTracksInPlaylist);
+    });
+
+    // Analyze each artist for genre deviation
+    const outliers: GenreOutlier[] = [];
+    let totalDeviationScore = 0;
+
+    artists.forEach((artist) => {
+      if (artist.genres.length === 0 || artist.trackCount === 0) return;
+
+      const commonGenres = artist.genres.filter((g) => topGenres.includes(g));
+      const uniqueGenres = artist.genres.filter((g) => !topGenres.includes(g));
+
+      // Calculate deviation score (0-100)
+      // Higher score = more deviation from playlist's main genres
+      let deviationScore = 0;
+
+      // Factor 1: Percentage of artist's genres that are NOT in main genres
+      const uniqueGenreRatio = uniqueGenres.length / artist.genres.length;
+      deviationScore += uniqueGenreRatio * 50;
+
+      // Factor 2: How common are the artist's unique genres in the playlist
+      const avgUniqueGenreFreq =
+        uniqueGenres.length > 0
+          ? uniqueGenres.reduce(
+              (sum, g) => sum + (genreFrequency.get(g) || 0),
+              0
+            ) / uniqueGenres.length
+          : 0;
+      deviationScore += (1 - avgUniqueGenreFreq) * 30;
+
+      // Factor 3: Weight by track count (artists with more tracks should have lower deviation)
+      const trackRatio = artist.trackCount / totalTracksInPlaylist;
+      deviationScore += (1 - Math.min(trackRatio * 10, 1)) * 20;
+
+      deviationScore = Math.min(100, Math.max(0, deviationScore));
+      totalDeviationScore += deviationScore * artist.trackCount;
+
+      // Only include as outlier if deviation is significant (> 70)
+      if (deviationScore > 70) {
+        outliers.push({
+          artist,
+          trackCount: artist.trackCount,
+          artistGenres: artist.genres,
+          deviationScore: Math.round(deviationScore),
+          commonGenres,
+          uniqueGenres,
+        });
+      }
+    });
+
+    outliers.sort((a, b) => b.deviationScore - a.deviationScore);
+
+    const avgDeviation =
+      artists.length > 0 ? totalDeviationScore / totalTracksInPlaylist : 0;
+
+    const consistencyScore = Math.round(Math.max(0, 100 - avgDeviation));
+
+    return {
+      consistencyScore,
+      outliers,
+      mainGenres: topGenres,
+      totalArtists: artists.length,
+    };
   }
 }

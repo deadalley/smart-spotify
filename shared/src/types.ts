@@ -102,6 +102,22 @@ export interface PersistResponse {
 }
 
 // Aggregation types
+export interface GenreOutlier {
+  artist: Artist;
+  trackCount: number;
+  artistGenres: string[];
+  deviationScore: number; // 0-100, higher means more outlier
+  commonGenres: string[]; // Genres this artist shares with the playlist
+  uniqueGenres: string[]; // Genres this artist has that are uncommon in playlist
+}
+
+export interface PlaylistConsistencyAnalysis {
+  consistencyScore: number; // 0-100, higher is more consistent
+  outliers: GenreOutlier[];
+  mainGenres: string[]; // Top 5-10 most common genres
+  totalArtists: number;
+}
+
 export interface PlaylistData {
   playlist: Playlist;
   tracks: Track[];
@@ -118,6 +134,10 @@ export interface TrackAggregationResult {
     similarGenres: { name: string; count: number }[];
     similarArtists: Artist[];
   }[];
+}
+
+export interface PlaylistAnalysisResult extends PlaylistData {
+  consistencyAnalysis?: PlaylistConsistencyAnalysis;
 }
 
 // Spotify API types (raw from API)
