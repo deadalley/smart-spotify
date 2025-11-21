@@ -157,7 +157,15 @@ export function PlaylistList({
       id: "actions",
       header: "",
       meta: { span: 2 },
-      cell: () => <SaveInPlaylist />,
+      cell: ({ row }) => {
+        if (!trackAnalysisResult) return null;
+        return (
+          <SaveInPlaylist
+            trackId={trackAnalysisResult.track.id}
+            playlistId={row.original.playlist.id}
+          />
+        );
+      },
     },
   ];
 
@@ -287,7 +295,7 @@ export function PlaylistList({
       id: "actions",
       header: "",
       meta: { span: 2 },
-      cell: () => <SaveInPlaylist />,
+      cell: () => null, // No add button in simple view
     },
   ];
 

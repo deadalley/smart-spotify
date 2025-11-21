@@ -223,4 +223,23 @@ export class SpotifyService {
       tracks: artistTracks,
     };
   }
+
+  async getTrack(trackId: string): Promise<SpotifyTrack> {
+    const response = await axios.get(`${this.baseURL}/tracks/${trackId}`, {
+      headers: this.getHeaders(),
+    });
+    return response.data;
+  }
+
+  async addTrackToPlaylist(playlistId: string, trackId: string): Promise<void> {
+    await axios.post(
+      `${this.baseURL}/playlists/${playlistId}/tracks`,
+      {
+        uris: [`spotify:track:${trackId}`],
+      },
+      {
+        headers: this.getHeaders(),
+      }
+    );
+  }
 }

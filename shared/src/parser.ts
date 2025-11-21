@@ -112,6 +112,7 @@ export function convertToRedisTrack(track: Track): Record<string, string> {
   return {
     id: track.id,
     name: track.name,
+    uri: track.uri,
     durationMs: track.durationMs.toString(),
     explicit: track.explicit.toString(),
     popularity: track.popularity.toString(),
@@ -169,6 +170,7 @@ export function convertFromRedisTrack(data: Record<string, string>): Track {
   return {
     id: data.id,
     name: data.name,
+    uri: data.uri || `spotify:track:${data.id}`,
     durationMs: parseInt(data.durationMs || "0"),
     explicit: data.explicit === "true",
     popularity: parseInt(data.popularity || "0"),
@@ -233,6 +235,7 @@ export function convertSpotifyTrackToRedis(
   return {
     id: spotifyTrack.id,
     name: spotifyTrack.name,
+    uri: spotifyTrack.uri,
     durationMs: spotifyTrack.duration_ms.toString(),
     explicit: spotifyTrack.explicit.toString(),
     popularity: spotifyTrack.popularity.toString(),

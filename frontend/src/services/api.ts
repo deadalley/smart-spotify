@@ -39,6 +39,9 @@ export const spotifyAPI = {
       `/spotify/playlists/${playlistId}/tracks?offset=${offset}`
     ),
 
+  addTrackToPlaylist: (playlistId: string, trackId: string) =>
+    api.post(`/spotify/playlists/${playlistId}/tracks`, { trackId }),
+
   // Artists
   getArtists: () => api.get<SpotifyArtistsResponse>(`/spotify/artists`),
   getArtistTracks: (artistId: string) =>

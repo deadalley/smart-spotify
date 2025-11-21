@@ -1,6 +1,6 @@
-import { Router, Request, Response } from "express";
 import axios from "axios";
 import dotenv from "dotenv";
+import { Request, Response, Router } from "express";
 
 dotenv.config();
 
@@ -24,7 +24,7 @@ const generateRandomString = (length: number): string => {
 router.get("/login", (req: Request, res: Response) => {
   const state = generateRandomString(16);
   const scope =
-    "user-read-private user-read-email playlist-read-private playlist-read-collaborative streaming user-read-playback-state user-modify-playback-state user-library-read";
+    "user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-library-read";
 
   const queryParams = new URLSearchParams({
     response_type: "code",

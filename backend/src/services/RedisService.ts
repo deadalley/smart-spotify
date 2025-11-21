@@ -531,6 +531,65 @@ export class RedisService {
     };
   }
 
+  // Add track to playlist
+  async addTrackToPlaylist(
+    userId: string,
+    playlistId: string,
+    track: SpotifyTrack
+  ): Promise<void> {
+    const trackKey = this.getRedisKey(userId, "track", track.id);
+
+    // Get the current highest position in the playlist
+    const tracksKey = this.getRedisKey(
+      userId,
+      "playlist",
+      playlistId,
+      "tracks"
+    );
+    // Get the count of tracks in the playlist to determine next position
+    const currentTrackCount = await redisClient.zCard(tracksKey);
+    const nextPosition = currentTrackCount;
+
+    // Store track metadata if it doesn't exist
+    const trackData = convertSpotifyTrackToRedis(track, nextPosition);
+    await redisClient.hSet(trackKey, trackData);
+
+    // Store track-playlist relationship
+    await redisClient.sAdd(
+      this.getRedisKey(userId, "track", track.id, "playlists"),
+      playlistId
+    );
+
+    // Add to playlist's sorted set
+    await redisClient.zAdd(tracksKey, { score: nextPosition, value: track.id });
+
+    // Store artist relationships
+    for (const artist of track.artists) {
+      // Store artist-track relationship
+      await redisClient.sAdd(
+        this.getRedisKey(userId, "artist", artist.id, "tracks"),
+        track.id
+      );
+
+      // Store artist-playlist relationship
+      await redisClient.sAdd(
+        this.getRedisKey(userId, "artist", artist.id, "playlists"),
+        playlistId
+      );
+
+      // Store track-artist relationship
+      await redisClient.sAdd(
+        this.getRedisKey(userId, "track", track.id, "artists"),
+        artist.id
+      );
+    }
+
+    // Update playlist track count
+    const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
+    const trackCount = await redisClient.zCard(tracksKey);
+    await redisClient.hSet(playlistKey, { tracks: trackCount.toString() });
+  }
+
   // Helper method to delete all user data
   async deleteUserData(userId: string): Promise<void> {
     const allKeys = await redisClient.keys(this.getRedisKey(userId, "*"));

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
-import { SpotifyService } from "../services";
+import { RedisService, SpotifyService } from "../services";
 
 const router: Router = Router();
 
@@ -68,6 +68,50 @@ router.get(
         return res.status(401).json({ error: "Token expired" });
       }
       res.status(500).json({ error: "Failed to fetch playlist tracks" });
+    }
+  }
+);
+
+router.post(
+  "/playlists/:id/tracks",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const { trackId } = req.body;
+      const playlistId = req.params.id;
+
+      if (!trackId) {
+        return res.status(400).json({ error: "Track ID is required" });
+      }
+
+      const spotifyService = new SpotifyService((req as any).accessToken);
+
+      // Add to Spotify
+      await spotifyService.addTrackToPlaylist(playlistId, trackId);
+
+      // Update Redis cache
+      const user = await spotifyService.getCurrentUser();
+      const track = await spotifyService.getTrack(trackId);
+
+      const redisService = new RedisService();
+      await redisService.addTrackToPlaylist(user.id, playlistId, track);
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error adding track to playlist:", error);
+      console.error("Spotify API error details:", error.response?.data);
+      if (error.response?.status === 401) {
+        return res.status(401).json({ error: "Token expired" });
+      }
+      if (error.response?.status === 403) {
+        return res.status(403).json({
+          error: "Permission denied",
+          message:
+            error.response?.data?.error?.message ||
+            "You don't have permission to modify this playlist",
+        });
+      }
+      res.status(500).json({ error: "Failed to add track to playlist" });
     }
   }
 );

@@ -40,6 +40,7 @@ export interface Playlist {
 export interface Track {
   id: string;
   name: string;
+  uri: string;
   durationMs: number;
   explicit: boolean;
   popularity: number;
@@ -193,6 +194,7 @@ export interface SpotifyPlaylist {
 export interface SpotifyTrack {
   id: string;
   name: string;
+  uri: string;
   duration_ms: number;
   explicit: boolean;
   popularity: number;
