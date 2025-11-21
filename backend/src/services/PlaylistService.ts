@@ -269,15 +269,26 @@ export class PlaylistService {
         return parseInt(a.decade) - parseInt(b.decade);
       });
 
-    // Find time outliers (tracks more than 15 years away from median)
+    // Find time outliers based on decade distribution
+    // Tracks from decades with < 10% representation are considered outliers
     const timeOutliers: TimeOutlier[] = [];
-    const outlierThreshold = 15;
+    const decadeThreshold = 10; // Decades with < 10% representation are outliers
+
+    // Create a set of decades that are underrepresented
+    const outlierDecades = new Set(
+      decadeDistribution
+        .filter((d) => d.percentage < decadeThreshold)
+        .map((d) => d.decade)
+    );
 
     tracks.forEach((track) => {
       const year = trackYears.get(track.id);
       if (year !== undefined) {
+        const decade = `${Math.floor(year / 10) * 10}s`;
         const deviationYears = Math.abs(year - medianYear);
-        if (deviationYears >= outlierThreshold) {
+
+        // Consider as outlier if from an underrepresented decade
+        if (outlierDecades.has(decade)) {
           timeOutliers.push({
             track,
             releaseYear: year,
@@ -287,7 +298,7 @@ export class PlaylistService {
       }
     });
 
-    // Sort outliers by deviation (most deviant first)
+    // Sort outliers by deviation from median (most deviant first)
     timeOutliers.sort((a, b) => b.deviationYears - a.deviationYears);
 
     return {
