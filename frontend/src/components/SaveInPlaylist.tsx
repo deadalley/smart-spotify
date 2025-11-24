@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Plus } from "lucide-react";
 import { spotifyAPI } from "../services/api";
+import { Tooltip } from "./Tooltip";
 
 export function SaveInPlaylist({
   trackId,
@@ -29,19 +30,28 @@ export function SaveInPlaylist({
 
   if (addToPlaylistMutation.isSuccess) {
     return (
-      <div className="flex gap-2 items-center justify-end">
-        <button className="btn btn-sm btn-success gap-1" disabled>
+      <Tooltip content="Added to playlist">
+        <button
+          className="btn btn-sm max-lg:btn-circle lg:btn-wide btn-success"
+          disabled
+        >
           <Check size={14} />
-          Added
+          <span className="max-lg:hidden lg:inline whitespace-pre">Added</span>
         </button>
-      </div>
+      </Tooltip>
     );
   }
 
   return (
-    <div className="flex gap-2 items-center justify-end">
+    <Tooltip
+      content={
+        addToPlaylistMutation.isPending
+          ? "Adding to playlist..."
+          : "Add to playlist"
+      }
+    >
       <button
-        className="btn btn-sm btn-primary gap-1"
+        className="btn btn-sm max-lg:btn-circle lg:btn-wide btn-primary"
         onClick={handleAddToPlaylist}
         disabled={addToPlaylistMutation.isPending}
       >
@@ -50,11 +60,10 @@ export function SaveInPlaylist({
         ) : (
           <Plus size={14} />
         )}
-        {addToPlaylistMutation.isPending ? "Adding..." : "Add to playlist"}
+        <span className="max-lg:hidden lg:inline whitespace-pre">
+          {addToPlaylistMutation.isPending ? "Adding..." : "Add to playlist"}
+        </span>
       </button>
-      {addToPlaylistMutation.isError && (
-        <span className="text-error text-xs">Failed</span>
-      )}
-    </div>
+    </Tooltip>
   );
 }

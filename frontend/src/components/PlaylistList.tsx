@@ -174,10 +174,12 @@ export function PlaylistList({
       cell: ({ row }) => {
         if (!trackAnalysisResult) return null;
         return (
-          <SaveInPlaylist
-            trackId={trackAnalysisResult.track.id}
-            playlistId={row.original.playlist.id}
-          />
+          <div className="flex flex-1 justify-end">
+            <SaveInPlaylist
+              trackId={trackAnalysisResult.track.id}
+              playlistId={row.original.playlist.id}
+            />
+          </div>
         );
       },
     },
