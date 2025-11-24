@@ -1,7 +1,7 @@
 import { Heart, LogOut, Music, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { SpotifyLogo } from "./SpotifyLogo";
+import { SmartSpotifyLogo } from "./SmartSpotifyLogo";
 import { SyncModal } from "./SyncModal";
 
 export function Navbar() {
@@ -28,7 +28,7 @@ export function Navbar() {
             to="/"
             className="flex font-bold text-lg gap-2 items-center text-base-content hover:text-primary transition-colors group"
           >
-            <SpotifyLogo className="size-6 group-hover:scale-110 transition-transform" />
+            <SmartSpotifyLogo className="size-6 group-hover:scale-110 transition-transform text-primary" />
             <span>Smart Spotify</span>
           </Link>
 

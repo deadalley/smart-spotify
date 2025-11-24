@@ -14,7 +14,7 @@
   --color-base-content: oklch(98% 0.01 0); /* #ffffff - white text */
 
   /* Spotify Brand Green */
-  --color-primary: oklch(63% 0.16 138); /* #1ed760 - Spotify green */
+  --color-primary: oklch(78.5% 0.205 149); /* #1ed760 - Spotify green */
   --color-primary-content: oklch(10% 0.01 0); /* dark text on green */
 
   /* Darker Spotify Green for secondary */
