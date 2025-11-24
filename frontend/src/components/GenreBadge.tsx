@@ -25,7 +25,7 @@ export function GenreBadge({
       key={genre.name}
       className={`badge badge-${size} ${variantClass} capitalize flex items-center ${className}`}
     >
-      <span>{genre.name}</span>
+      <span className="whitespace-pre">{genre.name}</span>
       <span className="flex items-center gap-1">
         <Music size={size === "xs" ? 8 : size === "sm" ? 10 : 16} />
         {genre.count}

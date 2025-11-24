@@ -120,15 +120,13 @@ export function PlaylistList({
           <div className="flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarArtists.length > 0 ? (
               suggestedPlaylist.similarArtists.map((artist) => {
-                const artistWithTracks = artist as typeof artist & {
-                  tracks: { id: string; name: string }[];
-                };
+                console.log({ artist });
                 return (
                   <Tooltip
                     key={artist.name}
                     content={
                       <ol className="text-xs list-decimal list-inside">
-                        {artistWithTracks.tracks.map((track) => (
+                        {artist.tracks.map((track) => (
                           <li key={track.id}>{track.name}</li>
                         ))}
                       </ol>
