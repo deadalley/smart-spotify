@@ -24,7 +24,7 @@ const generateRandomString = (length: number): string => {
 router.get("/login", (req: Request, res: Response) => {
   const state = generateRandomString(16);
   const scope =
-    "user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private streaming user-read-playback-state user-modify-playback-state user-library-read user-library-modify";
+    "user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private user-library-read user-library-modify";
 
   const queryParams = new URLSearchParams({
     response_type: "code",
