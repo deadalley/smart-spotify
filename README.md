@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./public/logo.svg" alt="Smart Spotify Logo" width="200"/>
+  <img src="./assets/images/smart-spotify.svg" alt="Smart Spotify Logo" width="200"/>
   <h1>Smart Spotify</h1>
   <p>Smart playlist manager for your Spotify library.</p>
   
