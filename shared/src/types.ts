@@ -153,7 +153,7 @@ export interface TrackAggregationResult {
   suggestedPlaylists: {
     playlist: Playlist;
     similarGenres: { name: string; count: number }[];
-    similarArtists: Artist[];
+    similarArtists: (Artist & { tracks: { id: string; name: string }[] })[];
   }[];
 }
 

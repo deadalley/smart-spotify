@@ -69,9 +69,19 @@ export class PlaylistService {
           });
 
           // Find matching artists (with track counts from the playlist)
-          const similarArtists = data.artists.filter((a) =>
-            trackArtistIds.has(a.id)
-          );
+          const similarArtists = data.artists
+            .filter((a) => trackArtistIds.has(a.id))
+            .map((artist) => {
+              // Get tracks from this artist in this playlist
+              const artistTracks = data.tracks
+                .filter((t) => t.artistIds.includes(artist.id))
+                .map((t) => ({ id: t.id, name: t.name }));
+
+              return {
+                ...artist,
+                tracks: artistTracks,
+              };
+            });
 
           if (similarGenres.length === 0 && similarArtists.length === 0) {
             return null;
@@ -84,9 +94,7 @@ export class PlaylistService {
           };
         })
         .filter(
-          (
-            suggestion
-          ): suggestion is TrackAggregationResult["suggestedPlaylists"][number] =>
+          (suggestion): suggestion is NonNullable<typeof suggestion> =>
             suggestion !== null
         )
         .sort((a, b) => {

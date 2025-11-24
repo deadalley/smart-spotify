@@ -8,6 +8,7 @@ import { GenreBadge } from "./GenreBadge";
 import { SaveInPlaylist } from "./SaveInPlaylist";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
+import { Tooltip } from "./Tooltip";
 
 type PlaylistColumn = ColumnDef<
   {
@@ -118,13 +119,28 @@ export function PlaylistList({
         return (
           <div className="flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarArtists.length > 0 ? (
-              suggestedPlaylist.similarArtists.map((artist) => (
-                <GenreBadge
-                  key={artist.name}
-                  genre={{ name: artist.name, count: artist.trackCount }}
-                  variant="primary"
-                />
-              ))
+              suggestedPlaylist.similarArtists.map((artist) => {
+                const artistWithTracks = artist as typeof artist & {
+                  tracks: { id: string; name: string }[];
+                };
+                return (
+                  <Tooltip
+                    key={artist.name}
+                    content={
+                      <ol className="text-xs list-decimal list-inside">
+                        {artistWithTracks.tracks.map((track) => (
+                          <li key={track.id}>{track.name}</li>
+                        ))}
+                      </ol>
+                    }
+                  >
+                    <GenreBadge
+                      genre={{ name: artist.name, count: artist.trackCount }}
+                      variant="primary"
+                    />
+                  </Tooltip>
+                );
+              })
             ) : (
               <span className="text-base-content/40 text-xs">None</span>
             )}
