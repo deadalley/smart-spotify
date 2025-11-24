@@ -242,4 +242,13 @@ export class SpotifyService {
       }
     );
   }
+
+  async removeTrackFromSaved(trackId: string): Promise<void> {
+    await axios.delete(`${this.baseURL}/me/tracks`, {
+      headers: this.getHeaders(),
+      data: {
+        ids: [trackId],
+      },
+    });
+  }
 }

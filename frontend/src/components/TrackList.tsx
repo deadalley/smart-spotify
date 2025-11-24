@@ -1,7 +1,9 @@
 import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, Heart } from "lucide-react";
 import { useMemo, useState } from "react";
+import { baseAPI } from "../services/api";
 import { formatDuration } from "../utils";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
@@ -11,12 +13,26 @@ export function TrackList({
   tracks,
   aggregatedTracks,
   playlists,
+  showUnlike = false,
 }: {
   tracks: Track[];
   aggregatedTracks?: TrackAggregationResult[];
   playlists?: Playlist[];
+  showUnlike?: boolean;
 }) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const queryClient = useQueryClient();
+
+  const unlikeTrackMutation = useMutation({
+    mutationFn: async (trackId: string) => {
+      return baseAPI.unlikeTrack(trackId);
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["saved-tracks"] });
+      queryClient.invalidateQueries({ queryKey: ["aggregated-liked-songs"] });
+    },
+  });
 
   const data = useMemo(() => {
     if (aggregatedTracks) {
@@ -130,7 +146,7 @@ export function TrackList({
       id: "duration",
       accessorFn: (row) => row.track.durationMs,
       header: () => <Clock size={14} />,
-      meta: { span: 2, align: "right" },
+      meta: { span: showUnlike ? 1 : 2, align: "right" },
       enableSorting: true,
       cell: ({ row }) => (
         <span className="text-base-content/50 text-sm tabular-nums">
@@ -139,6 +155,27 @@ export function TrackList({
       ),
     },
   ];
+
+  if (showUnlike) {
+    columns.push({
+      id: "unlike",
+      header: "",
+      meta: { span: 1, align: "center" },
+      cell: ({ row }) => (
+        <button
+          className="btn btn-ghost btn-sm btn-circle text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            unlikeTrackMutation.mutate(row.original.track.id);
+          }}
+          disabled={unlikeTrackMutation.isPending}
+          title="Remove from Liked Songs"
+        >
+          <Heart size={16} fill="currentColor" stroke="currentColor" />
+        </button>
+      ),
+    });
+  }
 
   return (
     <TableWrapper>

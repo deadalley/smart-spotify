@@ -590,6 +590,84 @@ export class RedisService {
     await redisClient.hSet(playlistKey, { tracks: trackCount.toString() });
   }
 
+  // Remove track from playlist
+  async removeTrackFromPlaylist(
+    userId: string,
+    playlistId: string,
+    trackId: string
+  ): Promise<void> {
+    const tracksKey = this.getRedisKey(
+      userId,
+      "playlist",
+      playlistId,
+      "tracks"
+    );
+
+    // Remove from playlist's sorted set
+    await redisClient.zRem(tracksKey, trackId);
+
+    // Remove track-playlist relationship
+    await redisClient.sRem(
+      this.getRedisKey(userId, "track", trackId, "playlists"),
+      playlistId
+    );
+
+    // Get track artists to update their relationships
+    const artistIds = await redisClient.sMembers(
+      this.getRedisKey(userId, "track", trackId, "artists")
+    );
+
+    // Check if track still exists in other playlists
+    const remainingPlaylists = await redisClient.sMembers(
+      this.getRedisKey(userId, "track", trackId, "playlists")
+    );
+
+    // If track is not in any other playlist, remove it completely
+    if (remainingPlaylists.length === 0) {
+      // Remove track hash
+      await redisClient.del(this.getRedisKey(userId, "track", trackId));
+
+      // Remove track-artist relationships
+      await redisClient.del(
+        this.getRedisKey(userId, "track", trackId, "artists")
+      );
+
+      // Remove artist-track relationships
+      for (const artistId of artistIds) {
+        await redisClient.sRem(
+          this.getRedisKey(userId, "artist", artistId, "tracks"),
+          trackId
+        );
+      }
+    }
+
+    // Update artist-playlist relationships
+    for (const artistId of artistIds) {
+      // Check if artist still has tracks in this playlist
+      const artistTracks = await redisClient.sMembers(
+        this.getRedisKey(userId, "artist", artistId, "tracks")
+      );
+      const playlistTracks = await redisClient.zRange(tracksKey, 0, -1);
+
+      const hasTracksInPlaylist = artistTracks.some((t) =>
+        playlistTracks.includes(t)
+      );
+
+      // If no more tracks from this artist in the playlist, remove the relationship
+      if (!hasTracksInPlaylist) {
+        await redisClient.sRem(
+          this.getRedisKey(userId, "artist", artistId, "playlists"),
+          playlistId
+        );
+      }
+    }
+
+    // Update playlist track count
+    const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
+    const trackCount = await redisClient.zCard(tracksKey);
+    await redisClient.hSet(playlistKey, { tracks: trackCount.toString() });
+  }
+
   // Helper method to delete all user data
   async deleteUserData(userId: string): Promise<void> {
     const allKeys = await redisClient.keys(this.getRedisKey(userId, "*"));

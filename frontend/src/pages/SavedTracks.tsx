@@ -78,6 +78,7 @@ export function SavedTracks() {
         aggregatedTracks={aggregatedData}
         tracks={tracks}
         playlists={playlists}
+        showUnlike={true}
       />
     </Page>
   );

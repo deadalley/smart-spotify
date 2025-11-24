@@ -44,6 +44,36 @@ router.get(
   }
 );
 
+router.delete(
+  "/tracks/saved/:id",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+      const user = await spotifyService.getCurrentUser();
+      const trackId = req.params.id;
+
+      // Remove from Spotify
+      await spotifyService.removeTrackFromSaved(trackId);
+
+      // Remove from Redis cache
+      await redisService.removeTrackFromPlaylist(
+        user.id,
+        "liked-songs",
+        trackId
+      );
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error removing track from saved:", error);
+      if (error.response?.status === 401) {
+        return res.status(401).json({ error: "Token expired" });
+      }
+      res.status(500).json({ error: "Failed to remove track from saved" });
+    }
+  }
+);
+
 router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);

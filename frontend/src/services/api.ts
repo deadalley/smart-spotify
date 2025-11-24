@@ -78,6 +78,7 @@ export const baseAPI = {
   getSavedTracks: () => api.get<Track[]>("/tracks/saved"),
   getAggregatedLikedSongs: () =>
     api.get<TrackAggregationResult[]>("/tracks/aggregate"),
+  unlikeTrack: (trackId: string) => api.delete(`/tracks/saved/${trackId}`),
 
   // Playlist type management
   updatePlaylistType: (playlistId: string, playlistType: string) =>
