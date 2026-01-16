@@ -13,9 +13,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const clientUrl =
+  process.env.CLIENT_URL || "http://127.0.0.1:5173";
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: clientUrl,
     credentials: true,
   })
 );
@@ -32,7 +35,7 @@ const startServer = async () => {
   try {
     await connectRedis();
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🚀 Server running on http://127.0.0.1:${PORT}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

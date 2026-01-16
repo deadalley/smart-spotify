@@ -9,7 +9,7 @@ const router: Router = Router();
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const REDIRECT_URI =
-  process.env.SPOTIFY_REDIRECT_URI || "http://localhost:3001/api/auth/callback";
+  process.env.SPOTIFY_REDIRECT_URI || "http://127.0.0.1:3001/api/auth/callback";
 
 const generateRandomString = (length: number): string => {
   const characters =
@@ -87,7 +87,7 @@ router.get("/callback", async (req: Request, res: Response) => {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
-    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}`);
+    res.redirect(`${process.env.CLIENT_URL || "http://127.0.0.1:5173"}`);
   } catch (error) {
     console.error("Error during token exchange:", error);
     res.redirect(`${process.env.CLIENT_URL}?error=invalid_token`);
