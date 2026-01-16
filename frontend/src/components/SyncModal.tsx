@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Trash } from "lucide-react";
+import { CheckCircle2, RefreshCw, Trash, XCircle } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
 import { baseAPI } from "../services/api";
 
@@ -9,6 +9,7 @@ interface SyncState {
   syncMessage: string;
   error: string | null;
   currentJobId: string | null;
+  completion: "sync" | "delete" | null;
 }
 
 type SyncAction =
@@ -16,10 +17,9 @@ type SyncAction =
   | { type: "UPDATE_PROGRESS"; progress: number; message: string }
   | { type: "SET_JOB_ID"; jobId: string }
   | { type: "COMPLETE_SYNC"; message: string }
+  | { type: "COMPLETE_DELETE"; message: string }
   | { type: "FAIL_SYNC"; error: string }
   | { type: "RESET" }
-  | { type: "SET_ERROR"; error: string }
-  | { type: "CLEAR_ERROR" }
   | { type: "RESUME_JOB"; jobId: string; progress: number; message: string };
 
 const initialState: SyncState = {
@@ -28,7 +28,21 @@ const initialState: SyncState = {
   syncMessage: "",
   error: null,
   currentJobId: null,
+  completion: null,
 };
+
+type SyncStep = {
+  key: "user" | "playlists" | "tracks" | "artists";
+  label: string;
+  minProgress: number;
+};
+
+const SYNC_STEPS: readonly SyncStep[] = [
+  { key: "user", label: "User info", minProgress: 5 },
+  { key: "playlists", label: "Playlists", minProgress: 25 },
+  { key: "tracks", label: "Tracks", minProgress: 65 },
+  { key: "artists", label: "Artists", minProgress: 80 },
+] as const;
 
 function syncReducer(state: SyncState, action: SyncAction): SyncState {
   switch (action.type) {
@@ -37,6 +51,7 @@ function syncReducer(state: SyncState, action: SyncAction): SyncState {
         ...state,
         isLoading: true,
         error: null,
+        completion: null,
         syncProgress: 0,
         syncMessage: action.message || "Starting sync...",
       };
@@ -54,8 +69,18 @@ function syncReducer(state: SyncState, action: SyncAction): SyncState {
     case "COMPLETE_SYNC":
       return {
         ...state,
+        isLoading: false,
         syncProgress: 100,
         syncMessage: action.message,
+        completion: "sync",
+      };
+    case "COMPLETE_DELETE":
+      return {
+        ...state,
+        isLoading: false,
+        syncProgress: 100,
+        syncMessage: action.message,
+        completion: "delete",
       };
     case "FAIL_SYNC":
       return {
@@ -64,20 +89,11 @@ function syncReducer(state: SyncState, action: SyncAction): SyncState {
       };
     case "RESET":
       return initialState;
-    case "SET_ERROR":
-      return {
-        ...state,
-        error: action.error,
-      };
-    case "CLEAR_ERROR":
-      return {
-        ...state,
-        error: null,
-      };
     case "RESUME_JOB":
       return {
         ...state,
         isLoading: true,
+        completion: null,
         currentJobId: action.jobId,
         syncProgress: action.progress,
         syncMessage: action.message,
@@ -91,6 +107,9 @@ export function SyncModal() {
   const [state, dispatch] = useReducer(syncReducer, initialState);
   const pollingIntervalRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
+  const isSuccess = state.completion === "sync" && state.syncProgress === 100;
+  const syncMessageLower = state.syncMessage.toLowerCase();
+  const isDeleting = state.isLoading && syncMessageLower.includes("delet");
 
   const stopPolling = () => {
     if (pollingIntervalRef.current) {
@@ -111,7 +130,7 @@ export function SyncModal() {
         if (!jobStatus.hasActiveJob) {
           dispatch({
             type: "COMPLETE_SYNC",
-            message: "Sync completed successfully!",
+            message: jobStatus.message || "Sync complete.",
           });
           stopPolling();
           // Invalidate all queries to refresh data
@@ -128,7 +147,7 @@ export function SyncModal() {
         if (jobStatus.status === "completed") {
           dispatch({
             type: "COMPLETE_SYNC",
-            message: "Sync completed successfully!",
+            message: jobStatus.message || "Sync complete.",
           });
           stopPolling();
           // Invalidate all queries to refresh data
@@ -251,7 +270,7 @@ export function SyncModal() {
       await queryClient.invalidateQueries();
 
       dispatch({
-        type: "COMPLETE_SYNC",
+        type: "COMPLETE_DELETE",
         message: "Data deleted successfully!",
       });
       setTimeout(() => {
@@ -275,53 +294,103 @@ export function SyncModal() {
     <>
       <dialog id="syncModal" className="modal">
         <div className="modal-box">
-          <h3 className="text-lg font-bold">Sync Spotify data</h3>
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="text-lg font-bold">Sync Spotify data</h3>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm btn-circle"
+                onClick={handleClose}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
 
-          {state.syncProgress === 100 && !state.error ? (
+          {!state.isLoading && state.syncProgress < 100 && (
+            <div className="mt-4 rounded-box border border-primary/30 bg-base-200/20 p-4">
+              <ul className="list-disc pl-5 space-y-1 text-sm text-base-content/80">
+                <li>
+                  In order to manage your entire Spotify library, SmartSpotify
+                  needs to{" "}
+                  <span className="font-semibold text-base-content">
+                    cache your data
+                  </span>{" "}
+                  for faster access.
+                </li>
+                <li>
+                  Your account data{" "}
+                  <span className="font-semibold text-base-content">
+                    belongs to you
+                  </span>{" "}
+                  and will only be used to run analysis on your Spotify library.
+                </li>
+                <li>You can delete the cached data anytime</li>
+                <li>
+                  Any changes you make in SmartSpotify will be{" "}
+                  <span className="font-semibold text-base-content">
+                    automatically
+                  </span>{" "}
+                  synced to Spotify.
+                </li>
+                <li>
+                  Changes you make in Spotify need to be{" "}
+                  <span className="font-semibold text-base-content">
+                    manually
+                  </span>{" "}
+                  synced to SmartSpotify.
+                </li>
+              </ul>
+            </div>
+          )}
+
+          {isSuccess && (
             <div className="py-4">
-              <div className="alert alert-success">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 shrink-0 stroke-current"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span>{state.syncMessage}</span>
+              <div className="flex flex-col items-center text-center gap-3 py-2">
+                <CheckCircle2 className="size-16 text-success" />
+                <div>
+                  <div className="text-lg font-bold">Sync complete</div>
+                  <div className="text-sm text-base-content/70 mt-1">
+                    {state.syncMessage || "Your data is ready."}
+                  </div>
+                </div>
               </div>
             </div>
-          ) : !state.isLoading ? (
-            <p className="py-4 text-sm text-base-content/70">
-              For Smart Spotify to work, it has to store your Spotify data
-              temporarily for faster access. By clicking the "Sync" button,
-              Smart Spotify will load the relevant data from your library.
-              <br />
-              <br />
-              This process does not alter any data on your Spotify account.
-              <br />
-              <br />
-              This data is deleted periodically, upon logout, or at your
-              request.
-            </p>
-          ) : (
+          )}
+
+          {!isSuccess && state.isLoading && (
             <div className="py-4">
-              <div className="mb-4">
+              <div className="mb-3">
                 <p className="text-sm font-medium mb-2">{state.syncMessage}</p>
                 <progress
                   className="progress progress-primary w-full"
                   value={state.syncProgress}
                   max="100"
                 ></progress>
-                <p className="text-xs text-base-content/60 mt-1">
-                  {state.syncProgress}% complete
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-xs text-base-content/60">
+                    {state.syncProgress}% complete
+                  </p>
+                </div>
               </div>
+
+              {!isDeleting && (
+                <ul className="steps steps-vertical">
+                  {SYNC_STEPS.map((step) => (
+                    <li
+                      key={step.key}
+                      className={
+                        state.syncProgress >= step.minProgress
+                          ? "step step-primary"
+                          : "step"
+                      }
+                    >
+                      {step.label}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
@@ -331,47 +400,42 @@ export function SyncModal() {
             </div>
           )}
 
-          <div className="modal-action">
-            {state.syncProgress === 100 && !state.error ? (
-              <button className="btn btn-primary" onClick={handleClose}>
-                Close
+          {state.syncProgress === 100 && !state.error ? (
+            <button
+              className="btn btn-primary w-full mt-2"
+              onClick={handleClose}
+            >
+              Start SmartSpotify
+            </button>
+          ) : (
+            <div className="modal-action flex flex-col gap-2">
+              <button
+                className="btn btn-error w-full"
+                onClick={handleDelete}
+                disabled={state.isLoading}
+              >
+                <Trash size={14} />
+                Delete data
               </button>
-            ) : (
-              <>
-                <button
-                  className="btn"
-                  onClick={handleClose}
-                  disabled={state.isLoading}
-                >
-                  Close
-                </button>
-                <button
-                  className="btn btn-error"
-                  onClick={handleDelete}
-                  disabled={state.isLoading}
-                >
-                  <Trash size={14} />
-                  Delete data
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleSync}
-                  disabled={state.isLoading}
-                >
-                  {state.isLoading ? (
-                    <span className="loading loading-spinner loading-sm"></span>
-                  ) : (
-                    <RefreshCw size={14} />
-                  )}
-                  Sync
-                </button>
-              </>
-            )}
-          </div>
+              <button
+                className="btn btn-primary w-full"
+                onClick={handleSync}
+                disabled={state.isLoading}
+              >
+                {state.isLoading ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <RefreshCw size={14} />
+                )}
+                {state.isLoading ? "Syncing data..." : "Sync data with Spotify"}
+              </button>
+            </div>
+          )}
         </div>
-        <div className="modal-backdrop" onClick={handleClose}>
-          <button>close</button>
-        </div>
+        <div
+          className="modal-backdrop"
+          onClick={state.isLoading ? undefined : handleClose}
+        ></div>
       </dialog>
       <button
         className="btn btn-primary btn-sm"
