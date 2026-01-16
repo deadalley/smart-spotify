@@ -35,6 +35,10 @@ export class RedisService {
     return `${namespace}:${type}`;
   }
 
+  private getMetaKey(userId: string) {
+    return this.getRedisKey(userId, "meta");
+  }
+
   // Uses Redis SCAN (incremental) instead of KEYS (blocking).
   // KEYS can stall Redis on large datasets; SCAN keeps Redis responsive as data grows.
   private async scanKeys(match: string): Promise<string[]> {
@@ -43,6 +47,47 @@ export class RedisService {
       keys.push(key);
     }
     return keys;
+  }
+
+  async setSyncMeta({
+    userId,
+    lastSync,
+    playlistCount,
+    trackCount,
+    artistCount,
+  }: {
+    userId: string;
+    lastSync: string;
+    playlistCount: number;
+    trackCount: number;
+    artistCount: number;
+  }): Promise<void> {
+    await redisClient.hSet(this.getMetaKey(userId), {
+      lastSync,
+      playlistCount: String(playlistCount),
+      trackCount: String(trackCount),
+      artistCount: String(artistCount),
+    });
+  }
+
+  async getSyncMeta(userId: string): Promise<
+    | {
+        lastSync: string;
+        playlistCount: number;
+        trackCount: number;
+        artistCount: number;
+      }
+    | null
+  > {
+    const data = await redisClient.hGetAll(this.getMetaKey(userId));
+    if (Object.keys(data).length === 0) return null;
+
+    return {
+      lastSync: data.lastSync || "",
+      playlistCount: Number(data.playlistCount || 0),
+      trackCount: Number(data.trackCount || 0),
+      artistCount: Number(data.artistCount || 0),
+    };
   }
 
   // User operations

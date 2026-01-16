@@ -59,12 +59,24 @@ router.get("/status", requireAuth, async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Not authenticated" });
     }
 
+    const meta = await redisService.getSyncMeta(userId);
+    const hasData = !!meta?.lastSync;
+
     const activeJobId = await bullService.getActiveJob(userId);
 
     if (!activeJobId) {
       return res.json({
         success: true,
         hasActiveJob: false,
+        hasData,
+        lastSync: meta?.lastSync,
+        stats: meta
+          ? {
+              playlists: meta.playlistCount,
+              tracks: meta.trackCount,
+              artists: meta.artistCount,
+            }
+          : undefined,
         message: "No active persist job found",
       });
     }
@@ -74,6 +86,8 @@ router.get("/status", requireAuth, async (req: Request, res: Response) => {
     res.json({
       success: true,
       hasActiveJob: true,
+      hasData,
+      lastSync: meta?.lastSync,
       jobId: activeJobId,
       ...jobStatus,
     });

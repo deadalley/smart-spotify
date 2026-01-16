@@ -9,6 +9,7 @@ import { Login } from "./pages/Login";
 import { Playlists } from "./pages/Playlists";
 import { PlaylistView } from "./pages/PlaylistView";
 import { SavedTracks } from "./pages/SavedTracks";
+import { SyncRequired } from "./pages/SyncRequired";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/saved-tracks" replace />} />
+          <Route path="sync" element={<SyncRequired />} />
           <Route path="playlists" element={<Playlists />} />
           <Route path="playlists/:id" element={<PlaylistView />} />
           <Route path="saved-tracks" element={<SavedTracks />} />

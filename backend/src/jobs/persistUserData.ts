@@ -210,6 +210,14 @@ export async function persistUserDataJob(
       await job.updateProgress(progress);
     }
 
+    await redisService.setSyncMeta({
+      userId,
+      lastSync: new Date().toISOString(),
+      playlistCount: playlists.length + (savedTracks.length > 0 ? 1 : 0),
+      trackCount: tracks.length,
+      artistCount: artistIds.length,
+    });
+
     await job.updateProgress(JobProgressPercentage.COMPLETED);
 
     console.log(
