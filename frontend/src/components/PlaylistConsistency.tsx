@@ -9,13 +9,26 @@ export function PlaylistConsistency({
   consistencyAnalysis: PlaylistConsistencyAnalysis;
 }) {
   const navigate = useNavigate();
-  const { consistencyScore, outliers, mainGenres, totalArtists, timeAnalysis } =
-    consistencyAnalysis;
+  const {
+    consistencyScore,
+    genreScore,
+    timeScore,
+    outliers,
+    mainGenres,
+    totalArtists,
+    timeAnalysis,
+  } = consistencyAnalysis;
 
   const getConsistencyColor = (score: number) => {
     if (score >= 80) return "text-success";
     if (score >= 60) return "text-warning";
     return "text-error";
+  };
+
+  const getScoreBorder = (score: number) => {
+    if (score >= 80) return "border-success/30";
+    if (score >= 60) return "border-warning/30";
+    return "border-error/30";
   };
 
   const getDeviationColor = (score: number) => {
@@ -46,6 +59,7 @@ export function PlaylistConsistency({
             </h3>
             <p className="text-sm text-base-content/60">
               Based on genre alignment across {totalArtists} artists
+              {timeScore !== undefined ? " and time spread" : ""}
             </p>
           </div>
         </div>
@@ -58,134 +72,192 @@ export function PlaylistConsistency({
         </div>
       </div>
 
-      {/* Main Genres */}
-      <div>
-        <h4 className="text-sm font-medium text-base-content/70 uppercase tracking-wider mb-3">
-          Main Genres
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {mainGenres.map((genre) => (
-            <GenreBadge key={genre} genre={{ name: genre }} size="lg" />
-          ))}
+      <div className="my-4 divider" />
+      <h3 className="text-lg font-semibold uppercase">Genre Analysis</h3>
+      <div className="space-y-4">
+        {genreScore !== undefined && (
+          <div
+            className={`card bg-base-300 border p-4 ${getScoreBorder(
+              genreScore
+            )}`}
+          >
+            <p className="text-sm text-base-content/60">Genre score</p>
+            <p
+              className={`text-2xl font-bold ${getConsistencyColor(
+                genreScore
+              )}`}
+            >
+              {genreScore}
+            </p>
+            <p className="text-xs text-base-content/60 mt-1">
+              Higher means artists’ genres better match the playlist’s genre
+              distribution.
+            </p>
+          </div>
+        )}
+
+        <div>
+          <h4 className="text-sm font-medium text-base-content/70 uppercase tracking-wider mb-3">
+            Main Genres
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {mainGenres.map((genre) => (
+              <GenreBadge key={genre} genre={{ name: genre }} size="lg" />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-medium text-base-content/70 uppercase tracking-wider mb-3">
+            Genre Outliers
+          </h4>
+          {outliers.length === 0 ? (
+            <div className="card bg-base-300 border border-base-200 p-4 text-center">
+              <CheckCircle2 size={32} className="text-success mx-auto mb-2" />
+              <p className="text-base-content/70">
+                No significant genre outliers detected.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {outliers.map((outlier) => {
+                const artistImage = outlier.artist.images[0]?.url;
+
+                return (
+                  <div
+                    key={outlier.artist.id}
+                    className={`card border ${getDeviationColor(
+                      outlier.deviationScore
+                    )} p-3 cursor-pointer hover:shadow-lg transition-all`}
+                    onClick={() => navigate(`/artists/${outlier.artist.id}`)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-base-300/50">
+                        {artistImage ? (
+                          <img
+                            src={artistImage}
+                            alt={outlier.artist.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User size={20} className="text-base-content/30" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <h5 className="font-semibold truncate">
+                              {outlier.artist.name}
+                            </h5>
+                            <p className="text-xs text-base-content/60">
+                              {outlier.trackCount} track
+                              {outlier.trackCount !== 1 ? "s" : ""}
+                            </p>
+                          </div>
+                          <div className="text-xl font-bold text-warning shrink-0">
+                            {outlier.deviationScore}
+                          </div>
+                        </div>
+
+                        {(outlier.uniqueGenres.length > 0 ||
+                          outlier.commonGenres.length > 0) && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {outlier.uniqueGenres.map((genre) => (
+                              <GenreBadge
+                                key={genre}
+                                genre={{ name: genre }}
+                                size="sm"
+                                variant={getBadgeVariant(
+                                  outlier.deviationScore
+                                )}
+                              />
+                            ))}
+                            {outlier.commonGenres.map((genre) => (
+                              <GenreBadge
+                                key={genre}
+                                genre={{ name: genre }}
+                                size="sm"
+                                variant="default"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
-      <div>
-        <h4 className="text-sm font-medium text-base-content/70 uppercase tracking-wider mb-3">
-          Genre Outliers
-        </h4>
-        {outliers.length === 0 ? (
-          <div className="card bg-base-300 border border-base-200 p-4 text-center">
-            <CheckCircle2 size={32} className="text-success mx-auto mb-2" />
-            <p className="text-base-content/70">
-              No significant genre outliers detected.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {outliers.map((outlier) => {
-              const artistImage = outlier.artist.images[0]?.url;
-
-              return (
-                <div
-                  key={outlier.artist.id}
-                  className={`card border ${getDeviationColor(
-                    outlier.deviationScore
-                  )} p-3 cursor-pointer hover:shadow-lg transition-all`}
-                  onClick={() => navigate(`/artists/${outlier.artist.id}`)}
+      <div className="my-4 divider" />
+      <h3 className="text-lg font-semibold uppercase">Time Analysis</h3>
+      {timeAnalysis ? (
+        <div className="space-y-4">
+          <div className="flex flex-row items-center justify-between gap-3">
+            {timeScore !== undefined && (
+              <div
+                className={`card bg-base-300 border p-4 flex-1 ${getScoreBorder(
+                  timeScore
+                )}`}
+              >
+                <p className="text-sm text-base-content/60">Time score</p>
+                <p
+                  className={`text-2xl font-bold ${getConsistencyColor(
+                    timeScore
+                  )}`}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* Artist Image */}
-                    <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-base-300/50">
-                      {artistImage ? (
-                        <img
-                          src={artistImage}
-                          alt={outlier.artist.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <User size={20} className="text-base-content/30" />
-                        </div>
-                      )}
-                    </div>
+                  {timeScore}
+                </p>
+                <p className="text-xs text-base-content/60 mt-1">
+                  Higher means releases cluster in a tighter year range
+                  (IQR-based).
+                </p>
+              </div>
+            )}
 
-                    {/* Artist Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <h5 className="font-semibold truncate">
-                            {outlier.artist.name}
-                          </h5>
-                          <p className="text-xs text-base-content/60">
-                            {outlier.trackCount} track
-                            {outlier.trackCount !== 1 ? "s" : ""}
-                          </p>
-                        </div>
-                        <div className="text-xl font-bold text-warning shrink-0">
-                          {outlier.deviationScore}
-                        </div>
-                      </div>
-
-                      {/* Genre Breakdown */}
-                      {(outlier.uniqueGenres.length > 0 ||
-                        outlier.commonGenres.length > 0) && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {outlier.uniqueGenres.map((genre) => (
-                            <GenreBadge
-                              key={genre}
-                              genre={{ name: genre }}
-                              size="sm"
-                              variant={getBadgeVariant(outlier.deviationScore)}
-                            />
-                          ))}
-                          {outlier.commonGenres.map((genre) => (
-                            <GenreBadge
-                              key={genre}
-                              genre={{ name: genre }}
-                              size="sm"
-                              variant="default"
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            <div className="card bg-base-300 border border-base-200 p-4 flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-base-content/60">Year Range</p>
+                  <p className="text-lg font-semibold">
+                    {timeAnalysis.yearRange.min} - {timeAnalysis.yearRange.max}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Time Analysis */}
-      {timeAnalysis && (
-        <div>
-          <h4 className="text-sm font-medium text-base-content/70 uppercase tracking-wider mb-3">
-            Time Period Analysis
-          </h4>
-
-          {/* Era Summary */}
-          <div className="card bg-base-300 border border-base-200 p-4 mb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-base-content/60">Year Range</p>
-                <p className="text-lg font-semibold">
-                  {timeAnalysis.yearRange.min} - {timeAnalysis.yearRange.max}
-                </p>
+                <div className="text-right">
+                  <p className="text-sm text-base-content/60">Median Year</p>
+                  <p className="text-lg font-semibold">
+                    {timeAnalysis.medianYear}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-base-content/60">Median Year</p>
-                <p className="text-lg font-semibold">
-                  {timeAnalysis.medianYear}
-                </p>
-              </div>
+              {timeAnalysis.iqrYears !== undefined && (
+                <div className="mt-3 text-sm text-base-content/70">
+                  IQR:{" "}
+                  <span className="font-semibold">{timeAnalysis.iqrYears}</span>{" "}
+                  years
+                  {timeAnalysis.outlierBounds && (
+                    <>
+                      {" "}
+                      • Outlier bounds:{" "}
+                      <span className="font-semibold">
+                        {timeAnalysis.outlierBounds.lower}–
+                        {timeAnalysis.outlierBounds.upper}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Decade Distribution */}
           {timeAnalysis.decadeDistribution.length > 0 && (
-            <div className="mb-3">
+            <div>
               <p className="text-xs text-base-content/60 mb-2">
                 Distribution by Decade
               </p>
@@ -227,7 +299,6 @@ export function PlaylistConsistency({
             </div>
           )}
 
-          {/* Time Outliers */}
           {timeAnalysis.timeOutliers.length > 0 && (
             <div>
               <p className="text-xs text-base-content/60 mb-2">
@@ -259,6 +330,10 @@ export function PlaylistConsistency({
               </div>
             </div>
           )}
+        </div>
+      ) : (
+        <div className="text-sm text-base-content/70">
+          No year data available for this playlist.
         </div>
       )}
     </div>

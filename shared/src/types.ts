@@ -128,11 +128,17 @@ export interface TimeOutlier {
 
 export interface PlaylistConsistencyAnalysis {
   consistencyScore: number; // 0-100, higher is more consistent
+  genreScore?: number; // 0-100, genre-only consistency (optional)
+  timeScore?: number; // 0-100, time-only consistency (optional)
   outliers: GenreOutlier[];
   mainGenres: string[]; // Top 5-10 most common genres
   totalArtists: number;
   timeAnalysis?: {
     medianYear: number;
+    q1Year?: number;
+    q3Year?: number;
+    iqrYears?: number;
+    outlierBounds?: { lower: number; upper: number };
     yearRange: { min: number; max: number };
     decadeDistribution: DecadeDistribution[];
     timeOutliers: TimeOutlier[];

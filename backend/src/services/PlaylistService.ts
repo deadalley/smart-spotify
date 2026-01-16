@@ -130,23 +130,21 @@ export class PlaylistService {
     totalTracksInPlaylist: number,
     tracks: Track[]
   ) {
-    // Identify main genres: genres that appear in at least 10% of tracks
-    // or at minimum the top 3 genres (to handle small playlists)
-    const minAbsoluteCount = Math.max(
-      Math.ceil(totalTracksInPlaylist * 0.1),
-      1
-    );
-    const minTopGenres = 3; // Always include at least top 3 genres
+    // Pick "main" genres by cumulative coverage for stability:
+    // include at least 3, stop when we cover ~60% of tracks, cap at 10.
+    const minGenres = 3;
+    const maxGenres = 10;
+    const targetCoverage = 0.6;
 
     const topGenres: string[] = [];
-
-    for (const genre of sortedGenres) {
-      // Stop if we have enough genres and this genre is below threshold
-      if (topGenres.length >= minTopGenres && genre.count < minAbsoluteCount) {
+    let covered = 0;
+    for (const g of sortedGenres) {
+      if (topGenres.length >= maxGenres) break;
+      topGenres.push(g.name);
+      covered += g.count;
+      if (topGenres.length >= minGenres && covered / totalTracksInPlaylist >= targetCoverage) {
         break;
       }
-
-      topGenres.push(genre.name);
     }
 
     // Build genre frequency map for scoring
@@ -165,38 +163,32 @@ export class PlaylistService {
       const commonGenres = artist.genres.filter((g) => topGenres.includes(g));
       const uniqueGenres = artist.genres.filter((g) => !topGenres.includes(g));
 
-      // Calculate deviation score (0-100)
-      // Higher score = more deviation from playlist's main genres
-      let deviationScore = 0;
+      // Fit-based deviation:
+      // - avgFreq: mean playlist frequency of the artist's genres
+      // - maxFreq: best-matching genre to playlist
+      // Higher fit => lower deviation.
+      const freqs = artist.genres.map((g) => genreFrequency.get(g) ?? 0);
+      const avgFreq =
+        freqs.length > 0 ? freqs.reduce((s, v) => s + v, 0) / freqs.length : 0;
+      const maxFreq = freqs.length > 0 ? Math.max(...freqs) : 0;
 
-      // Factor 1: Percentage of artist's genres that are NOT in main genres
-      const uniqueGenreRatio = uniqueGenres.length / artist.genres.length;
-      deviationScore += uniqueGenreRatio * 50;
-
-      // Factor 2: How common are the artist's unique genres in the playlist
-      const avgUniqueGenreFreq =
-        uniqueGenres.length > 0
-          ? uniqueGenres.reduce(
-              (sum, g) => sum + (genreFrequency.get(g) || 0),
-              0
-            ) / uniqueGenres.length
-          : 0;
-      deviationScore += (1 - avgUniqueGenreFreq) * 30;
-
-      // Factor 3: Weight by track count (artists with more tracks should have lower deviation)
-      const trackRatio = artist.trackCount / totalTracksInPlaylist;
-      deviationScore += (1 - Math.min(trackRatio * 10, 1)) * 20;
-
-      deviationScore = Math.min(100, Math.max(0, deviationScore));
+      const fit = Math.max(
+        0,
+        Math.min(100, (0.55 * maxFreq + 0.45 * avgFreq) * 100)
+      );
+      const deviationScore = Math.round(Math.min(100, Math.max(0, 100 - fit)));
       totalDeviationScore += deviationScore * artist.trackCount;
 
-      // Only include as outlier if deviation is significant (> 70)
-      if (deviationScore > 70) {
+      // Outliers: poor fit, with thresholds that still surface meaningful “odd ones out”.
+      // (We still show the score for all outliers; UI can sort/limit as needed.)
+      const isOutlier =
+        deviationScore >= 80 || (deviationScore >= 70 && artist.trackCount >= 3);
+      if (isOutlier) {
         outliers.push({
           artist,
           trackCount: artist.trackCount,
           artistGenres: artist.genres,
-          deviationScore: Math.round(deviationScore),
+          deviationScore,
           commonGenres,
           uniqueGenres,
         });
@@ -208,13 +200,24 @@ export class PlaylistService {
     const avgDeviation =
       artists.length > 0 ? totalDeviationScore / totalTracksInPlaylist : 0;
 
-    const consistencyScore = Math.round(Math.max(0, 100 - avgDeviation));
-
     // Calculate time analysis
     const timeAnalysis = this.calculateTimeAnalysis(tracks);
 
+    const genreScore = Math.round(Math.max(0, 100 - avgDeviation));
+    const timeScore =
+      timeAnalysis?.iqrYears !== undefined
+        ? Math.round(Math.max(0, 100 - timeAnalysis.iqrYears * 2))
+        : undefined;
+
+    const consistencyScore =
+      timeScore !== undefined
+        ? Math.round(0.75 * genreScore + 0.25 * timeScore)
+        : genreScore;
+
     return {
       consistencyScore,
+      genreScore,
+      timeScore,
       outliers,
       mainGenres: topGenres,
       totalArtists: artists.length,
@@ -257,6 +260,22 @@ export class PlaylistService {
     const minYear = Math.min(...years);
     const maxYear = Math.max(...years);
 
+    // Quartiles and IQR (for robust outlier detection)
+    const percentile = (p: number) => {
+      const idx = (sortedYears.length - 1) * p;
+      const lo = Math.floor(idx);
+      const hi = Math.ceil(idx);
+      if (lo === hi) return sortedYears[lo];
+      const w = idx - lo;
+      return Math.round(sortedYears[lo] * (1 - w) + sortedYears[hi] * w);
+    };
+
+    const q1Year = percentile(0.25);
+    const q3Year = percentile(0.75);
+    const iqrYears = q3Year - q1Year;
+    const lowerBound = q1Year - Math.round(1.5 * iqrYears);
+    const upperBound = q3Year + Math.round(1.5 * iqrYears);
+
     // Calculate decade distribution
     const decadeCounts = new Map<string, number>();
     years.forEach((year) => {
@@ -278,25 +297,15 @@ export class PlaylistService {
       });
 
     // Find time outliers based on decade distribution
-    // Tracks from decades with < 10% representation are considered outliers
     const timeOutliers: TimeOutlier[] = [];
-    const decadeThreshold = 10; // Decades with < 10% representation are outliers
-
-    // Create a set of decades that are underrepresented
-    const outlierDecades = new Set(
-      decadeDistribution
-        .filter((d) => d.percentage < decadeThreshold)
-        .map((d) => d.decade)
-    );
 
     tracks.forEach((track) => {
       const year = trackYears.get(track.id);
       if (year !== undefined) {
-        const decade = `${Math.floor(year / 10) * 10}s`;
         const deviationYears = Math.abs(year - medianYear);
 
-        // Consider as outlier if from an underrepresented decade
-        if (outlierDecades.has(decade)) {
+        // Robust outlier: outside Tukey fences (Q1/Q3 ± 1.5*IQR)
+        if (year < lowerBound || year > upperBound) {
           timeOutliers.push({
             track,
             releaseYear: year,
@@ -311,6 +320,10 @@ export class PlaylistService {
 
     return {
       medianYear,
+      q1Year,
+      q3Year,
+      iqrYears,
+      outlierBounds: { lower: lowerBound, upper: upperBound },
       yearRange: { min: minYear, max: maxYear },
       decadeDistribution,
       timeOutliers: timeOutliers.slice(0, 10), // Limit to top 10 outliers
