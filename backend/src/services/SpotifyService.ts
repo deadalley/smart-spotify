@@ -8,7 +8,7 @@ import {
   SpotifyTrack,
   SpotifyUser,
 } from "@smart-spotify/shared";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 type SpotifyAlbumTracksResponse = {
   items: Array<
@@ -28,6 +28,58 @@ export class SpotifyService {
   private baseURL = "https://api.spotify.com/v1";
 
   constructor(private accessToken: string) {}
+
+  private async sleep(ms: number) {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private async requestWithRetry<T>(
+    fn: () => Promise<T>,
+    {
+      maxAttempts = 5,
+      baseDelayMs = 500,
+    }: { maxAttempts?: number; baseDelayMs?: number } = {}
+  ): Promise<T> {
+    let attempt = 0;
+    for (;;) {
+      try {
+        return await fn();
+      } catch (err: unknown) {
+        attempt += 1;
+        const error = err as AxiosError;
+        const status = error.response?.status;
+
+        // Rate limit: respect Retry-After when present.
+        if (status === 429 && attempt < maxAttempts) {
+          const retryAfterHeader =
+            (error.response?.headers as Record<string, string | undefined>)?.[
+              "retry-after"
+            ];
+          const retryAfterSeconds = retryAfterHeader
+            ? Number(retryAfterHeader)
+            : NaN;
+          const waitMs = Number.isFinite(retryAfterSeconds)
+            ? Math.max(0, retryAfterSeconds) * 1000
+            : baseDelayMs * Math.pow(2, attempt - 1);
+
+          await this.sleep(waitMs);
+          continue;
+        }
+
+        // Transient upstream errors: retry with exponential backoff.
+        if (
+          (status === 500 || status === 502 || status === 503 || status === 504) &&
+          attempt < maxAttempts
+        ) {
+          const waitMs = baseDelayMs * Math.pow(2, attempt - 1);
+          await this.sleep(waitMs);
+          continue;
+        }
+
+        throw err;
+      }
+    }
+  }
 
   setAccessToken(accessToken: string) {
     this.accessToken = accessToken;
@@ -73,9 +125,11 @@ export class SpotifyService {
   }
 
   async getCurrentUser(): Promise<SpotifyUser> {
-    const response = await axios.get(`${this.baseURL}/me`, {
-      headers: this.getHeaders(),
-    });
+    const response = await this.requestWithRetry(() =>
+      axios.get(`${this.baseURL}/me`, {
+        headers: this.getHeaders(),
+      })
+    );
     return response.data;
   }
 
@@ -86,10 +140,12 @@ export class SpotifyService {
     let hasMore = true;
 
     while (hasMore) {
-      const response = await axios.get(`${this.baseURL}/me/playlists`, {
-        headers: this.getHeaders(),
-        params: { limit, offset },
-      });
+      const response = await this.requestWithRetry(() =>
+        axios.get(`${this.baseURL}/me/playlists`, {
+          headers: this.getHeaders(),
+          params: { limit, offset },
+        })
+      );
 
       const data: SpotifyPlaylistsResponse = response.data;
       allPlaylists.push(...data.items);
@@ -109,11 +165,10 @@ export class SpotifyService {
   }
 
   async getPlaylist(playlistId: string): Promise<SpotifyPlaylist> {
-    const response = await axios.get(
-      `${this.baseURL}/playlists/${playlistId}`,
-      {
+    const response = await this.requestWithRetry(() =>
+      axios.get(`${this.baseURL}/playlists/${playlistId}`, {
         headers: this.getHeaders(),
-      }
+      })
     );
     return response.data;
   }
@@ -127,12 +182,11 @@ export class SpotifyService {
     let hasMore = true;
 
     while (hasMore) {
-      const response = await axios.get(
-        `${this.baseURL}/playlists/${playlistId}/tracks`,
-        {
+      const response = await this.requestWithRetry(() =>
+        axios.get(`${this.baseURL}/playlists/${playlistId}/tracks`, {
           headers: this.getHeaders(),
           params: { limit, offset },
-        }
+        })
       );
 
       const data: SpotifyPlaylistTracksResponse = response.data;
@@ -146,9 +200,11 @@ export class SpotifyService {
   }
 
   async getAlbum(albumId: string): Promise<SpotifyAlbum> {
-    const response = await axios.get(`${this.baseURL}/albums/${albumId}`, {
-      headers: this.getHeaders(),
-    });
+    const response = await this.requestWithRetry(() =>
+      axios.get(`${this.baseURL}/albums/${albumId}`, {
+        headers: this.getHeaders(),
+      })
+    );
     return response.data;
   }
 
@@ -161,12 +217,11 @@ export class SpotifyService {
     let hasMore = true;
 
     while (hasMore) {
-      const response = await axios.get(
-        `${this.baseURL}/albums/${albumId}/tracks`,
-        {
+      const response = await this.requestWithRetry(() =>
+        axios.get(`${this.baseURL}/albums/${albumId}/tracks`, {
           headers: this.getHeaders(),
           params: { limit, offset },
-        }
+        })
       );
 
       const data: SpotifyAlbumTracksResponse = response.data;
@@ -186,10 +241,12 @@ export class SpotifyService {
     let hasMore = true;
 
     while (hasMore) {
-      const response = await axios.get(`${this.baseURL}/me/tracks`, {
-        headers: this.getHeaders(),
-        params: { limit, offset },
-      });
+      const response = await this.requestWithRetry(() =>
+        axios.get(`${this.baseURL}/me/tracks`, {
+          headers: this.getHeaders(),
+          params: { limit, offset },
+        })
+      );
 
       const data = response.data;
       allTracks.push(...data.items);
@@ -212,11 +269,10 @@ export class SpotifyService {
       const artistIdsString = batch.join(",");
 
       try {
-        const response = await axios.get(
-          `${this.baseURL}/artists?ids=${artistIdsString}`,
-          {
+        const response = await this.requestWithRetry(() =>
+          axios.get(`${this.baseURL}/artists?ids=${artistIdsString}`, {
             headers: this.getHeaders(),
-          }
+          })
         );
 
         const data: SpotifyArtistsResponse = response.data;
@@ -231,9 +287,11 @@ export class SpotifyService {
   }
 
   async getArtist(artistId: string): Promise<SpotifyArtist> {
-    const response = await axios.get(`${this.baseURL}/artists/${artistId}`, {
-      headers: this.getHeaders(),
-    });
+    const response = await this.requestWithRetry(() =>
+      axios.get(`${this.baseURL}/artists/${artistId}`, {
+        headers: this.getHeaders(),
+      })
+    );
     return response.data;
   }
 
@@ -311,30 +369,36 @@ export class SpotifyService {
   }
 
   async getTrack(trackId: string): Promise<SpotifyTrack> {
-    const response = await axios.get(`${this.baseURL}/tracks/${trackId}`, {
-      headers: this.getHeaders(),
-    });
+    const response = await this.requestWithRetry(() =>
+      axios.get(`${this.baseURL}/tracks/${trackId}`, {
+        headers: this.getHeaders(),
+      })
+    );
     return response.data;
   }
 
   async addTrackToPlaylist(playlistId: string, trackId: string): Promise<void> {
-    await axios.post(
-      `${this.baseURL}/playlists/${playlistId}/tracks`,
-      {
-        uris: [`spotify:track:${trackId}`],
-      },
-      {
-        headers: this.getHeaders(),
-      }
+    await this.requestWithRetry(() =>
+      axios.post(
+        `${this.baseURL}/playlists/${playlistId}/tracks`,
+        {
+          uris: [`spotify:track:${trackId}`],
+        },
+        {
+          headers: this.getHeaders(),
+        }
+      )
     );
   }
 
   async removeTrackFromSaved(trackId: string): Promise<void> {
-    await axios.delete(`${this.baseURL}/me/tracks`, {
-      headers: this.getHeaders(),
-      data: {
-        ids: [trackId],
-      },
-    });
+    await this.requestWithRetry(() =>
+      axios.delete(`${this.baseURL}/me/tracks`, {
+        headers: this.getHeaders(),
+        data: {
+          ids: [trackId],
+        },
+      })
+    );
   }
 }
