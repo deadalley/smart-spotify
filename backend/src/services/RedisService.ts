@@ -35,6 +35,16 @@ export class RedisService {
     return `${namespace}:${type}`;
   }
 
+  // Uses Redis SCAN (incremental) instead of KEYS (blocking).
+  // KEYS can stall Redis on large datasets; SCAN keeps Redis responsive as data grows.
+  private async scanKeys(match: string): Promise<string[]> {
+    const keys: string[] = [];
+    for await (const key of redisClient.scanIterator({ MATCH: match })) {
+      keys.push(key);
+    }
+    return keys;
+  }
+
   // User operations
   async storeUser(user: SpotifyUser): Promise<void> {
     const userKey = this.getRedisKey(user.id, "user");
@@ -68,7 +78,7 @@ export class RedisService {
   }
 
   async getUserPlaylists(userId: string): Promise<Playlist[]> {
-    const playlistKeys = await redisClient.keys(
+    const playlistKeys = await this.scanKeys(
       this.getRedisKey(userId, "playlist", "*")
     );
     const playlists: Playlist[] = [];
@@ -213,7 +223,7 @@ export class RedisService {
   }
 
   async getUserTracks(userId: string): Promise<Track[]> {
-    const trackKeys = await redisClient.keys(
+    const trackKeys = await this.scanKeys(
       this.getRedisKey(userId, "track", "*")
     );
     const tracks: Track[] = [];
@@ -305,7 +315,7 @@ export class RedisService {
   }
 
   async getUserArtists(userId: string): Promise<Artist[]> {
-    const artistKeys = await redisClient.keys(
+    const artistKeys = await this.scanKeys(
       this.getRedisKey(userId, "artist", "*")
     );
     const artists: Artist[] = [];
@@ -408,7 +418,7 @@ export class RedisService {
   async getPlaylistData(
     userId: string,
     playlistId: string
-  ): Promise<PlaylistData> {
+  ): Promise<PlaylistData | null> {
     // Fetch playlist and track IDs
     const [playlistData, trackIds] = await Promise.all([
       redisClient.hGetAll(this.getRedisKey(userId, "playlist", playlistId)),
@@ -418,6 +428,10 @@ export class RedisService {
         -1
       ),
     ]);
+
+    if (Object.keys(playlistData).length === 0) {
+      return null;
+    }
 
     const playlist = convertFromRedisPlaylist(playlistData);
 
@@ -670,7 +684,7 @@ export class RedisService {
 
   // Helper method to delete all user data
   async deleteUserData(userId: string): Promise<void> {
-    const allKeys = await redisClient.keys(this.getRedisKey(userId, "*"));
+    const allKeys = await this.scanKeys(this.getRedisKey(userId, "*"));
 
     if (allKeys.length > 0) {
       await redisClient.del(allKeys);

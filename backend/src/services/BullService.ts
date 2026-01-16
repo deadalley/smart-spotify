@@ -11,11 +11,10 @@ export class BullService {
   private persistWorker: Worker;
 
   constructor() {
+    const connection = this.getRedisConnection();
+
     this.persistQueue = new Queue(JobQueues.PERSIST_USER_DATA, {
-      connection: {
-        host: "localhost",
-        port: 6379,
-      },
+      connection,
     });
 
     this.persistWorker = new Worker(
@@ -24,15 +23,27 @@ export class BullService {
         return persistUserDataJob(job);
       },
       {
-        connection: {
-          host: "localhost",
-          port: 6379,
-        },
+        connection,
         concurrency: 1, // Process one persist job at a time
       }
     );
 
     this.setupWorkerListeners();
+  }
+
+  private getRedisConnection(): { host: string; port: number; password?: string } {
+    const url = process.env.REDIS_URL;
+    if (!url) {
+      return { host: "localhost", port: 6379 };
+    }
+
+    const parsed = new URL(url);
+    const password = parsed.password ? decodeURIComponent(parsed.password) : undefined;
+    return {
+      host: parsed.hostname,
+      port: parsed.port ? Number(parsed.port) : 6379,
+      ...(password ? { password } : {}),
+    };
   }
 
   private setupWorkerListeners(): void {
@@ -114,7 +125,11 @@ export class BullService {
   }
 
   // Jobs
-  async startPersistJob(userId: string, accessToken: string): Promise<string> {
+  async startPersistJob(
+    userId: string,
+    accessToken: string,
+    refreshToken?: string
+  ): Promise<string> {
     // Check if there's already an active job for this user
     const activeJobs = await this.persistQueue.getJobs(["waiting", "active"]);
     const existingJob = activeJobs.find((job) => job.data.userId === userId);
@@ -126,7 +141,7 @@ export class BullService {
     // Create a new job
     const job = await this.persistQueue.add(
       Jobs.PERSIST_USER_DATA,
-      { userId, accessToken },
+      { userId, accessToken, refreshToken },
       {
         attempts: 3,
         backoff: {

@@ -110,6 +110,10 @@ router.get(
         playlistId
       );
 
+      if (!playlistResponse) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
+
       res.json(playlistResponse);
     } catch (error: any) {
       console.error("Error fetching cached playlist tracks:", error);
@@ -164,6 +168,10 @@ router.get("/artists/:id", requireAuth, async (req: Request, res: Response) => {
 
     const artistResponse = await redisService.getArtist(user.id, artistId);
 
+    if (!artistResponse) {
+      return res.status(404).json({ error: "Artist not found" });
+    }
+
     res.json(artistResponse);
   } catch (error: any) {
     console.error("Error fetching cached artist tracks:", error);
@@ -208,6 +216,10 @@ router.get(
         user.id,
         playlistId
       );
+
+      if (!playlistAnalysis) {
+        return res.status(404).json({ error: "Playlist not found" });
+      }
 
       const consistencyAnalysis = playlistService.calculatePlaylistConsistency(
         playlistAnalysis.artists,

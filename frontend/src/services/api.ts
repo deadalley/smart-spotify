@@ -5,6 +5,7 @@ import {
   Playlist,
   PlaylistAnalysisResult,
   SpotifyArtistsResponse,
+  SpotifyTrack,
   SpotifyPlaylist,
   SpotifyPlaylistsResponse,
   SpotifyPlaylistTracksResponse,
@@ -16,6 +17,26 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "/api",
   withCredentials: true,
+});
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${escapeRegExp(name)}=([^;]*)`)
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+api.interceptors.request.use((config) => {
+  const csrf = getCookie("csrf_token");
+  if (csrf) {
+    config.headers = config.headers ?? {};
+    config.headers["X-CSRF-Token"] = csrf;
+  }
+  return config;
 });
 
 // Auth endpoints
@@ -46,7 +67,7 @@ export const spotifyAPI = {
   // Artists
   getArtists: () => api.get<SpotifyArtistsResponse>(`/spotify/artists`),
   getArtistTracks: (artistId: string) =>
-    api.get<Track[]>(`/spotify/artists/${artistId}/tracks`),
+    api.get<SpotifyTrack[]>(`/spotify/artists/${artistId}/tracks`),
 };
 
 // Base api endpoints
@@ -91,22 +112,36 @@ export const baseAPI = {
     api.patch(`/playlists/${playlistId}/type`, { playlistType }),
 };
 
-// Axios interceptors for error handling
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     if (error.response?.status === 401) {
-//       // Try to refresh token
-//       try {
-//         await authAPI.refreshToken();
-//         // Retry the original request
-//         return api.request(error.config);
-//       } catch (refreshError) {
-//         // Redirect to login if refresh fails
-//         window.location.href = "/login";
-//         return Promise.reject(refreshError);
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+// Axios interceptor: transparently refresh Spotify access token on 401 once.
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const status = error?.response?.status;
+    const originalRequest = error?.config as
+      | (typeof error.config & { _retry?: boolean })
+      | undefined;
+
+    if (status !== 401 || !originalRequest || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    // Don't try to refresh when the refresh itself failed
+    if (
+      typeof originalRequest.url === "string" &&
+      originalRequest.url.includes("/auth/refresh")
+    ) {
+      window.location.href = "/login";
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      await authAPI.refreshToken();
+      return api.request(originalRequest);
+    } catch (refreshError) {
+      window.location.href = "/login";
+      return Promise.reject(refreshError);
+    }
+  }
+);

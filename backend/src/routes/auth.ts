@@ -1,4 +1,5 @@
 import axios from "axios";
+import crypto from "crypto";
 import dotenv from "dotenv";
 import { Request, Response, Router } from "express";
 
@@ -10,16 +11,11 @@ const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const REDIRECT_URI =
   process.env.SPOTIFY_REDIRECT_URI || "http://127.0.0.1:3001/api/auth/callback";
+const CLIENT_URL = process.env.CLIENT_URL || "http://127.0.0.1:5173";
+const isProduction = process.env.NODE_ENV === "production";
 
-const generateRandomString = (length: number): string => {
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
+const generateRandomString = (bytes: number): string =>
+  crypto.randomBytes(bytes).toString("hex");
 
 router.get("/login", (req: Request, res: Response) => {
   const state = generateRandomString(16);
@@ -36,7 +32,8 @@ router.get("/login", (req: Request, res: Response) => {
 
   res.cookie("spotify_auth_state", state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProduction,
+    sameSite: "lax",
     maxAge: 10 * 60 * 1000, // 10 minutes
   });
 
@@ -50,10 +47,10 @@ router.get("/callback", async (req: Request, res: Response) => {
   const storedState = req.cookies?.spotify_auth_state;
 
   if (state === null || state !== storedState) {
-    return res.redirect(`${process.env.CLIENT_URL}?error=state_mismatch`);
+    return res.redirect(`${CLIENT_URL}?error=state_mismatch`);
   }
 
-  res.clearCookie("spotify_auth_state");
+  res.clearCookie("spotify_auth_state", { sameSite: "lax" });
 
   try {
     const response = await axios.post(
@@ -77,20 +74,22 @@ router.get("/callback", async (req: Request, res: Response) => {
 
     res.cookie("spotify_access_token", access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction,
+      sameSite: "lax",
       maxAge: expires_in * 1000,
     });
 
     res.cookie("spotify_refresh_token", refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction,
+      sameSite: "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
-    res.redirect(`${process.env.CLIENT_URL || "http://127.0.0.1:5173"}`);
+    res.redirect(CLIENT_URL);
   } catch (error) {
     console.error("Error during token exchange:", error);
-    res.redirect(`${process.env.CLIENT_URL}?error=invalid_token`);
+    res.redirect(`${CLIENT_URL}?error=invalid_token`);
   }
 });
 
@@ -122,7 +121,8 @@ router.post("/refresh", async (req: Request, res: Response) => {
 
     res.cookie("spotify_access_token", access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction,
+      sameSite: "lax",
       maxAge: expires_in * 1000,
     });
 
@@ -134,8 +134,8 @@ router.post("/refresh", async (req: Request, res: Response) => {
 });
 
 router.post("/logout", (req: Request, res: Response) => {
-  res.clearCookie("spotify_access_token");
-  res.clearCookie("spotify_refresh_token");
+  res.clearCookie("spotify_access_token", { sameSite: "lax" });
+  res.clearCookie("spotify_refresh_token", { sameSite: "lax" });
   res.json({ success: true });
 });
 

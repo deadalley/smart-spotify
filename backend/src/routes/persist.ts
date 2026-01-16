@@ -12,6 +12,7 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
   try {
     const spotifyService = new SpotifyService((req as any).accessToken);
     const user = await spotifyService.getCurrentUser();
+    const refreshToken = req.cookies?.spotify_refresh_token as string | undefined;
 
     const existingJobId = await bullService.getActiveJob(user.id);
 
@@ -26,7 +27,8 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
 
     const jobId = await bullService.startPersistJob(
       user.id,
-      (req as any).accessToken
+      (req as any).accessToken,
+      refreshToken
     );
 
     res.json({

@@ -100,6 +100,8 @@ export function SyncModal() {
   };
 
   const pollJobStatus = () => {
+    // Ensure we never create multiple polling intervals
+    stopPolling();
     const poll = async () => {
       try {
         const response = await baseAPI.getSyncStatus();

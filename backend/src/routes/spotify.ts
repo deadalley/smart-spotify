@@ -121,19 +121,11 @@ router.get("/artists", requireAuth, async (req: Request, res: Response) => {
     const spotifyService = new SpotifyService((req as any).accessToken);
     const artistsWithCounts = await spotifyService.getArtistsFromSavedTracks();
 
-    const artists = Array.from(artistsWithCounts.values()).map(
-      ({ artist, trackCount }) => ({
-        ...artist,
-        track_count: trackCount,
-      })
-    );
+    const artists = Array.from(artistsWithCounts.values())
+      .sort((a, b) => b.trackCount - a.trackCount)
+      .map(({ artist }) => artist);
 
-    artists.sort((a, b) => b.track_count - a.track_count);
-
-    res.json({
-      items: artists,
-      total: artists.length,
-    });
+    res.json({ artists });
   } catch (error: any) {
     console.error("Error fetching artists:", error);
     if (error.response?.status === 401) {
@@ -155,13 +147,11 @@ router.get(
         artistId
       );
 
-      res.json({
-        artist: result.artist,
-        tracks: {
-          items: result.tracks,
-          total: result.tracks.length,
-        },
-      });
+      const tracks = result.tracks
+        .filter((item) => item.track && !item.track.is_local)
+        .map((item) => item.track);
+
+      res.json(tracks);
     } catch (error: any) {
       console.error("Error fetching artist tracks:", error);
       if (error.response?.status === 401) {

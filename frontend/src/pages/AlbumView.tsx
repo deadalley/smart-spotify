@@ -1,6 +1,6 @@
 import { Album } from "@smart-spotify/shared";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Disc3, ExternalLink, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Disc3, ExternalLink } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";

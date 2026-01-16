@@ -15,6 +15,7 @@ enum JobProgressPercentage {
 export interface PersistJobData {
   userId: string;
   accessToken: string;
+  refreshToken?: string;
 }
 
 export function getPersistJobStatusMessage(progress: number): string {
@@ -55,11 +56,30 @@ function calculateProgress({
 export async function persistUserDataJob(
   job: Job<PersistJobData>
 ): Promise<void> {
-  const { userId, accessToken } = job.data;
+  const { userId, accessToken, refreshToken } = job.data;
 
   try {
     const spotifyService = new SpotifyService(accessToken);
     const redisService = new RedisService();
+
+    const refreshAccessToken = async () => {
+      if (!refreshToken) return;
+      const { accessToken: newToken } =
+        await spotifyService.refreshAccessToken(refreshToken);
+      spotifyService.setAccessToken(newToken);
+    };
+
+    const withAutoRefresh = async <T,>(fn: () => Promise<T>): Promise<T> => {
+      try {
+        return await fn();
+      } catch (error: any) {
+        if (error?.response?.status === 401 && refreshToken) {
+          await refreshAccessToken();
+          return await fn();
+        }
+        throw error;
+      }
+    };
 
     // Start job
     await job.updateProgress(JobProgressPercentage.START);
@@ -68,16 +88,21 @@ export async function persistUserDataJob(
     await redisService.deleteUserData(userId);
 
     // Store user info
-    const user = await spotifyService.getCurrentUser();
+    await refreshAccessToken();
+    const user = await withAutoRefresh(() => spotifyService.getCurrentUser());
     await redisService.storeUser(user);
     await job.updateProgress(JobProgressPercentage.USER_INFO_STORED);
 
     // Store playlists
-    const playlists = await spotifyService.getUserOwnedPlaylists();
+    const playlists = await withAutoRefresh(() =>
+      spotifyService.getUserOwnedPlaylists()
+    );
     await redisService.storePlaylists(userId, playlists);
 
     // Get saved tracks to store as a special playlist
-    const savedTracksData = await spotifyService.getUserSavedTracks();
+    const savedTracksData = await withAutoRefresh(() =>
+      spotifyService.getUserSavedTracks()
+    );
     const savedTracks = savedTracksData
       .filter((item) => item.track && !item.track.is_local)
       .map((item) => item.track);
@@ -119,8 +144,8 @@ export async function persistUserDataJob(
     for (let i = 0; i < playlists.length; i++) {
       const playlist = playlists[i];
 
-      const playlistTracks = await spotifyService.getPlaylistTracks(
-        playlist.id
+      const playlistTracks = await withAutoRefresh(() =>
+        spotifyService.getPlaylistTracks(playlist.id)
       );
 
       const validTracks = playlistTracks
@@ -171,7 +196,7 @@ export async function persistUserDataJob(
 
     for (let i = 0; i < artistIds.length; i += batchSize) {
       const batch = artistIds.slice(i, i + batchSize);
-      const artists = await spotifyService.getArtists(batch);
+      const artists = await withAutoRefresh(() => spotifyService.getArtists(batch));
 
       await redisService.storeArtists(userId, artists);
 

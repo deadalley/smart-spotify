@@ -29,6 +29,43 @@ export class SpotifyService {
 
   constructor(private accessToken: string) {}
 
+  setAccessToken(accessToken: string) {
+    this.accessToken = accessToken;
+  }
+
+  async refreshAccessToken(
+    refreshToken: string
+  ): Promise<{ accessToken: string; expiresIn: number }> {
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      throw new Error("Missing Spotify client credentials");
+    }
+
+    const response = await axios.post(
+      "https://accounts.spotify.com/api/token",
+      new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${Buffer.from(
+            `${clientId}:${clientSecret}`
+          ).toString("base64")}`,
+        },
+      }
+    );
+
+    const { access_token, expires_in } = response.data as {
+      access_token: string;
+      expires_in: number;
+    };
+
+    return { accessToken: access_token, expiresIn: expires_in };
+  }
+
   private getHeaders() {
     return {
       Authorization: `Bearer ${this.accessToken}`,
