@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, RefreshCw, Trash } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { baseAPI } from "../services/api";
 
 interface SyncState {
@@ -107,6 +108,7 @@ export function SyncModal() {
   const [state, dispatch] = useReducer(syncReducer, initialState);
   const pollingIntervalRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const isSuccess = state.completion === "sync" && state.syncProgress === 100;
   const syncMessageLower = state.syncMessage.toLowerCase();
   const isDeleting = state.isLoading && syncMessageLower.includes("delet");
@@ -257,6 +259,11 @@ export function SyncModal() {
     (document.getElementById("syncModal") as HTMLDialogElement)?.close();
   };
 
+  const handleStartSmartSpotify = () => {
+    handleClose();
+    navigate("/", { replace: true });
+  };
+
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete all synced data?")) {
       return;
@@ -403,7 +410,7 @@ export function SyncModal() {
           {state.syncProgress === 100 && !state.error ? (
             <button
               className="btn btn-primary w-full mt-2"
-              onClick={handleClose}
+              onClick={handleStartSmartSpotify}
             >
               Start SmartSpotify
             </button>
