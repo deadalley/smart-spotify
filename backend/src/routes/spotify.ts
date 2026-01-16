@@ -150,11 +150,18 @@ router.get(
         artistId
       );
 
-      const tracks = result.tracks
-        .filter((item) => item.track && !item.track.is_local)
-        .map((item) => item.track);
+      const items = result.tracks.filter(
+        (item) => item.track && !item.track.is_local
+      );
 
-      res.json(tracks);
+      res.json({
+        items,
+        total: items.length,
+        offset: 0,
+        limit: items.length,
+        next: null,
+        previous: null,
+      });
     } catch (error: any) {
       console.error("Error fetching artist tracks:", error);
       if (error.response?.status === 401) {

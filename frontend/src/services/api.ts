@@ -5,7 +5,6 @@ import {
   Playlist,
   PlaylistAnalysisResult,
   SpotifyArtistsResponse,
-  SpotifyTrack,
   SpotifyPlaylist,
   SpotifyPlaylistsResponse,
   SpotifyPlaylistTracksResponse,
@@ -67,7 +66,7 @@ export const spotifyAPI = {
   // Artists
   getArtists: () => api.get<SpotifyArtistsResponse>(`/spotify/artists`),
   getArtistTracks: (artistId: string) =>
-    api.get<SpotifyTrack[]>(`/spotify/artists/${artistId}/tracks`),
+    api.get<SpotifyPlaylistTracksResponse>(`/spotify/artists/${artistId}/tracks`),
 };
 
 // Base api endpoints
