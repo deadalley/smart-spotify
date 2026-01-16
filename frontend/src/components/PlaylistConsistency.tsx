@@ -2,6 +2,8 @@ import { PlaylistConsistencyAnalysis } from "@smart-spotify/shared";
 import { AlertTriangle, CheckCircle2, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { GenreBadge } from "./GenreBadge";
+import { Table } from "./Table";
+import { TableWrapper } from "./TableWrapper";
 
 export function PlaylistConsistency({
   consistencyAnalysis,
@@ -29,12 +31,6 @@ export function PlaylistConsistency({
     if (score >= 80) return "border-success/30";
     if (score >= 60) return "border-warning/30";
     return "border-error/30";
-  };
-
-  const getDeviationColor = (score: number) => {
-    if (score >= 80) return "bg-error/5 border-error/30";
-    if (score >= 70) return "bg-warning/5 border-warning/30";
-    return "bg-info/10 border-info/30";
   };
 
   const getBadgeVariant = (score: number) => {
@@ -119,78 +115,96 @@ export function PlaylistConsistency({
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {outliers.map((outlier) => {
-                const artistImage = outlier.artist.images[0]?.url;
-
-                return (
-                  <div
-                    key={outlier.artist.id}
-                    className={`card border ${getDeviationColor(
-                      outlier.deviationScore
-                    )} p-3 cursor-pointer hover:shadow-lg transition-all`}
-                    onClick={() => navigate(`/artists/${outlier.artist.id}`)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-base-300/50">
-                        {artistImage ? (
-                          <img
-                            src={artistImage}
-                            alt={outlier.artist.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <User size={20} className="text-base-content/30" />
+            <TableWrapper>
+              <Table
+                data={outliers}
+                enableFilter={false}
+                enableSorting={true}
+                getRowKey={(row) => row.artist.id}
+                onRowClick={(row) => navigate(`/artists/${row.artist.id}`)}
+                columns={[
+                  {
+                    id: "artist",
+                    header: "Artist",
+                    meta: { span: 6 },
+                    cell: ({ row }) => {
+                      const outlier = row.original;
+                      const artistImage = outlier.artist.images[0]?.url;
+                      return (
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-base-300/50">
+                            {artistImage ? (
+                              <img
+                                src={artistImage}
+                                alt={outlier.artist.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <User
+                                  size={18}
+                                  className="text-base-content/30"
+                                />
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
-                            <h5 className="font-semibold truncate">
+                            <div className="font-semibold truncate">
                               {outlier.artist.name}
-                            </h5>
-                            <p className="text-xs text-base-content/60">
-                              {outlier.trackCount} track
-                              {outlier.trackCount !== 1 ? "s" : ""}
-                            </p>
-                          </div>
-                          <div className="text-xl font-bold text-warning shrink-0">
-                            {outlier.deviationScore}
+                            </div>
+                            <div className="text-xs text-base-content/60 truncate">
+                              {outlier.uniqueGenres.slice(0, 2).join(", ")}
+                              {outlier.uniqueGenres.length > 2 ? "…" : ""}
+                            </div>
                           </div>
                         </div>
-
-                        {(outlier.uniqueGenres.length > 0 ||
-                          outlier.commonGenres.length > 0) && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {outlier.uniqueGenres.map((genre) => (
-                              <GenreBadge
-                                key={genre}
-                                genre={{ name: genre }}
-                                size="sm"
-                                variant={getBadgeVariant(
-                                  outlier.deviationScore
-                                )}
-                              />
-                            ))}
-                            {outlier.commonGenres.map((genre) => (
-                              <GenreBadge
-                                key={genre}
-                                genre={{ name: genre }}
-                                size="sm"
-                                variant="default"
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      );
+                    },
+                  },
+                  {
+                    id: "tracks",
+                    header: "Tracks",
+                    meta: { span: 2, align: "center" },
+                    accessorFn: (row) => row.trackCount,
+                    cell: ({ row }) => (
+                      <span className="text-sm text-base-content/70 tabular-nums">
+                        {row.original.trackCount}
+                      </span>
+                    ),
+                  },
+                  {
+                    id: "genres",
+                    header: "Genres",
+                    meta: { span: 4 },
+                    cell: ({ row }) => {
+                      const outlier = row.original;
+                      const unique = outlier.uniqueGenres.slice(0, 4);
+                      const common = outlier.commonGenres.slice(0, 2);
+                      return (
+                        <div className="flex flex-wrap gap-1 justify-start">
+                          {unique.map((g) => (
+                            <GenreBadge
+                              key={`u-${outlier.artist.id}-${g}`}
+                              genre={{ name: g }}
+                              size="xs"
+                              variant={getBadgeVariant(outlier.deviationScore)}
+                            />
+                          ))}
+                          {common.map((g) => (
+                            <GenreBadge
+                              key={`c-${outlier.artist.id}-${g}`}
+                              genre={{ name: g }}
+                              size="xs"
+                              variant="default"
+                            />
+                          ))}
+                        </div>
+                      );
+                    },
+                  },
+                ]}
+              />
+            </TableWrapper>
           )}
         </div>
       </div>
