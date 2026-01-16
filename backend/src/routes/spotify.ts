@@ -90,11 +90,14 @@ router.post(
       await spotifyService.addTrackToPlaylist(playlistId, trackId);
 
       // Update Redis cache
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
       const track = await spotifyService.getTrack(trackId);
 
       const redisService = new RedisService();
-      await redisService.addTrackToPlaylist(user.id, playlistId, track);
+      await redisService.addTrackToPlaylist(userId, playlistId, track);
 
       res.json({ success: true });
     } catch (error: any) {

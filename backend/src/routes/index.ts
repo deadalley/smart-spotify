@@ -15,10 +15,10 @@ const playlistService = new PlaylistService(redisService);
 
 router.get("/tracks", requireAuth, async (req: Request, res: Response) => {
   try {
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const user = await spotifyService.getCurrentUser();
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
-    const tracksResponse = await redisService.getUserTracks(user.id);
+    const tracksResponse = await redisService.getUserTracks(userId);
 
     res.json(tracksResponse);
   } catch (error: any) {
@@ -32,12 +32,12 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
       // Get saved tracks from Redis (stored as "liked-songs" playlist)
       const savedTracks = await redisService.getPlaylistTracks(
-        user.id,
+        userId,
         "liked-songs"
       );
 
@@ -55,7 +55,8 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
       const trackId = req.params.id;
 
       // Remove from Spotify
@@ -63,7 +64,7 @@ router.delete(
 
       // Remove from Redis cache
       await redisService.removeTrackFromPlaylist(
-        user.id,
+        userId,
         "liked-songs",
         trackId
       );
@@ -81,11 +82,11 @@ router.delete(
 
 router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
   try {
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const user = await spotifyService.getCurrentUser();
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
     const playlistsResponse = (
-      await redisService.getUserPlaylists(user.id)
+      await redisService.getUserPlaylists(userId)
     ).filter((p) => p.id !== "liked-songs");
 
     res.json(playlistsResponse);
@@ -100,13 +101,13 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
       const playlistId = req.params.id;
 
       const playlistResponse = await redisService.getPlaylist(
-        user.id,
+        userId,
         playlistId
       );
 
@@ -127,13 +128,13 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
       const playlistId = req.params.id;
 
       const tracksResponse = await redisService.getPlaylistTracks(
-        user.id,
+        userId,
         playlistId
       );
 
@@ -147,10 +148,10 @@ router.get(
 
 router.get("/artists", requireAuth, async (req: Request, res: Response) => {
   try {
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const user = await spotifyService.getCurrentUser();
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
-    const artistsResponse = await redisService.getUserArtists(user.id);
+    const artistsResponse = await redisService.getUserArtists(userId);
 
     res.json(artistsResponse);
   } catch (error: any) {
@@ -161,12 +162,12 @@ router.get("/artists", requireAuth, async (req: Request, res: Response) => {
 
 router.get("/artists/:id", requireAuth, async (req: Request, res: Response) => {
   try {
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const user = await spotifyService.getCurrentUser();
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
     const artistId = req.params.id;
 
-    const artistResponse = await redisService.getArtist(user.id, artistId);
+    const artistResponse = await redisService.getArtist(userId, artistId);
 
     if (!artistResponse) {
       return res.status(404).json({ error: "Artist not found" });
@@ -184,13 +185,13 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
       const artistId = req.params.id;
 
       const artistTracksResponse = await redisService.getArtistTracks(
-        user.id,
+        userId,
         artistId
       );
 
@@ -207,13 +208,13 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
       const playlistId = req.params.id;
 
       const playlistAnalysis = await redisService.getPlaylistData(
-        user.id,
+        userId,
         playlistId
       );
 
@@ -246,11 +247,11 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
       const aggregatedPlaylists = await playlistService.aggregatePlaylists(
-        user.id
+        userId
       );
 
       res.json(aggregatedPlaylists);
@@ -266,11 +267,11 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
       const aggregatedLikedSongs = await playlistService.aggregateLikedSongs(
-        user.id
+        userId
       );
 
       res.json(aggregatedLikedSongs);
@@ -333,8 +334,8 @@ router.patch(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const user = await spotifyService.getCurrentUser();
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
       const playlistId = req.params.id;
       const { playlistType } = req.body;
@@ -352,7 +353,7 @@ router.patch(
         });
       }
 
-      await redisService.updatePlaylistType(user.id, playlistId, playlistType);
+      await redisService.updatePlaylistType(userId, playlistId, playlistType);
 
       res.json({ success: true, playlistType });
     } catch (error: any) {

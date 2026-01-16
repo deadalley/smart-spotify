@@ -72,6 +72,12 @@ router.get("/callback", async (req: Request, res: Response) => {
 
     const { access_token, refresh_token, expires_in } = response.data;
 
+    // Fetch and persist user id once to avoid repeated /me calls in API routes.
+    const meResponse = await axios.get("https://api.spotify.com/v1/me", {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    const spotifyUserId = (meResponse.data as { id?: string }).id;
+
     res.cookie("spotify_access_token", access_token, {
       httpOnly: true,
       secure: isProduction,
@@ -85,6 +91,15 @@ router.get("/callback", async (req: Request, res: Response) => {
       sameSite: "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
+
+    if (spotifyUserId) {
+      res.cookie("spotify_user_id", spotifyUserId, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      });
+    }
 
     res.redirect(CLIENT_URL);
   } catch (error) {
@@ -136,6 +151,7 @@ router.post("/refresh", async (req: Request, res: Response) => {
 router.post("/logout", (req: Request, res: Response) => {
   res.clearCookie("spotify_access_token", { sameSite: "lax" });
   res.clearCookie("spotify_refresh_token", { sameSite: "lax" });
+  res.clearCookie("spotify_user_id", { sameSite: "lax" });
   res.json({ success: true });
 });
 

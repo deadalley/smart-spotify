@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
-import { RedisService, SpotifyService } from "../services";
+import { RedisService } from "../services";
 import { BullService } from "../services/BullService";
 
 const router: Router = Router();
@@ -10,11 +10,14 @@ const redisService = new RedisService();
 
 router.post("/", requireAuth, async (req: Request, res: Response) => {
   try {
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const user = await spotifyService.getCurrentUser();
     const refreshToken = req.cookies?.spotify_refresh_token as string | undefined;
+    const userId = (req as any).userId as string | undefined;
 
-    const existingJobId = await bullService.getActiveJob(user.id);
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const existingJobId = await bullService.getActiveJob(userId);
 
     if (existingJobId) {
       return res.json({
@@ -26,7 +29,7 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
     }
 
     const jobId = await bullService.startPersistJob(
-      user.id,
+      userId,
       (req as any).accessToken,
       refreshToken
     );
@@ -51,10 +54,12 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
 
 router.get("/status", requireAuth, async (req: Request, res: Response) => {
   try {
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const user = await spotifyService.getCurrentUser();
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
 
-    const activeJobId = await bullService.getActiveJob(user.id);
+    const activeJobId = await bullService.getActiveJob(userId);
 
     if (!activeJobId) {
       return res.json({
@@ -86,17 +91,19 @@ router.get("/status", requireAuth, async (req: Request, res: Response) => {
 
 router.delete("/", requireAuth, async (req: Request, res: Response) => {
   try {
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const user = await spotifyService.getCurrentUser();
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
 
-    const activeJobId = await bullService.getActiveJob(user.id);
+    const activeJobId = await bullService.getActiveJob(userId);
     if (activeJobId) {
       return res.status(400).json({
         error: "Cannot delete data while sync is in progress",
       });
     }
 
-    await redisService.deleteUserData(user.id);
+    await redisService.deleteUserData(userId);
 
     res.json({
       success: true,
