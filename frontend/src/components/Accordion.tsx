@@ -25,7 +25,10 @@ export function Accordion({
         <details
           key={name ? `${name}-item-${index}` : `accordion-item-${index}`}
           className="collapse collapse-arrow"
-          onClick={() => setIsOpen((s) => ({ ...s, [index]: !s[index] }))}
+          onToggle={(e) => {
+            const details = e.currentTarget as HTMLDetailsElement;
+            setIsOpen((s) => ({ ...s, [index]: details.open }));
+          }}
           open={isOpen[index]}
         >
           <summary className="collapse-title font-semibold">{title}</summary>
