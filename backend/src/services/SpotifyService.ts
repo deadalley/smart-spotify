@@ -1,4 +1,5 @@
 import {
+  SpotifyAlbum,
   SpotifyArtist,
   SpotifyArtistsResponse,
   SpotifyPlaylist,
@@ -8,6 +9,20 @@ import {
   SpotifyUser,
 } from "@smart-spotify/shared";
 import axios from "axios";
+
+type SpotifyAlbumTracksResponse = {
+  items: Array<
+    Omit<SpotifyTrack, "album" | "popularity"> & {
+      // Album tracks endpoint returns "simplified track objects" (no popularity, no album).
+      popularity?: number;
+    }
+  >;
+  total: number;
+  limit: number;
+  offset: number;
+  next: string | null;
+  previous?: string | null;
+};
 
 export class SpotifyService {
   private baseURL = "https://api.spotify.com/v1";
@@ -84,6 +99,40 @@ export class SpotifyService {
       );
 
       const data: SpotifyPlaylistTracksResponse = response.data;
+      allTracks.push(...data.items);
+
+      hasMore = data.next !== null;
+      offset += limit;
+    }
+
+    return allTracks;
+  }
+
+  async getAlbum(albumId: string): Promise<SpotifyAlbum> {
+    const response = await axios.get(`${this.baseURL}/albums/${albumId}`, {
+      headers: this.getHeaders(),
+    });
+    return response.data;
+  }
+
+  async getAlbumTracks(
+    albumId: string
+  ): Promise<SpotifyAlbumTracksResponse["items"]> {
+    const allTracks: SpotifyAlbumTracksResponse["items"] = [];
+    let offset = 0;
+    const limit = 50;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await axios.get(
+        `${this.baseURL}/albums/${albumId}/tracks`,
+        {
+          headers: this.getHeaders(),
+          params: { limit, offset },
+        }
+      );
+
+      const data: SpotifyAlbumTracksResponse = response.data;
       allTracks.push(...data.items);
 
       hasMore = data.next !== null;

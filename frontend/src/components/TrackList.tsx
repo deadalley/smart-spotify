@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, Clock, Heart } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { baseAPI } from "../services/api";
 import { formatDuration } from "../utils";
 import { Table } from "./Table";
@@ -121,9 +122,14 @@ export function TrackList({
       enableSorting: true,
       cell: ({ row }) => (
         <div className="min-w-0 flex-1">
-          <p className="text-base-content/70 text-sm truncate">
+          <Link
+            to={`/albums/${row.original.track.album.id}`}
+            className="text-base-content/70 text-sm truncate hover:text-primary transition-colors max-w-full"
+            onClick={(e) => e.stopPropagation()}
+            title={row.original.track.album.name}
+          >
             {row.original.track.album.name}
-          </p>
+          </Link>
         </div>
       ),
     },

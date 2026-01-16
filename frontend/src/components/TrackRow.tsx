@@ -1,6 +1,7 @@
 import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { formatDuration } from "../utils";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
 
@@ -50,9 +51,14 @@ export function TrackRow({
         </div>
 
         <div className="col-span-3 flex items-center">
-          <p className="text-base-content/70 text-sm truncate">
+          <Link
+            to={`/albums/${track.album.id}`}
+            className="text-base-content/70 text-sm truncate hover:text-primary transition-colors"
+            onClick={(e) => e.stopPropagation()}
+            title={track.album.name}
+          >
             {track.album.name}
-          </p>
+          </Link>
         </div>
 
         <div className="col-span-2 flex items-center justify-end">

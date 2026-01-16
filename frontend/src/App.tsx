@@ -4,6 +4,7 @@ import { Layout } from "./components/Layout";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Artists } from "./pages/Artists";
 import { ArtistView } from "./pages/ArtistView";
+import { AlbumView } from "./pages/AlbumView";
 import { Login } from "./pages/Login";
 import { Playlists } from "./pages/Playlists";
 import { PlaylistView } from "./pages/PlaylistView";
@@ -21,6 +22,7 @@ function App() {
           <Route path="saved-tracks" element={<SavedTracks />} />
           <Route path="artists" element={<Artists />} />
           <Route path="artists/:id" element={<ArtistView />} />
+          <Route path="albums/:id" element={<AlbumView />} />
         </Route>
       </Routes>
     </AuthProvider>

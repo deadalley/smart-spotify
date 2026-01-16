@@ -1,4 +1,5 @@
 import {
+  Album,
   Artist,
   PersistResponse,
   Playlist,
@@ -73,6 +74,11 @@ export const baseAPI = {
   getArtist: (artistId: string) => api.get<Artist>(`/artists/${artistId}`),
   getArtistTracks: (artistId: string) =>
     api.get<Track[]>(`/artists/${artistId}/tracks`),
+
+  // Albums
+  getAlbum: (albumId: string) => api.get<Album>(`/albums/${albumId}`),
+  getAlbumTracks: (albumId: string) =>
+    api.get<Track[]>(`/albums/${albumId}/tracks`),
 
   // Saved tracks
   getSavedTracks: () => api.get<Track[]>("/tracks/saved"),

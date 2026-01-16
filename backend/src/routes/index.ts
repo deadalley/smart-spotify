@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PlaylistAnalysisResult } from "@smart-spotify/shared";
+import {
+  convertFromSpotifyAlbum,
+  convertFromSpotifyTrack,
+  PlaylistAnalysisResult,
+  SpotifyTrack,
+} from "@smart-spotify/shared";
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { PlaylistService, RedisService, SpotifyService } from "../services";
@@ -260,6 +265,53 @@ router.get(
     } catch (error: any) {
       console.error("Error fetching aggregated liked songs:", error);
       res.status(500).json({ error: "Failed to fetch aggregated liked songs" });
+    }
+  }
+);
+
+router.get("/albums/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const spotifyService = new SpotifyService((req as any).accessToken);
+    const album = await spotifyService.getAlbum(req.params.id);
+    res.json(convertFromSpotifyAlbum(album));
+  } catch (error: any) {
+    console.error("Error fetching album:", error);
+    if (error.response?.status === 401) {
+      return res.status(401).json({ error: "Token expired" });
+    }
+    res.status(500).json({ error: "Failed to fetch album" });
+  }
+});
+
+router.get(
+  "/albums/:id/tracks",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const spotifyService = new SpotifyService((req as any).accessToken);
+      const [album, albumTracks] = await Promise.all([
+        spotifyService.getAlbum(req.params.id),
+        spotifyService.getAlbumTracks(req.params.id),
+      ]);
+
+      // Album tracks endpoint returns simplified tracks; enrich with album + default popularity.
+      const tracks = albumTracks.map((t) => {
+        const enriched: SpotifyTrack = {
+          ...(t as Omit<SpotifyTrack, "album" | "popularity">),
+          album,
+          popularity: (t as any).popularity ?? 0,
+        };
+
+        return convertFromSpotifyTrack(enriched);
+      });
+
+      res.json(tracks);
+    } catch (error: any) {
+      console.error("Error fetching album tracks:", error);
+      if (error.response?.status === 401) {
+        return res.status(401).json({ error: "Token expired" });
+      }
+      res.status(500).json({ error: "Failed to fetch album tracks" });
     }
   }
 );
