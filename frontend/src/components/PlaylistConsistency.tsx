@@ -152,10 +152,6 @@ export function PlaylistConsistency({
                             <div className="font-semibold truncate">
                               {outlier.artist.name}
                             </div>
-                            <div className="text-xs text-base-content/60 truncate">
-                              {outlier.uniqueGenres.slice(0, 2).join(", ")}
-                              {outlier.uniqueGenres.length > 2 ? "…" : ""}
-                            </div>
                           </div>
                         </div>
                       );
