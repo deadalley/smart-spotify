@@ -11,6 +11,81 @@ import {
 import { isTrackInPlaylist, isTrackNotInPlaylist } from "../utils";
 import { RedisService } from "./RedisService";
 
+type GenreInfo = {
+  normalized: string;
+  tokens: Set<string>;
+  roots: Set<string>;
+};
+
+function normalizeGenreName(name: string): string {
+  // Normalize common punctuation/formatting so small variations still match.
+  return (
+    name
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[()]/g, " ")
+      .replace(/[.,:;'"!?]/g, " ")
+      .replace(/[-/]/g, " ")
+      // Collapse whitespace
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
+function getGenreInfo(name: string): GenreInfo {
+  const normalized = normalizeGenreName(name);
+  const parts = normalized.split(" ").filter(Boolean);
+
+  const tokens = new Set(
+    parts
+      .map((p) => p.trim())
+      .filter(Boolean)
+      // Filter very short tokens to reduce noise (e.g., "a", "i", "k")
+      .filter((t) => t.length >= 2)
+  );
+
+  const roots = new Set<string>();
+  if (parts.length > 0) {
+    roots.add(parts[parts.length - 1]); // e.g. "yacht rock" -> "rock"
+  }
+  if (parts.length >= 2) {
+    roots.add(`${parts[parts.length - 2]} ${parts[parts.length - 1]}`); // e.g. "soul rock"
+  }
+
+  // Treat common multi-word genre families as roots too.
+  const normalizedSpaced = ` ${normalized} `;
+  if (normalizedSpaced.includes(" hip hop ")) roots.add("hip hop");
+  if (normalizedSpaced.includes(" drum and bass ")) roots.add("drum and bass");
+  if (normalizedSpaced.includes(" r and b ")) roots.add("r and b");
+
+  return { normalized, tokens, roots };
+}
+
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  for (const x of a) {
+    if (b.has(x)) intersection += 1;
+  }
+  const union = a.size + b.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+function genreSimilarity(a: GenreInfo, b: GenreInfo): number {
+  if (a.normalized === b.normalized) return 1;
+
+  // Strong match on "family" root, e.g. "glam rock" ~ "rock".
+  for (const r of a.roots) {
+    if (b.roots.has(r) && r.length >= 3) return 0.88;
+  }
+
+  // Token overlap as a softer fallback.
+  const j = jaccardSimilarity(a.tokens, b.tokens);
+  if (j <= 0) return 0;
+  // Keep this conservative to avoid accidental matches on generic tokens.
+  return Math.min(0.65, 0.65 * j);
+}
+
 export class PlaylistService {
   constructor(private redisService: RedisService) {}
 
@@ -142,7 +217,10 @@ export class PlaylistService {
       if (topGenres.length >= maxGenres) break;
       topGenres.push(g.name);
       covered += g.count;
-      if (topGenres.length >= minGenres && covered / totalTracksInPlaylist >= targetCoverage) {
+      if (
+        topGenres.length >= minGenres &&
+        covered / totalTracksInPlaylist >= targetCoverage
+      ) {
         break;
       }
     }
@@ -153,6 +231,43 @@ export class PlaylistService {
       genreFrequency.set(g.name, g.count / totalTracksInPlaylist);
     });
 
+    // Precompute genre infos + a cache for pairwise similarity
+    const genreInfoByName = new Map<string, GenreInfo>();
+    const getInfoCached = (name: string) => {
+      const existing = genreInfoByName.get(name);
+      if (existing) return existing;
+      const info = getGenreInfo(name);
+      genreInfoByName.set(name, info);
+      return info;
+    };
+
+    const similarityCache = new Map<string, number>();
+    const getSimilarityCached = (a: string, b: string) => {
+      // Stable key to avoid duplicating (a,b) vs (b,a)
+      const key = a < b ? `${a}|||${b}` : `${b}|||${a}`;
+      const existing = similarityCache.get(key);
+      if (existing !== undefined) return existing;
+      const sim = genreSimilarity(getInfoCached(a), getInfoCached(b));
+      similarityCache.set(key, sim);
+      return sim;
+    };
+
+    const playlistGenreNames = sortedGenres.map((g) => g.name);
+    const topGenreSimilarityThreshold = 0.85;
+    const bestSimilarGenreFrequency = (artistGenre: string) => {
+      // Best-match frequency across all playlist genres, weighted by similarity.
+      let best = 0;
+      for (const pg of playlistGenreNames) {
+        const base = genreFrequency.get(pg) ?? 0;
+        if (base <= 0) continue;
+        const sim = getSimilarityCached(artistGenre, pg);
+        if (sim <= 0) continue;
+        const candidate = base * sim;
+        if (candidate > best) best = candidate;
+      }
+      return best;
+    };
+
     // Analyze each artist for genre deviation
     const outliers: GenreOutlier[] = [];
     let totalDeviationScore = 0;
@@ -160,14 +275,20 @@ export class PlaylistService {
     artists.forEach((artist) => {
       if (artist.genres.length === 0 || artist.trackCount === 0) return;
 
-      const commonGenres = artist.genres.filter((g) => topGenres.includes(g));
-      const uniqueGenres = artist.genres.filter((g) => !topGenres.includes(g));
+      const commonGenres = artist.genres.filter((g) =>
+        topGenres.some(
+          (tg) => getSimilarityCached(g, tg) >= topGenreSimilarityThreshold
+        )
+      );
+      const uniqueGenres = artist.genres.filter(
+        (g) => !commonGenres.includes(g)
+      );
 
       // Fit-based deviation:
       // - avgFreq: mean playlist frequency of the artist's genres
       // - maxFreq: best-matching genre to playlist
       // Higher fit => lower deviation.
-      const freqs = artist.genres.map((g) => genreFrequency.get(g) ?? 0);
+      const freqs = artist.genres.map((g) => bestSimilarGenreFrequency(g));
       const avgFreq =
         freqs.length > 0 ? freqs.reduce((s, v) => s + v, 0) / freqs.length : 0;
       const maxFreq = freqs.length > 0 ? Math.max(...freqs) : 0;
@@ -182,7 +303,8 @@ export class PlaylistService {
       // Outliers: poor fit, with thresholds that still surface meaningful “odd ones out”.
       // (We still show the score for all outliers; UI can sort/limit as needed.)
       const isOutlier =
-        deviationScore >= 80 || (deviationScore >= 70 && artist.trackCount >= 3);
+        deviationScore >= 80 ||
+        (deviationScore >= 70 && artist.trackCount >= 3);
       if (isOutlier) {
         outliers.push({
           artist,
