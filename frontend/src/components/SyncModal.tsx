@@ -254,8 +254,12 @@ export function SyncModal() {
   };
 
   const handleClose = () => {
-    stopPolling();
-    dispatch({ type: "RESET" });
+    // If a sync job is running, allow closing the modal while keeping
+    // polling/state alive so the navbar button can reflect progress.
+    if (!state.isLoading) {
+      stopPolling();
+      dispatch({ type: "RESET" });
+    }
     (document.getElementById("syncModal") as HTMLDialogElement)?.close();
   };
 
@@ -449,8 +453,14 @@ export function SyncModal() {
         // @ts-expect-error daisyUI adds this
         onClick={() => document.getElementById("syncModal")?.showModal()}
       >
-        <RefreshCw size={14} />
-        Sync
+        {state.isLoading ? (
+          <span className="loading loading-spinner loading-sm"></span>
+        ) : (
+          <RefreshCw size={14} />
+        )}
+        {state.isLoading
+          ? `Syncing${state.syncProgress ? ` (${state.syncProgress}%)` : "…"}`
+          : "Sync"}
       </button>
     </>
   );
