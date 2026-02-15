@@ -29,10 +29,6 @@ export function Layout() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
   // Gate the app until a first successful sync has created library cache in Redis.
   if (isSyncStatusLoading) {
     return (

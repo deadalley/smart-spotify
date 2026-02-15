@@ -35,13 +35,24 @@
 Create env file:
 
 ```env
-CLIENT_ID=your_spotify_client_id
-CLIENT_SECRET=your_spotify_client_secret
-REDIRECT_URI=http://localhost:3000/api/auth/callback
-CLIENT_URL=http://localhost:5173
-SESSION_SECRET=your_random_session_secret
-REDIS_HOST=localhost
-REDIS_PORT=6379
+# Backend
+PORT=3001
+CLIENT_URL=http://127.0.0.1:5173
+NODE_ENV=development
+
+# Spotify OAuth
+SPOTIFY_CLIENT_ID=your_spotify_client_id
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+SPOTIFY_REDIRECT_URI=http://127.0.0.1:3001/api/auth/spotify/callback
+
+# YouTube (Google) OAuth
+# Enable "YouTube Data API v3" and create an OAuth Client ID (Web).
+YOUTUBE_CLIENT_ID=your_google_oauth_client_id
+YOUTUBE_CLIENT_SECRET=your_google_oauth_client_secret
+YOUTUBE_REDIRECT_URI=http://127.0.0.1:3001/api/auth/youtube/callback
+
+# Redis (optional; defaults to localhost:6379 if REDIS_URL is unset)
+# REDIS_URL=redis://localhost:6379
 ```
 
 Start the local development server
@@ -54,7 +65,7 @@ pnpm dev
 This will start:
 
 - Frontend: http://localhost:5173
-- Backend: http://localhost:3000
+- Backend: http://127.0.0.1:3001
 
 ## Project Structure
 
@@ -82,10 +93,17 @@ smart-spotify/
 
 ### Authentication
 
-- `GET /api/auth/login` - Initiate Spotify OAuth flow
-- `GET /api/auth/callback` - OAuth callback
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/me` - Get current user
+- `GET /api/auth/spotify/login` - Initiate Spotify OAuth flow
+- `GET /api/auth/spotify/callback` - Spotify OAuth callback
+- `POST /api/auth/spotify/logout` - Logout (Spotify)
+- `GET /api/auth/spotify/me` - Current user (Spotify)
+- `POST /api/auth/spotify/refresh` - Refresh Spotify access token
+
+- `GET /api/auth/youtube/login` - Initiate YouTube OAuth flow
+- `GET /api/auth/youtube/callback` - YouTube OAuth callback
+- `POST /api/auth/youtube/logout` - Logout (YouTube)
+- `GET /api/auth/youtube/me` - Current user (YouTube)
+- `POST /api/auth/youtube/refresh` - Refresh YouTube access token
 
 ### Data Persistence
 

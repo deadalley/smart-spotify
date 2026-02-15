@@ -14,8 +14,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const clientUrl =
-  process.env.CLIENT_URL || "http://127.0.0.1:5173";
+const clientUrl = process.env.CLIENT_URL || "http://127.0.0.1:5173";
 const isProduction = process.env.NODE_ENV === "production";
 
 // Helps secure cookies work correctly behind proxies in production
@@ -25,7 +24,7 @@ app.use(
   cors({
     origin: clientUrl,
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 app.use(cookieParser());
@@ -46,7 +45,11 @@ app.use((req, res, next) => {
     });
   }
 
-  if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
+  if (
+    req.method === "GET" ||
+    req.method === "HEAD" ||
+    req.method === "OPTIONS"
+  ) {
     return next();
   }
 

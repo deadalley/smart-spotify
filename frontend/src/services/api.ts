@@ -12,6 +12,7 @@ import {
   TrackAggregationResult,
 } from "@smart-spotify/shared";
 import axios from "axios";
+import type { AuthSource } from "../contexts/AuthContext";
 
 const api = axios.create({
   baseURL: "/api",
@@ -24,9 +25,22 @@ function escapeRegExp(value: string): string {
 
 function getCookie(name: string): string | null {
   const match = document.cookie.match(
-    new RegExp(`(?:^|; )${escapeRegExp(name)}=([^;]*)`)
+    new RegExp(`(?:^|; )${escapeRegExp(name)}=([^;]*)`),
   );
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+function getStoredSource(): AuthSource {
+  try {
+    const value = localStorage.getItem("smart_spotify_auth_source");
+    return value === "youtube" ? "youtube" : "spotify";
+  } catch {
+    return "spotify";
+  }
+}
+
+function getLoginPathForSource(source: AuthSource): string {
+  return source === "youtube" ? "/login/youtube" : "/login/spotify";
 }
 
 api.interceptors.request.use((config) => {
@@ -40,10 +54,22 @@ api.interceptors.request.use((config) => {
 
 // Auth endpoints
 export const authAPI = {
-  login: () => (window.location.href = "/api/auth/login"),
-  logout: () => api.post("/auth/logout"),
-  getUser: () => api.get("/auth/me"),
-  refreshToken: () => api.post("/auth/refresh"),
+  login: (source: AuthSource) => {
+    window.location.href =
+      source === "youtube"
+        ? "/api/auth/youtube/login"
+        : "/api/auth/spotify/login";
+  },
+  logout: (source: AuthSource) =>
+    api.post(
+      source === "youtube" ? "/auth/youtube/logout" : "/auth/spotify/logout",
+    ),
+  getUser: (source: AuthSource) =>
+    api.get(source === "youtube" ? "/auth/youtube/me" : "/auth/spotify/me"),
+  refreshToken: (source: AuthSource) =>
+    api.post(
+      source === "youtube" ? "/auth/youtube/refresh" : "/auth/spotify/refresh",
+    ),
 };
 
 // Spotify endpoints
@@ -57,7 +83,7 @@ export const spotifyAPI = {
 
   getPlaylistTracks: (playlistId: string, offset = 0) =>
     api.get<SpotifyPlaylistTracksResponse>(
-      `/spotify/playlists/${playlistId}/tracks?offset=${offset}`
+      `/spotify/playlists/${playlistId}/tracks?offset=${offset}`,
     ),
 
   addTrackToPlaylist: (playlistId: string, trackId: string) =>
@@ -66,7 +92,9 @@ export const spotifyAPI = {
   // Artists
   getArtists: () => api.get<SpotifyArtistsResponse>(`/spotify/artists`),
   getArtistTracks: (artistId: string) =>
-    api.get<SpotifyPlaylistTracksResponse>(`/spotify/artists/${artistId}/tracks`),
+    api.get<SpotifyPlaylistTracksResponse>(
+      `/spotify/artists/${artistId}/tracks`,
+    ),
 };
 
 // Base api endpoints
@@ -111,36 +139,37 @@ export const baseAPI = {
     api.patch(`/playlists/${playlistId}/type`, { playlistType }),
 };
 
-// Axios interceptor: transparently refresh Spotify access token on 401 once.
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const status = error?.response?.status;
-    const originalRequest = error?.config as
-      | (typeof error.config & { _retry?: boolean })
-      | undefined;
+// Axios interceptor: transparently refresh access token on 401 once.
+// api.interceptors.response.use(
+//   (response) => response,
+//   async (error) => {
+//     const status = error?.response?.status;
+//     const originalRequest = error?.config as
+//       | (typeof error.config & { _retry?: boolean })
+//       | undefined;
 
-    if (status !== 401 || !originalRequest || originalRequest._retry) {
-      return Promise.reject(error);
-    }
+//     if (status !== 401 || !originalRequest || originalRequest._retry) {
+//       return Promise.reject(error);
+//     }
 
-    // Don't try to refresh when the refresh itself failed
-    if (
-      typeof originalRequest.url === "string" &&
-      originalRequest.url.includes("/auth/refresh")
-    ) {
-      window.location.href = "/login";
-      return Promise.reject(error);
-    }
+//     // Don't try to refresh when the refresh itself failed
+//     if (
+//       typeof originalRequest.url === "string" &&
+//       (originalRequest.url.includes("/auth/spotify/refresh") ||
+//         originalRequest.url.includes("/auth/youtube/refresh"))
+//     ) {
+//       window.location.href = "/";
+//       return Promise.reject(error);
+//     }
 
-    originalRequest._retry = true;
+//     originalRequest._retry = true;
 
-    try {
-      await authAPI.refreshToken();
-      return api.request(originalRequest);
-    } catch (refreshError) {
-      window.location.href = "/login";
-      return Promise.reject(refreshError);
-    }
-  }
-);
+//     try {
+//       await authAPI.refreshToken(getStoredSource());
+//       return api.request(originalRequest);
+//     } catch (refreshError) {
+//       window.location.href = "/";
+//       return Promise.reject(refreshError);
+//     }
+//   },
+// );

@@ -12,7 +12,8 @@ export function Navbar() {
     logout();
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const navLinks = [
     { path: "/saved-tracks", label: "Liked Songs", icon: Heart },

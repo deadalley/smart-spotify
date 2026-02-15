@@ -19,14 +19,18 @@ import {
 } from "@smart-spotify/shared";
 import { redisClient } from "../redis";
 
+export type MusicSource = "spotify" | "yt-music";
+
 export class RedisService {
+  constructor(private source: MusicSource = "spotify") {}
+
   // Generic function to generate Redis keys
   private getRedisKey(
     userId: string,
     type: string,
     ...keys: (string | undefined)[]
   ): string {
-    const namespace = `smart-spotify:${userId}`;
+    const namespace = `smart-spotify:${userId}:${this.source}`;
 
     if (keys?.length) {
       return `${namespace}:${type}:${keys.join(":")}`;
@@ -136,9 +140,9 @@ export class RedisService {
     // Filter keys to only include direct playlist hash keys (not relationship sets)
     const directplaylistKeys = playlistKeys.filter((key) => {
       const parts = key.split(":");
-      // playlist hash keys have exactly 4 parts: smart-spotify:userId:playlist:playlistId
-      // Relationship keys have 5+ parts: smart-spotify:userId:playlist:playlistId:tracks
-      return parts.length === 4;
+      // playlist hash keys: smart-spotify:userId:source:playlist:playlistId
+      // relationship keys: smart-spotify:userId:source:playlist:playlistId:tracks
+      return parts.length === 5;
     });
 
     for (const playlistKey of directplaylistKeys) {
@@ -274,17 +278,15 @@ export class RedisService {
   }
 
   async getUserTracks(userId: string): Promise<Track[]> {
-    const trackKeys = await this.scanKeys(
-      this.getRedisKey(userId, "track", "*")
-    );
+    const trackKeys = await this.scanKeys(this.getRedisKey(userId, "track", "*"));
     const tracks: Track[] = [];
 
     // Filter keys to only include direct track hash keys (not relationship sets)
     const directTrackKeys = trackKeys.filter((key) => {
       const parts = key.split(":");
-      // Track hash keys have exactly 4 parts: smart-spotify:userId:track:trackId
-      // Relationship keys have 5+ parts: smart-spotify:userId:track:trackId:playlists/artists
-      return parts.length === 4;
+      // track hash keys: smart-spotify:userId:source:track:trackId
+      // relationship keys: smart-spotify:userId:source:track:trackId:artists/playlists
+      return parts.length === 5;
     });
 
     for (const trackKey of directTrackKeys) {
@@ -308,12 +310,7 @@ export class RedisService {
     userId: string,
     playlistId: string
   ): Promise<Track[]> {
-    const tracksKey = this.getRedisKey(
-      userId,
-      "playlist",
-      playlistId,
-      "tracks"
-    );
+    const tracksKey = this.getRedisKey(userId, "playlist", playlistId, "tracks");
     const trackIds = await redisClient.zRange(tracksKey, 0, -1);
 
     const tracks: Track[] = [];
@@ -370,17 +367,15 @@ export class RedisService {
   }
 
   async getUserArtists(userId: string): Promise<Artist[]> {
-    const artistKeys = await this.scanKeys(
-      this.getRedisKey(userId, "artist", "*")
-    );
+    const artistKeys = await this.scanKeys(this.getRedisKey(userId, "artist", "*"));
     const artists: Artist[] = [];
 
     // Filter keys to only include direct artist hash keys (not relationship sets)
     const directArtistKeys = artistKeys.filter((key) => {
       const parts = key.split(":");
-      // Artist hash keys have exactly 4 parts: smart-spotify:userId:artist:artistId
-      // Relationship keys have 5+ parts: smart-spotify:userId:artist:artistId:tracks/playlists
-      return parts.length === 4;
+      // artist hash keys: smart-spotify:userId:source:artist:artistId
+      // relationship keys: smart-spotify:userId:source:artist:artistId:tracks/playlists
+      return parts.length === 5;
     });
 
     for (const artistKey of directArtistKeys) {
@@ -417,9 +412,7 @@ export class RedisService {
 
     const pipeline = redisClient.multi();
 
-    const artistKeys = artistIds.map((id) =>
-      this.getRedisKey(userId, "artist", id)
-    );
+    const artistKeys = artistIds.map((id) => this.getRedisKey(userId, "artist", id));
     artistKeys.forEach((key) => pipeline.hGetAll(key));
 
     const trackKeys = artistIds.map((id) =>
@@ -739,7 +732,8 @@ export class RedisService {
 
   // Helper method to delete all user data
   async deleteUserData(userId: string): Promise<void> {
-    const allKeys = await this.scanKeys(this.getRedisKey(userId, "*"));
+    // Delete *all* keys for this user across legacy + all sources.
+    const allKeys = await this.scanKeys(`smart-spotify:${userId}:*`);
 
     if (allKeys.length > 0) {
       await redisClient.del(allKeys);

@@ -8,12 +8,28 @@ import {
   useState,
 } from "react";
 import { authAPI } from "../services/api";
+import { useNavigate } from "react-router-dom";
+
+export type AuthSource = "spotify" | "youtube";
+
+const AUTH_SOURCE_STORAGE_KEY = "smart_spotify_auth_source";
+
+function getStoredSource(): AuthSource {
+  const value = localStorage.getItem(AUTH_SOURCE_STORAGE_KEY);
+  return value === "youtube" ? "youtube" : "spotify";
+}
+
+function applyThemeForSource(source: AuthSource) {
+  document.documentElement.setAttribute("data-theme", source);
+}
 
 interface AuthContextType {
   user: SpotifyUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: () => void;
+  source: AuthSource;
+  setSource: (source: AuthSource) => void;
+  login: (source: AuthSource) => void;
   logout: () => void;
 }
 
@@ -25,13 +41,17 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [source, setSourceState] = useState<AuthSource>(() =>
+    getStoredSource(),
+  );
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: user, isLoading } = useQuery({
-    queryKey: ["user"],
+    queryKey: ["user", source],
     queryFn: async () => {
-      const response = await authAPI.getUser();
-      setIsAuthenticated(true);
+      const response = await authAPI.getUser(source);
+      // setIsAuthenticated(true);
       return response.data;
     },
     retry: false,
@@ -39,16 +59,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
 
   const logoutMutation = useMutation({
-    mutationFn: authAPI.logout,
+    mutationFn: () => authAPI.logout(source),
     onSuccess: () => {
       setIsAuthenticated(false);
       queryClient.clear();
-      window.location.href = "/login";
+      navigate("/login");
     },
   });
 
-  const login = () => {
-    authAPI.login();
+  const setSource = (nextSource: AuthSource) => {
+    localStorage.setItem(AUTH_SOURCE_STORAGE_KEY, nextSource);
+    setSourceState(nextSource);
+  };
+
+  const login = (loginSource: AuthSource) => {
+    setSource(loginSource);
+    authAPI.login(loginSource);
   };
 
   const logout = () => {
@@ -56,15 +82,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   useEffect(() => {
-    if (user) {
-      setIsAuthenticated(true);
-    }
-  }, [user]);
+    applyThemeForSource(source);
+  }, [source]);
 
   const value: AuthContextType = {
     user: user || null,
     isLoading,
     isAuthenticated,
+    source,
+    setSource,
     login,
     logout,
   };
