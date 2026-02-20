@@ -5,6 +5,7 @@ import {
   persistUserDataJob,
 } from "../jobs/persistUserData";
 import { JobProgress, JobQueues, Jobs, JobStatus } from "../types";
+import type { MusicSource } from "./RedisService";
 
 export class BullService {
   private persistQueue: Queue;
@@ -128,7 +129,8 @@ export class BullService {
   async startPersistJob(
     userId: string,
     accessToken: string,
-    refreshToken?: string
+    refreshToken: string | undefined,
+    source: MusicSource
   ): Promise<string> {
     // Check if there's already an active job for this user
     const activeJobs = await this.persistQueue.getJobs(["waiting", "active"]);
@@ -141,7 +143,7 @@ export class BullService {
     // Create a new job
     const job = await this.persistQueue.add(
       Jobs.PERSIST_USER_DATA,
-      { userId, accessToken, refreshToken },
+      { userId, accessToken, refreshToken, source } satisfies PersistJobData,
       {
         attempts: 3,
         backoff: {

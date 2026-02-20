@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { authAPI } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export type AuthSource = "spotify" | "youtube";
 
@@ -46,12 +46,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["user", source],
     queryFn: async () => {
       const response = await authAPI.getUser(source);
-      // setIsAuthenticated(true);
+      setIsAuthenticated(true);
       return response.data;
     },
     retry: false,
@@ -84,6 +85,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     applyThemeForSource(source);
   }, [source]);
+
+  useEffect(() => {
+    if (user && location.pathname.includes("/login")) {
+      navigate("/");
+    }
+  }, [user, location]);
 
   const value: AuthContextType = {
     user: user || null,

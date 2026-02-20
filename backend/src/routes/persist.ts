@@ -3,14 +3,23 @@ import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { RedisService } from "../services";
 import { BullService } from "../services/BullService";
+import type { MusicSource } from "../services/RedisService";
 
 const router: Router = Router();
 const bullService = new BullService();
-const redisService = new RedisService();
+
+function getRequestSource(req: Request): MusicSource {
+  const source = (req as any).source as MusicSource | undefined;
+  return source === "yt-music" ? "yt-music" : "spotify";
+}
 
 router.post("/", requireAuth, async (req: Request, res: Response) => {
   try {
-    const refreshToken = req.cookies?.spotify_refresh_token as string | undefined;
+    const source = getRequestSource(req);
+    const refreshToken =
+      source === "spotify"
+        ? (req.cookies?.spotify_refresh_token as string | undefined)
+        : (req.cookies?.youtube_refresh_token as string | undefined);
     const userId = (req as any).userId as string | undefined;
 
     if (!userId) {
@@ -31,7 +40,8 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
     const jobId = await bullService.startPersistJob(
       userId,
       (req as any).accessToken,
-      refreshToken
+      refreshToken,
+      source
     );
 
     res.json({
@@ -54,6 +64,7 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
 
 router.get("/status", requireAuth, async (req: Request, res: Response) => {
   try {
+    const redisService = new RedisService(getRequestSource(req));
     const userId = (req as any).userId as string | undefined;
     if (!userId) {
       return res.status(401).json({ error: "Not authenticated" });
@@ -105,6 +116,7 @@ router.get("/status", requireAuth, async (req: Request, res: Response) => {
 
 router.delete("/", requireAuth, async (req: Request, res: Response) => {
   try {
+    const redisService = new RedisService(getRequestSource(req));
     const userId = (req as any).userId as string | undefined;
     if (!userId) {
       return res.status(401).json({ error: "Not authenticated" });

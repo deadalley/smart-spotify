@@ -8,13 +8,18 @@ import {
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { PlaylistService, RedisService, SpotifyService } from "../services";
+import type { MusicSource } from "../services/RedisService";
 
 const router: Router = Router();
-const redisService = new RedisService();
-const playlistService = new PlaylistService(redisService);
+
+function getRequestSource(req: Request): MusicSource {
+  const source = (req as any).source as MusicSource | undefined;
+  return source === "yt-music" ? "yt-music" : "spotify";
+}
 
 router.get("/tracks", requireAuth, async (req: Request, res: Response) => {
   try {
+    const redisService = new RedisService(getRequestSource(req));
     const userId = (req as any).userId as string | undefined;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -32,6 +37,7 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const redisService = new RedisService(getRequestSource(req));
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -54,6 +60,12 @@ router.delete(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      if (getRequestSource(req) !== "spotify") {
+        return res
+          .status(501)
+          .json({ error: "Removing saved tracks not supported for YouTube yet" });
+      }
+      const redisService = new RedisService(getRequestSource(req));
       const spotifyService = new SpotifyService((req as any).accessToken);
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
@@ -82,6 +94,7 @@ router.delete(
 
 router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
   try {
+    const redisService = new RedisService(getRequestSource(req));
     const userId = (req as any).userId as string | undefined;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -101,6 +114,7 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const redisService = new RedisService(getRequestSource(req));
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -128,6 +142,7 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const redisService = new RedisService(getRequestSource(req));
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -148,6 +163,7 @@ router.get(
 
 router.get("/artists", requireAuth, async (req: Request, res: Response) => {
   try {
+    const redisService = new RedisService(getRequestSource(req));
     const userId = (req as any).userId as string | undefined;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -162,6 +178,7 @@ router.get("/artists", requireAuth, async (req: Request, res: Response) => {
 
 router.get("/artists/:id", requireAuth, async (req: Request, res: Response) => {
   try {
+    const redisService = new RedisService(getRequestSource(req));
     const userId = (req as any).userId as string | undefined;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -185,6 +202,7 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const redisService = new RedisService(getRequestSource(req));
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -208,6 +226,8 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const redisService = new RedisService(getRequestSource(req));
+      const playlistService = new PlaylistService(redisService);
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -247,6 +267,8 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const redisService = new RedisService(getRequestSource(req));
+      const playlistService = new PlaylistService(redisService);
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -267,6 +289,8 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const redisService = new RedisService(getRequestSource(req));
+      const playlistService = new PlaylistService(redisService);
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
@@ -284,6 +308,9 @@ router.get(
 
 router.get("/albums/:id", requireAuth, async (req: Request, res: Response) => {
   try {
+    if (getRequestSource(req) !== "spotify") {
+      return res.status(501).json({ error: "Albums not supported for YouTube" });
+    }
     const spotifyService = new SpotifyService((req as any).accessToken);
     const album = await spotifyService.getAlbum(req.params.id);
     res.json(convertFromSpotifyAlbum(album));
@@ -301,6 +328,11 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      if (getRequestSource(req) !== "spotify") {
+        return res
+          .status(501)
+          .json({ error: "Album tracks not supported for YouTube" });
+      }
       const spotifyService = new SpotifyService((req as any).accessToken);
       const [album, albumTracks] = await Promise.all([
         spotifyService.getAlbum(req.params.id),
@@ -334,6 +366,7 @@ router.patch(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      const redisService = new RedisService(getRequestSource(req));
       const userId = (req as any).userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "Not authenticated" });
 

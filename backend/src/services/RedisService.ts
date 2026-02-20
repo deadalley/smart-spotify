@@ -1,5 +1,9 @@
 import {
   Artist,
+  convertToRedisArtist,
+  convertToRedisPlaylist,
+  convertToRedisTrack,
+  convertToRedisUser,
   convertFromRedisArtist,
   convertFromRedisPlaylist,
   convertFromRedisTrack,
@@ -102,6 +106,12 @@ export class RedisService {
     await redisClient.hSet(userKey, userData);
   }
 
+  async storeUserDomain(user: User): Promise<void> {
+    const userKey = this.getRedisKey(user.id, "user");
+    const userData = convertToRedisUser(user);
+    await redisClient.hSet(userKey, userData);
+  }
+
   async getUser(userId: string): Promise<User | null> {
     const userKey = this.getRedisKey(userId, "user");
     const userData = await redisClient.hGetAll(userKey);
@@ -125,6 +135,19 @@ export class RedisService {
     for (const playlist of playlists) {
       const playlistKey = this.getRedisKey(userId, "playlist", playlist.id);
       const playlistData = convertSpotifyPlaylistToRedis(playlist);
+      pipeline.hSet(playlistKey, playlistData);
+    }
+
+    await pipeline.exec();
+  }
+
+  async storePlaylistsDomain(userId: string, playlists: Playlist[]): Promise<void> {
+    if (playlists.length === 0) return;
+
+    const pipeline = redisClient.multi();
+    for (const playlist of playlists) {
+      const playlistKey = this.getRedisKey(userId, "playlist", playlist.id);
+      const playlistData = convertToRedisPlaylist(playlist);
       pipeline.hSet(playlistKey, playlistData);
     }
 
@@ -275,6 +298,86 @@ export class RedisService {
 
       await pipeline.exec();
     }
+  }
+
+  async storeTracksDomain(
+    userId: string,
+    playlistId: string,
+    tracks: Track[]
+  ): Promise<void> {
+    if (tracks.length === 0) return;
+
+    const tracksKey = this.getRedisKey(userId, "playlist", playlistId, "tracks");
+
+    // Clear existing sorted set once (maintains order via score).
+    await redisClient.del(tracksKey);
+
+    const chunkSize = 200;
+    for (let offset = 0; offset < tracks.length; offset += chunkSize) {
+      const chunk = tracks.slice(offset, offset + chunkSize);
+      const pipeline = redisClient.multi();
+      const sortedSetData: { score: number; value: string }[] = [];
+
+      for (let i = 0; i < chunk.length; i++) {
+        const globalIndex = offset + i;
+        const track = chunk[i];
+        const playlistPosition = globalIndex;
+
+        const trackKey = this.getRedisKey(userId, "track", track.id);
+        const trackData = convertToRedisTrack({
+          ...track,
+          playlistPosition,
+        });
+
+        pipeline.hSet(trackKey, trackData);
+
+        // Track-playlist relationship
+        pipeline.sAdd(
+          this.getRedisKey(userId, "track", track.id, "playlists"),
+          playlistId
+        );
+
+        // Track ordering
+        sortedSetData.push({ score: playlistPosition, value: track.id });
+
+        // Artist relationships
+        for (const artistId of track.artistIds) {
+          pipeline.sAdd(
+            this.getRedisKey(userId, "artist", artistId, "tracks"),
+            track.id
+          );
+
+          pipeline.sAdd(
+            this.getRedisKey(userId, "artist", artistId, "playlists"),
+            playlistId
+          );
+
+          pipeline.sAdd(
+            this.getRedisKey(userId, "track", track.id, "artists"),
+            artistId
+          );
+        }
+      }
+
+      if (sortedSetData.length > 0) {
+        pipeline.zAdd(tracksKey, sortedSetData);
+      }
+
+      await pipeline.exec();
+    }
+  }
+
+  async storeArtistsDomain(userId: string, artists: Artist[]): Promise<void> {
+    if (artists.length === 0) return;
+
+    const pipeline = redisClient.multi();
+    for (const artist of artists) {
+      const artistKey = this.getRedisKey(userId, "artist", artist.id);
+      const artistData = convertToRedisArtist(artist);
+      pipeline.hSet(artistKey, artistData);
+    }
+
+    await pipeline.exec();
   }
 
   async getUserTracks(userId: string): Promise<Track[]> {
@@ -732,9 +835,17 @@ export class RedisService {
 
   // Helper method to delete all user data
   async deleteUserData(userId: string): Promise<void> {
-    // Delete *all* keys for this user across legacy + all sources.
-    const allKeys = await this.scanKeys(`smart-spotify:${userId}:*`);
+    // Delete keys for this user *for this source only*.
+    const allKeys = await this.scanKeys(`smart-spotify:${userId}:${this.source}:*`);
 
+    if (allKeys.length > 0) {
+      await redisClient.del(allKeys);
+    }
+  }
+
+  // Escape hatch for admin/debug use if needed.
+  async deleteUserDataAllSources(userId: string): Promise<void> {
+    const allKeys = await this.scanKeys(`smart-spotify:${userId}:*`);
     if (allKeys.length > 0) {
       await redisClient.del(allKeys);
     }

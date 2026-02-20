@@ -2,11 +2,20 @@
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { RedisService, SpotifyService } from "../services";
+import type { MusicSource } from "../services/RedisService";
 
 const router: Router = Router();
 
+function getRequestSource(req: Request): MusicSource {
+  const source = (req as any).source as MusicSource | undefined;
+  return source === "yt-music" ? "yt-music" : "spotify";
+}
+
 router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
   try {
+    if (getRequestSource(req) !== "spotify") {
+      return res.status(400).json({ error: "Spotify session required" });
+    }
     const spotifyService = new SpotifyService((req as any).accessToken);
     const userOwnedPlaylists = await spotifyService.getUserOwnedPlaylists();
 
@@ -32,6 +41,9 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      if (getRequestSource(req) !== "spotify") {
+        return res.status(400).json({ error: "Spotify session required" });
+      }
       const spotifyService = new SpotifyService((req as any).accessToken);
       const playlist = await spotifyService.getPlaylist(req.params.id);
 
@@ -51,6 +63,9 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      if (getRequestSource(req) !== "spotify") {
+        return res.status(400).json({ error: "Spotify session required" });
+      }
       const spotifyService = new SpotifyService((req as any).accessToken);
       const tracks = await spotifyService.getPlaylistTracks(req.params.id);
 
@@ -77,6 +92,9 @@ router.post(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
+      if (getRequestSource(req) !== "spotify") {
+        return res.status(400).json({ error: "Spotify session required" });
+      }
       const { trackId } = req.body;
       const playlistId = req.params.id;
 
@@ -96,7 +114,7 @@ router.post(
       }
       const track = await spotifyService.getTrack(trackId);
 
-      const redisService = new RedisService();
+      const redisService = new RedisService(getRequestSource(req));
       await redisService.addTrackToPlaylist(userId, playlistId, track);
 
       res.json({ success: true });
@@ -121,6 +139,9 @@ router.post(
 
 router.get("/artists", requireAuth, async (req: Request, res: Response) => {
   try {
+    if (getRequestSource(req) !== "spotify") {
+      return res.status(400).json({ error: "Spotify session required" });
+    }
     const spotifyService = new SpotifyService((req as any).accessToken);
     const artistsWithCounts = await spotifyService.getArtistsFromSavedTracks();
 
@@ -145,6 +166,9 @@ router.get(
     const artistId = req.params.id;
 
     try {
+      if (getRequestSource(req) !== "spotify") {
+        return res.status(400).json({ error: "Spotify session required" });
+      }
       const spotifyService = new SpotifyService((req as any).accessToken);
       const result = await spotifyService.getArtistTracksFromSavedTracks(
         artistId
