@@ -30,19 +30,6 @@ function getCookie(name: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function getStoredSource(): AuthSource {
-  try {
-    const value = localStorage.getItem("smart_spotify_auth_source");
-    return value === "youtube" ? "youtube" : "spotify";
-  } catch {
-    return "spotify";
-  }
-}
-
-function getLoginPathForSource(source: AuthSource): string {
-  return source === "youtube" ? "/login/youtube" : "/login/spotify";
-}
-
 api.interceptors.request.use((config) => {
   const csrf = getCookie("csrf_token");
   if (csrf) {
@@ -64,8 +51,8 @@ export const authAPI = {
     api.post(
       source === "youtube" ? "/auth/youtube/logout" : "/auth/spotify/logout",
     ),
-  getUser: (source: AuthSource) =>
-    api.get(source === "youtube" ? "/auth/youtube/me" : "/auth/spotify/me"),
+  // User
+  getUser: () => api.get("/auth/me"),
   refreshToken: (source: AuthSource) =>
     api.post(
       source === "youtube" ? "/auth/youtube/refresh" : "/auth/spotify/refresh",

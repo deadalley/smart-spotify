@@ -78,15 +78,12 @@ export class RedisService {
     });
   }
 
-  async getSyncMeta(userId: string): Promise<
-    | {
-        lastSync: string;
-        playlistCount: number;
-        trackCount: number;
-        artistCount: number;
-      }
-    | null
-  > {
+  async getSyncMeta(userId: string): Promise<{
+    lastSync: string;
+    playlistCount: number;
+    trackCount: number;
+    artistCount: number;
+  } | null> {
     const data = await redisClient.hGetAll(this.getMetaKey(userId));
     if (Object.keys(data).length === 0) return null;
 
@@ -126,7 +123,7 @@ export class RedisService {
   // Playlist operations
   async storePlaylists(
     userId: string,
-    playlists: SpotifyPlaylist[]
+    playlists: SpotifyPlaylist[],
   ): Promise<void> {
     if (playlists.length === 0) return;
 
@@ -141,7 +138,10 @@ export class RedisService {
     await pipeline.exec();
   }
 
-  async storePlaylistsDomain(userId: string, playlists: Playlist[]): Promise<void> {
+  async storePlaylistsDomain(
+    userId: string,
+    playlists: Playlist[],
+  ): Promise<void> {
     if (playlists.length === 0) return;
 
     const pipeline = redisClient.multi();
@@ -156,7 +156,7 @@ export class RedisService {
 
   async getUserPlaylists(userId: string): Promise<Playlist[]> {
     const playlistKeys = await this.scanKeys(
-      this.getRedisKey(userId, "playlist", "*")
+      this.getRedisKey(userId, "playlist", "*"),
     );
     const playlists: Playlist[] = [];
 
@@ -177,7 +177,7 @@ export class RedisService {
           const trackIds = await redisClient.zRange(
             this.getRedisKey(userId, "playlist", playlist.id, "tracks"),
             0,
-            -1
+            -1,
           );
 
           playlists.push({ ...playlist, trackCount: trackIds.length });
@@ -185,7 +185,7 @@ export class RedisService {
       } catch (error) {
         console.error(
           `Error fetching playlist data for key ${playlistKey}:`,
-          error
+          error,
         );
       }
     }
@@ -195,7 +195,7 @@ export class RedisService {
 
   async getPlaylist(
     userId: string,
-    playlistId: string
+    playlistId: string,
   ): Promise<Playlist | null> {
     const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
     const playlistData = await redisClient.hGetAll(playlistKey);
@@ -207,7 +207,7 @@ export class RedisService {
     const trackIds = await redisClient.zRange(
       this.getRedisKey(userId, "playlist", playlistId, "tracks"),
       0,
-      -1
+      -1,
     );
 
     return {
@@ -219,7 +219,7 @@ export class RedisService {
   async updatePlaylistType(
     userId: string,
     playlistId: string,
-    playlistType: string
+    playlistType: string,
   ): Promise<void> {
     const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
     await redisClient.hSet(playlistKey, { playlistType });
@@ -229,7 +229,7 @@ export class RedisService {
   async storeTracks(
     userId: string,
     playlistId: string,
-    tracks: SpotifyTrack[]
+    tracks: SpotifyTrack[],
   ): Promise<void> {
     if (tracks.length === 0) return;
 
@@ -237,7 +237,7 @@ export class RedisService {
       userId,
       "playlist",
       playlistId,
-      "tracks"
+      "tracks",
     );
 
     // Clear existing sorted set once (maintains order via score).
@@ -265,7 +265,7 @@ export class RedisService {
         // Track-playlist relationship
         pipeline.sAdd(
           this.getRedisKey(userId, "track", track.id, "playlists"),
-          playlistId
+          playlistId,
         );
 
         // Track ordering
@@ -277,17 +277,17 @@ export class RedisService {
 
           pipeline.sAdd(
             this.getRedisKey(userId, "artist", artistId, "tracks"),
-            track.id
+            track.id,
           );
 
           pipeline.sAdd(
             this.getRedisKey(userId, "artist", artistId, "playlists"),
-            playlistId
+            playlistId,
           );
 
           pipeline.sAdd(
             this.getRedisKey(userId, "track", track.id, "artists"),
-            artistId
+            artistId,
           );
         }
       }
@@ -303,11 +303,16 @@ export class RedisService {
   async storeTracksDomain(
     userId: string,
     playlistId: string,
-    tracks: Track[]
+    tracks: Track[],
   ): Promise<void> {
     if (tracks.length === 0) return;
 
-    const tracksKey = this.getRedisKey(userId, "playlist", playlistId, "tracks");
+    const tracksKey = this.getRedisKey(
+      userId,
+      "playlist",
+      playlistId,
+      "tracks",
+    );
 
     // Clear existing sorted set once (maintains order via score).
     await redisClient.del(tracksKey);
@@ -334,7 +339,7 @@ export class RedisService {
         // Track-playlist relationship
         pipeline.sAdd(
           this.getRedisKey(userId, "track", track.id, "playlists"),
-          playlistId
+          playlistId,
         );
 
         // Track ordering
@@ -344,17 +349,17 @@ export class RedisService {
         for (const artistId of track.artistIds) {
           pipeline.sAdd(
             this.getRedisKey(userId, "artist", artistId, "tracks"),
-            track.id
+            track.id,
           );
 
           pipeline.sAdd(
             this.getRedisKey(userId, "artist", artistId, "playlists"),
-            playlistId
+            playlistId,
           );
 
           pipeline.sAdd(
             this.getRedisKey(userId, "track", track.id, "artists"),
-            artistId
+            artistId,
           );
         }
       }
@@ -381,7 +386,9 @@ export class RedisService {
   }
 
   async getUserTracks(userId: string): Promise<Track[]> {
-    const trackKeys = await this.scanKeys(this.getRedisKey(userId, "track", "*"));
+    const trackKeys = await this.scanKeys(
+      this.getRedisKey(userId, "track", "*"),
+    );
     const tracks: Track[] = [];
 
     // Filter keys to only include direct track hash keys (not relationship sets)
@@ -411,9 +418,14 @@ export class RedisService {
 
   async getPlaylistTracks(
     userId: string,
-    playlistId: string
+    playlistId: string,
   ): Promise<Track[]> {
-    const tracksKey = this.getRedisKey(userId, "playlist", playlistId, "tracks");
+    const tracksKey = this.getRedisKey(
+      userId,
+      "playlist",
+      playlistId,
+      "tracks",
+    );
     const trackIds = await redisClient.zRange(tracksKey, 0, -1);
 
     const tracks: Track[] = [];
@@ -421,7 +433,7 @@ export class RedisService {
     for (let i = 0; i < trackIds.length; i++) {
       const trackId = trackIds[i];
       const trackData = await redisClient.hGetAll(
-        this.getRedisKey(userId, "track", trackId)
+        this.getRedisKey(userId, "track", trackId),
       );
 
       if (Object.keys(trackData).length > 0) {
@@ -437,13 +449,13 @@ export class RedisService {
 
   async getArtistTracks(userId: string, artistId: string): Promise<Track[]> {
     const trackIds = await redisClient.sMembers(
-      this.getRedisKey(userId, "artist", artistId, "tracks")
+      this.getRedisKey(userId, "artist", artistId, "tracks"),
     );
     const tracks: Track[] = [];
 
     for (const trackId of trackIds) {
       const trackData = await redisClient.hGetAll(
-        this.getRedisKey(userId, "track", trackId)
+        this.getRedisKey(userId, "track", trackId),
       );
       if (Object.keys(trackData).length > 0) {
         const track = convertFromRedisTrack(trackData);
@@ -470,7 +482,9 @@ export class RedisService {
   }
 
   async getUserArtists(userId: string): Promise<Artist[]> {
-    const artistKeys = await this.scanKeys(this.getRedisKey(userId, "artist", "*"));
+    const artistKeys = await this.scanKeys(
+      this.getRedisKey(userId, "artist", "*"),
+    );
     const artists: Artist[] = [];
 
     // Filter keys to only include direct artist hash keys (not relationship sets)
@@ -488,7 +502,7 @@ export class RedisService {
           const artist = convertFromRedisArtist(artistData);
 
           const trackIds = await redisClient.sMembers(
-            this.getRedisKey(userId, "artist", artist.id, "tracks")
+            this.getRedisKey(userId, "artist", artist.id, "tracks"),
           );
 
           artists.push({
@@ -499,7 +513,7 @@ export class RedisService {
       } catch (error) {
         console.error(
           `Error fetching artist data for key ${artistKey}:`,
-          error
+          error,
         );
       }
     }
@@ -509,17 +523,19 @@ export class RedisService {
 
   async getArtistsByIds(
     userId: string,
-    artistIds: string[]
+    artistIds: string[],
   ): Promise<Artist[]> {
     if (artistIds.length === 0) return [];
 
     const pipeline = redisClient.multi();
 
-    const artistKeys = artistIds.map((id) => this.getRedisKey(userId, "artist", id));
+    const artistKeys = artistIds.map((id) =>
+      this.getRedisKey(userId, "artist", id),
+    );
     artistKeys.forEach((key) => pipeline.hGetAll(key));
 
     const trackKeys = artistIds.map((id) =>
-      this.getRedisKey(userId, "artist", id, "tracks")
+      this.getRedisKey(userId, "artist", id, "tracks"),
     );
     trackKeys.forEach((key) => pipeline.sCard(key));
 
@@ -540,7 +556,7 @@ export class RedisService {
 
         return {
           ...convertFromRedisArtist(
-            artistData as unknown as Record<string, string>
+            artistData as unknown as Record<string, string>,
           ),
           trackCount,
         };
@@ -557,7 +573,7 @@ export class RedisService {
     }
 
     const trackIds = await redisClient.sMembers(
-      this.getRedisKey(userId, "artist", artistId, "tracks")
+      this.getRedisKey(userId, "artist", artistId, "tracks"),
     );
 
     return {
@@ -568,7 +584,7 @@ export class RedisService {
 
   async getPlaylistData(
     userId: string,
-    playlistId: string
+    playlistId: string,
   ): Promise<PlaylistData | null> {
     // Fetch playlist and track IDs
     const [playlistData, trackIds] = await Promise.all([
@@ -576,7 +592,7 @@ export class RedisService {
       redisClient.zRange(
         this.getRedisKey(userId, "playlist", playlistId, "tracks"),
         0,
-        -1
+        -1,
       ),
     ]);
 
@@ -632,7 +648,7 @@ export class RedisService {
         artistIds.forEach((artistId) => {
           artistTrackCount.set(
             artistId,
-            (artistTrackCount.get(artistId) || 0) + 1
+            (artistTrackCount.get(artistId) || 0) + 1,
           );
         });
       }
@@ -700,7 +716,7 @@ export class RedisService {
   async addTrackToPlaylist(
     userId: string,
     playlistId: string,
-    track: SpotifyTrack
+    track: SpotifyTrack,
   ): Promise<void> {
     const trackKey = this.getRedisKey(userId, "track", track.id);
 
@@ -709,7 +725,7 @@ export class RedisService {
       userId,
       "playlist",
       playlistId,
-      "tracks"
+      "tracks",
     );
     // Get the count of tracks in the playlist to determine next position
     const currentTrackCount = await redisClient.zCard(tracksKey);
@@ -722,7 +738,7 @@ export class RedisService {
     // Store track-playlist relationship
     await redisClient.sAdd(
       this.getRedisKey(userId, "track", track.id, "playlists"),
-      playlistId
+      playlistId,
     );
 
     // Add to playlist's sorted set
@@ -733,19 +749,19 @@ export class RedisService {
       // Store artist-track relationship
       await redisClient.sAdd(
         this.getRedisKey(userId, "artist", artist.id, "tracks"),
-        track.id
+        track.id,
       );
 
       // Store artist-playlist relationship
       await redisClient.sAdd(
         this.getRedisKey(userId, "artist", artist.id, "playlists"),
-        playlistId
+        playlistId,
       );
 
       // Store track-artist relationship
       await redisClient.sAdd(
         this.getRedisKey(userId, "track", track.id, "artists"),
-        artist.id
+        artist.id,
       );
     }
 
@@ -759,13 +775,13 @@ export class RedisService {
   async removeTrackFromPlaylist(
     userId: string,
     playlistId: string,
-    trackId: string
+    trackId: string,
   ): Promise<void> {
     const tracksKey = this.getRedisKey(
       userId,
       "playlist",
       playlistId,
-      "tracks"
+      "tracks",
     );
 
     // Remove from playlist's sorted set
@@ -774,17 +790,17 @@ export class RedisService {
     // Remove track-playlist relationship
     await redisClient.sRem(
       this.getRedisKey(userId, "track", trackId, "playlists"),
-      playlistId
+      playlistId,
     );
 
     // Get track artists to update their relationships
     const artistIds = await redisClient.sMembers(
-      this.getRedisKey(userId, "track", trackId, "artists")
+      this.getRedisKey(userId, "track", trackId, "artists"),
     );
 
     // Check if track still exists in other playlists
     const remainingPlaylists = await redisClient.sMembers(
-      this.getRedisKey(userId, "track", trackId, "playlists")
+      this.getRedisKey(userId, "track", trackId, "playlists"),
     );
 
     // If track is not in any other playlist, remove it completely
@@ -794,14 +810,14 @@ export class RedisService {
 
       // Remove track-artist relationships
       await redisClient.del(
-        this.getRedisKey(userId, "track", trackId, "artists")
+        this.getRedisKey(userId, "track", trackId, "artists"),
       );
 
       // Remove artist-track relationships
       for (const artistId of artistIds) {
         await redisClient.sRem(
           this.getRedisKey(userId, "artist", artistId, "tracks"),
-          trackId
+          trackId,
         );
       }
     }
@@ -810,19 +826,19 @@ export class RedisService {
     for (const artistId of artistIds) {
       // Check if artist still has tracks in this playlist
       const artistTracks = await redisClient.sMembers(
-        this.getRedisKey(userId, "artist", artistId, "tracks")
+        this.getRedisKey(userId, "artist", artistId, "tracks"),
       );
       const playlistTracks = await redisClient.zRange(tracksKey, 0, -1);
 
       const hasTracksInPlaylist = artistTracks.some((t) =>
-        playlistTracks.includes(t)
+        playlistTracks.includes(t),
       );
 
       // If no more tracks from this artist in the playlist, remove the relationship
       if (!hasTracksInPlaylist) {
         await redisClient.sRem(
           this.getRedisKey(userId, "artist", artistId, "playlists"),
-          playlistId
+          playlistId,
         );
       }
     }
@@ -836,7 +852,9 @@ export class RedisService {
   // Helper method to delete all user data
   async deleteUserData(userId: string): Promise<void> {
     // Delete keys for this user *for this source only*.
-    const allKeys = await this.scanKeys(`smart-spotify:${userId}:${this.source}:*`);
+    const allKeys = await this.scanKeys(
+      `smart-spotify:${userId}:${this.source}:*`,
+    );
 
     if (allKeys.length > 0) {
       await redisClient.del(allKeys);

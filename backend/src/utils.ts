@@ -1,7 +1,7 @@
 import { Artist, Playlist, PlaylistData } from "@smart-spotify/shared";
 
 export function getGenres(
-  artists: Artist[]
+  artists: Artist[],
 ): { name: string; count: number }[] {
   return Object.entries(
     artists.reduce<Record<string, number>>((acc, artist) => {
@@ -13,28 +13,28 @@ export function getGenres(
         }
       });
       return acc;
-    }, {})
+    }, {}),
   ).map(([name, count]) => ({ name, count }));
 }
 
 export function isTrackInPlaylist(
   trackId: string,
-  playlistData: Record<string, PlaylistData>
+  playlistData: Record<string, PlaylistData>,
 ) {
   return (playlist: Playlist) =>
     playlist.id !== "liked-songs" &&
     (playlistData[playlist.id]?.tracks || []).some(
-      (track) => track.id === trackId
+      (track) => track.id === trackId,
     );
 }
 
 export function isTrackNotInPlaylist(
   trackId: string,
-  playlistData: Record<string, PlaylistData>
+  playlistData: Record<string, PlaylistData>,
 ) {
   return (playlist: Playlist) =>
     playlist.id === "liked-songs" ||
     !(playlistData[playlist.id]?.tracks || []).some(
-      (track) => track.id === trackId
+      (track) => track.id === trackId,
     );
 }

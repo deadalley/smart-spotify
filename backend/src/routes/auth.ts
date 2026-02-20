@@ -3,6 +3,7 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import { Request, Response, Router } from "express";
 import { YouTubeService } from "../services/YouTubeService";
+import { AuthService } from "../services";
 
 dotenv.config();
 
@@ -24,6 +25,9 @@ const isProduction = process.env.NODE_ENV === "production";
 const generateRandomString = (bytes: number): string =>
   crypto.randomBytes(bytes).toString("hex");
 
+/**
+ * SPOTIFY AUTH ROUTES
+ */
 router.get("/spotify/login", (req: Request, res: Response) => {
   const state = generateRandomString(16);
   const scope =
@@ -183,10 +187,9 @@ router.get("/spotify/me", async (req: Request, res: Response) => {
   }
 });
 
-// -----------------------------
-// YouTube Music auth routes
-// -----------------------------
-
+/**
+ * YOUTUBE AUTH ROUTES
+ */
 router.get("/youtube/login", (req: Request, res: Response) => {
   if (!YOUTUBE_CLIENT_ID || !YOUTUBE_CLIENT_SECRET) {
     return res.redirect(`${CLIENT_URL}?error=youtube_not_configured`);
@@ -219,6 +222,7 @@ router.get("/youtube/callback", async (req: Request, res: Response) => {
   res.clearCookie("youtube_auth_state", { sameSite: "lax", path: "/" });
 
   try {
+    const authService = new AuthService();
     const yt = new YouTubeService();
     const tokens = await yt.exchangeCode(code);
 
@@ -235,8 +239,12 @@ router.get("/youtube/callback", async (req: Request, res: Response) => {
 
     const grantedScopes = await ytMe.getGrantedScopes();
     const hasYouTubeScope =
-      grantedScopes.includes("https://www.googleapis.com/auth/youtube.readonly") ||
-      grantedScopes.includes("https://www.googleapis.com/auth/youtube.force-ssl");
+      grantedScopes.includes(
+        "https://www.googleapis.com/auth/youtube.readonly",
+      ) ||
+      grantedScopes.includes(
+        "https://www.googleapis.com/auth/youtube.force-ssl",
+      );
     if (!hasYouTubeScope) {
       console.error("YouTube OAuth missing required scopes:", grantedScopes);
       return res.redirect(`${CLIENT_URL}?error=youtube_missing_scopes`);
@@ -263,6 +271,22 @@ router.get("/youtube/callback", async (req: Request, res: Response) => {
     }
 
     res.cookie("youtube_user_id", channel.id, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
+    const userId = await authService.createUser(channel.id);
+
+    authService.storeYouTubeToken(userId, {
+      userId: channel.id,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token ?? undefined,
+    });
+
+    res.cookie("user_id", userId, {
       httpOnly: true,
       secure: isProduction,
       sameSite: "lax",
@@ -329,6 +353,43 @@ router.get("/youtube/me", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching YouTube profile:", error);
     return res.status(401).json({ error: "Failed to fetch user profile" });
+  }
+});
+
+/**
+ * AUTH ROUTES
+ */
+router.get("/me", async (req: Request, res: Response) => {
+  try {
+    const ytAccessToken = req.cookies?.youtube_access_token as
+      | string
+      | undefined;
+    if (!ytAccessToken) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    const userId = req.cookies?.user_id as string | undefined;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const authService = new AuthService();
+    const userResponse = await authService.getUser(userId);
+
+    if (!userResponse) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (
+      !userResponse.spotify?.accessToken &&
+      !userResponse.ytMusic?.accessToken
+    ) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    res.json(userResponse);
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ error: "Failed to fetch user data" });
   }
 });
 

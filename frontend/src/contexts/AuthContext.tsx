@@ -49,9 +49,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const location = useLocation();
 
   const { data: user, isLoading } = useQuery({
-    queryKey: ["user", source],
+    queryKey: ["user"],
     queryFn: async () => {
-      const response = await authAPI.getUser(source);
+      const response = await authAPI.getUser();
       setIsAuthenticated(true);
       return response.data;
     },
