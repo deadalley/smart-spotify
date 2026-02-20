@@ -15,7 +15,7 @@ export interface AuthUser {
 export class AuthService {
   // Generic function to generate Redis keys
   private getRedisKey(userId: string): string {
-    const namespace = `smart-spotify:users`;
+    const namespace = `smart-spotify:user`;
 
     return `${namespace}:${userId}`;
   }

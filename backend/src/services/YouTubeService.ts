@@ -33,7 +33,11 @@ export class YouTubeService {
       throw new Error("Missing YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET");
     }
 
-    this.oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    this.oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret,
+      redirectUri,
+    );
 
     if (tokens) {
       this.oauth2Client.setCredentials({
@@ -57,7 +61,11 @@ export class YouTubeService {
       throw new Error("Missing YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET");
     }
 
-    const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    const oauth2Client = new google.auth.OAuth2(
+      clientId,
+      clientSecret,
+      redirectUri,
+    );
     return oauth2Client.generateAuthUrl({
       access_type: "offline",
       prompt: "consent",
@@ -242,6 +250,8 @@ export class YouTubeService {
         maxResults: 50,
       });
 
+      console.log(res.data.items);
+
       for (const v of res.data.items ?? []) {
         const id = v.id;
         const title = v.snippet?.title;
@@ -267,4 +277,3 @@ export class YouTubeService {
     return results;
   }
 }
-

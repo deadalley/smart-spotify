@@ -20,7 +20,7 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
       source === "spotify"
         ? (req.cookies?.spotify_refresh_token as string | undefined)
         : (req.cookies?.youtube_refresh_token as string | undefined);
-    const userId = (req as any).userId as string | undefined;
+    const userId = req.cookies?.user_id;
 
     if (!userId) {
       return res.status(401).json({ error: "Not authenticated" });
@@ -41,7 +41,7 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
       userId,
       (req as any).accessToken,
       refreshToken,
-      source
+      source,
     );
 
     res.json({
