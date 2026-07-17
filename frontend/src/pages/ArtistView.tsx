@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Music, User } from "lucide-react";
+import { ExternalLink, Music, User } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
@@ -7,10 +7,13 @@ import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { SpotifyLink } from "../components/SpotifyLink";
 import { TrackList } from "../components/TrackList";
+import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
+import { buildLinks } from "../utils/buyLinks";
 
 export function ArtistView() {
   const { id } = useParams<{ id: string }>();
+  const { enabledServices } = useSettings();
 
   const {
     data: artist,
@@ -50,6 +53,11 @@ export function ArtistView() {
   }
 
   const artistImage = artist.images.length > 0 ? artist.images[0].url : null;
+  const viewLinks = buildLinks({
+    entityType: "artist",
+    name: artist.name,
+    services: enabledServices,
+  });
 
   return (
     <Page>
@@ -93,6 +101,24 @@ export function ArtistView() {
           )
         }
       />
+
+      {viewLinks.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          {viewLinks.map((link) => (
+            <a
+              key={link.service}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline btn-sm"
+              title={`View on ${link.label}`}
+            >
+              <ExternalLink className="size-4 mr-2" />
+              View on {link.label}
+            </a>
+          ))}
+        </div>
+      )}
 
       {tracks.length === 0 ? (
         <Empty Icon={Music}>No tracks found</Empty>
