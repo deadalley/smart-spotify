@@ -4,11 +4,14 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, Clock, Heart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
 import { formatDuration } from "../utils";
+import { buildLinks } from "../utils/buyLinks";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
+import { Tooltip } from "./Tooltip";
 
 export function TrackList({
   tracks,
@@ -23,6 +26,7 @@ export function TrackList({
 }) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  const { enabledServices } = useSettings();
 
   const unlikeTrackMutation = useMutation({
     mutationFn: async (trackId: string) => {
@@ -78,7 +82,7 @@ export function TrackList({
       id: "title",
       accessorKey: "track",
       header: "Title",
-      meta: { span: 6 },
+      meta: { span: 5 },
       enableSorting: true,
       cell: ({ row }) => {
         const { track, trackAnalysisResult } = row.original;
@@ -118,7 +122,7 @@ export function TrackList({
       id: "album",
       accessorFn: (row) => row.track.album.name,
       header: "Album",
-      meta: { span: 2 },
+      meta: { span: 1 },
       enableSorting: true,
       cell: ({ row }) => (
         <div className="min-w-0 flex-1">
@@ -161,6 +165,45 @@ export function TrackList({
       ),
     },
   ];
+
+  if (enabledServices.length > 0) {
+    columns.push({
+      id: "buy",
+      header: "",
+      meta: { span: 2, align: "right" },
+      cell: ({ row }) => {
+        const { track } = row.original;
+        const links = buildLinks({
+          entityType: "track",
+          name: track.name,
+          artistName: track.artistNames[0],
+          services: enabledServices,
+        });
+
+        return (
+          <div className="flex flex-wrap items-center justify-end gap-1">
+            {links.map((link) => (
+              <Tooltip key={link.service} content={`Search on ${link.label}`}>
+                <a
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost btn-xs btn-circle p-0.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={link.icon}
+                    alt={link.label}
+                    className="size-full rounded-sm"
+                  />
+                </a>
+              </Tooltip>
+            ))}
+          </div>
+        );
+      },
+    });
+  }
 
   if (showUnlike) {
     columns.push({

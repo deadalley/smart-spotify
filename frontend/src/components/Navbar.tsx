@@ -1,4 +1,4 @@
-import { Heart, LogOut, Music, Users } from "lucide-react";
+import { Heart, LogOut, Music, Settings, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { getAppName } from "../utils";
@@ -24,6 +24,7 @@ export function Navbar() {
       : []),
     { path: "/playlists", label: "Playlists", icon: Music },
     { path: "/artists", label: "Artists", icon: Users },
+    { path: "/settings", label: "Settings", icon: Settings },
   ];
 
   return (

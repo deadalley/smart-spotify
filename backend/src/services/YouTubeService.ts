@@ -94,7 +94,9 @@ export class YouTubeService {
     );
     return oauth2Client.generateAuthUrl({
       access_type: "offline",
-      prompt: "consent",
+      // No forced "prompt: consent" — Google only shows the consent screen
+      // when it's actually needed (first grant, revoked access, or new
+      // scopes), so a returning user isn't re-prompted every login.
       include_granted_scopes: true,
       state,
       scope: [
