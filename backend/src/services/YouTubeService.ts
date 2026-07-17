@@ -302,4 +302,39 @@ export class YouTubeService {
 
     return results;
   }
+
+  async getChannelsByIds(ids: string[]): Promise<
+    Array<{
+      id: string;
+      thumbnails: youtube_v3.Schema$ThumbnailDetails | null;
+    }>
+  > {
+    if (ids.length === 0) return [];
+
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 50) chunks.push(ids.slice(i, i + 50));
+
+    const results: Array<{
+      id: string;
+      thumbnails: youtube_v3.Schema$ThumbnailDetails | null;
+    }> = [];
+
+    for (const chunk of chunks) {
+      const res = await this.youtube.channels.list({
+        id: chunk,
+        part: ["snippet"],
+        maxResults: 50,
+      });
+
+      for (const c of res.data.items ?? []) {
+        if (!c.id) continue;
+        results.push({
+          id: c.id,
+          thumbnails: c.snippet?.thumbnails ?? null,
+        });
+      }
+    }
+
+    return results;
+  }
 }

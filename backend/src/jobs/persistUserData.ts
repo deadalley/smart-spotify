@@ -323,7 +323,7 @@ async function syncYoutube(
           name: v.channelTitle,
           type: "youtube",
           releaseDate: v.publishedAt?.slice(0, 10),
-          images: [],
+          images: convertYouTubeThumbnails(v.thumbnails),
           externalUrls: {
             spotify: `https://www.youtube.com/channel/${v.channelId}`,
           },
@@ -351,10 +351,16 @@ async function syncYoutube(
   }
 
   // Store artists (channel ids). Genres are unknown for YouTube, store empty.
+  const artistIds = Array.from(uniqueArtists.keys());
+  const channels = await withAutoRefresh(() => yt.getChannelsByIds(artistIds));
+  const channelThumbnails = new Map(
+    channels.map((c) => [c.id, c.thumbnails] as const),
+  );
+
   const artistsDomain = Array.from(uniqueArtists.values()).map((a) => ({
     id: a.id,
     name: a.name,
-    images: [],
+    images: convertYouTubeThumbnails(channelThumbnails.get(a.id)),
     externalUrls: { spotify: `https://www.youtube.com/channel/${a.id}` },
     trackCount: 0,
     genres: [],
