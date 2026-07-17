@@ -32,7 +32,12 @@ export class BullService {
     this.setupWorkerListeners();
   }
 
-  private getRedisConnection(): { host: string; port: number; password?: string } {
+  private getRedisConnection(): {
+    host: string;
+    port: number;
+    password?: string;
+    tls?: Record<string, never>;
+  } {
     const url = process.env.REDIS_URL;
     if (!url) {
       return { host: "localhost", port: 6379 };
@@ -44,6 +49,8 @@ export class BullService {
       host: parsed.hostname,
       port: parsed.port ? Number(parsed.port) : 6379,
       ...(password ? { password } : {}),
+      // Upstash (and most managed Redis) requires TLS on rediss:// URLs
+      ...(parsed.protocol === "rediss:" ? { tls: {} } : {}),
     };
   }
 
