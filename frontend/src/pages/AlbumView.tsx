@@ -11,6 +11,7 @@ import { TrackList } from "../components/TrackList";
 import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
 import { buildLinks, getPrimaryArtistNameFromTracks } from "../utils/buyLinks";
+import { Tooltip } from "../components/Tooltip";
 
 function getBestAlbumImage(album: Album) {
   const images = album.images ?? [];
@@ -119,17 +120,21 @@ export function AlbumView() {
       {buyLinks.length > 0 && (
         <div className="mb-6 flex flex-wrap items-center gap-2">
           {buyLinks.map((link) => (
-            <a
-              key={link.service}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-outline btn-sm"
-              title={`Search on ${link.label}`}
-            >
-              <img src={link.icon} alt="" className="size-4 mr-2 rounded-sm" />
-              {link.label}
-            </a>
+            <Tooltip key={link.service} content={`Search on ${link.label}`}>
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-outline btn-sm"
+              >
+                <img
+                  src={link.icon}
+                  alt=""
+                  className="size-4 mr-2 rounded-sm"
+                />
+                {link.label}
+              </a>
+            </Tooltip>
           ))}
         </div>
       )}
@@ -142,4 +147,3 @@ export function AlbumView() {
     </Page>
   );
 }
-

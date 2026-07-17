@@ -11,6 +11,7 @@ import { buildLinks } from "../utils/buyLinks";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
+import { Tooltip } from "./Tooltip";
 
 export function TrackList({
   tracks,
@@ -182,21 +183,21 @@ export function TrackList({
         return (
           <div className="flex flex-wrap items-center justify-end gap-1">
             {links.map((link) => (
-              <a
-                key={link.service}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ghost btn-xs btn-circle p-0.5"
-                title={`Search on ${link.label}`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <img
-                  src={link.icon}
-                  alt={link.label}
-                  className="size-full rounded-sm"
-                />
-              </a>
+              <Tooltip key={link.service} content={`Search on ${link.label}`}>
+                <a
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost btn-xs btn-circle p-0.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={link.icon}
+                    alt={link.label}
+                    className="size-full rounded-sm"
+                  />
+                </a>
+              </Tooltip>
             ))}
           </div>
         );

@@ -7,8 +7,8 @@ const DEFAULT_ENABLED_SERVICES: Record<BuyLinkService, boolean> = {
   qobuz: true,
   bandcamp: true,
   appleMusic: true,
-  discogs: false,
-  amazon: false,
+  discogs: true,
+  amazon: true,
 };
 
 function getStoredServices(): Record<BuyLinkService, boolean> {
@@ -30,12 +30,12 @@ interface SettingsContextType {
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [services, setServices] = useState<Record<BuyLinkService, boolean>>(
-    () => getStoredServices()
+    () => getStoredServices(),
   );
 
   const setServiceEnabled = (service: BuyLinkService, enabled: boolean) => {
@@ -48,7 +48,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const value: SettingsContextType = {
     enabledServices: (Object.keys(services) as BuyLinkService[]).filter(
-      (service) => services[service]
+      (service) => services[service],
     ),
     isServiceEnabled: (service) => services[service] ?? false,
     setServiceEnabled,
