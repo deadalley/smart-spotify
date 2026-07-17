@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { SpotifyLogo } from "../components/SpotifyLogo";
+// import { SpotifyLogo } from "../components/SpotifyLogo";
 import { YouTubeLogo } from "../components/YouTubeLogo";
 
 const YOUTUBE_LOGIN_ERROR_MESSAGES: Record<string, string> = {
@@ -39,7 +39,7 @@ export function Home() {
 
         <div className="flex flex-col gap-3">
           <div className="flex gap-3">
-            <div
+            {/* <div
               className="card size-64 bg-base-100 shadow-sm hover:translate-y-[-2px] transition-transform duration-200 cursor-pointer hover:shadow-lg hover:shadow-[color:var(--color-primary-spotify)]/30"
               onClick={() => {
                 setSource("spotify");
@@ -52,7 +52,7 @@ export function Home() {
                   Login with Spotify
                 </span>
               </div>
-            </div>
+            </div> */}
 
             <div
               className="card size-64 bg-base-100 shadow-sm hover:translate-y-[-2px] transition-transform duration-200 cursor-pointer hover:shadow-lg hover:shadow-[color:var(--color-primary-youtube)]/30"
@@ -70,7 +70,7 @@ export function Home() {
             </div>
           </div>
 
-          <div
+          {/* <div
             className="card bg-base-100 shadow-sm hover:translate-y-[-2px] transition-transform duration-200 cursor-pointer hover:shadow-lg w-full"
             onClick={() => {}}
           >
@@ -79,7 +79,7 @@ export function Home() {
                 Compare libraries
               </span>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
