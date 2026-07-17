@@ -7,7 +7,7 @@ import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { PlaylistAnalysisResult } from "../components/PlaylistAnalysisResult";
 import { PlaylistTypeSelector } from "../components/PlaylistTypeSelector";
-import { SpotifyLink } from "../components/SpotifyLink";
+import { SourceLink } from "../components/SourceLink";
 import { TrackList } from "../components/TrackList";
 import { baseAPI } from "../services/api";
 import { formatDuration } from "../utils";
@@ -65,7 +65,7 @@ export function PlaylistView() {
               playlistId={id!}
               currentType={playlist.playlistType}
             />
-            <SpotifyLink href={playlist.externalUrls.spotify} />
+            <SourceLink href={playlist.externalUrls.spotify} />
           </div>
         }
         subtitle={

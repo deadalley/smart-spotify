@@ -6,7 +6,7 @@ import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
 import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
-import { SpotifyLink } from "../components/SpotifyLink";
+import { SourceLink } from "../components/SourceLink";
 import { TrackList } from "../components/TrackList";
 import { baseAPI } from "../services/api";
 
@@ -164,7 +164,7 @@ export function AlbumView() {
         }
         action={
           album.externalUrls?.spotify ? (
-            <SpotifyLink href={album.externalUrls.spotify} />
+            <SourceLink href={album.externalUrls.spotify} />
           ) : undefined
         }
       />

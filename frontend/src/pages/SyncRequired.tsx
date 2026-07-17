@@ -1,9 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Database, RefreshCw } from "lucide-react";
+import { useEffect } from "react";
 import { Page } from "../components/Page";
+import { useAuth } from "../contexts/AuthContext";
 import { baseAPI } from "../services/api";
+import { SOURCE_LABELS } from "../utils";
 
 export function SyncRequired() {
+  const { source } = useAuth();
+  const sourceLabel = SOURCE_LABELS[source];
+
   const { data: syncStatus } = useQuery({
     queryKey: ["sync-status"],
     queryFn: async () => {
@@ -24,6 +30,11 @@ export function SyncRequired() {
     )?.showModal?.();
   };
 
+  // Prompt the user to sync right away instead of making them find the button.
+  useEffect(() => {
+    openSyncModal();
+  }, []);
+
   return (
     <Page>
       <div className="max-w-2xl mx-auto">
@@ -35,9 +46,9 @@ export function SyncRequired() {
             <div className="flex-1">
               <h1 className="text-2xl font-bold">Sync required</h1>
               <p className="text-base-content/70 mt-2">
-                SmartSpotify needs to cache your Spotify library for faster
-                access. Start a sync to unlock playlists, artists, albums, and
-                analysis.
+                SmartSpotify needs to cache your {sourceLabel} library for
+                faster access. Start a sync to unlock playlists, artists,
+                albums, and analysis.
               </p>
 
               {syncStatus?.hasActiveJob && (
@@ -58,7 +69,7 @@ export function SyncRequired() {
                 onClick={openSyncModal}
               >
                 <RefreshCw size={14} />
-                Sync data with Spotify
+                Sync data with {sourceLabel}
               </button>
             </div>
           </div>
