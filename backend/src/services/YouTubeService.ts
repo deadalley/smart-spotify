@@ -278,8 +278,6 @@ export class YouTubeService {
         maxResults: 50,
       });
 
-      console.log(res.data.items);
-
       for (const v of res.data.items ?? []) {
         const id = v.id;
         const title = v.snippet?.title;
