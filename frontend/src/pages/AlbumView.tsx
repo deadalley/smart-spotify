@@ -1,6 +1,6 @@
 import { Album } from "@smart-spotify/shared";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Disc3, ExternalLink } from "lucide-react";
+import { ArrowLeft, Disc3 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
@@ -127,7 +127,7 @@ export function AlbumView() {
               className="btn btn-outline btn-sm"
               title={`Search on ${link.label}`}
             >
-              <ExternalLink className="size-4 mr-2" />
+              <img src={link.icon} alt="" className="size-4 mr-2 rounded-sm" />
               {link.label}
             </a>
           ))}

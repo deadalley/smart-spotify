@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, Music, User } from "lucide-react";
+import { Music, User } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
@@ -113,7 +113,7 @@ export function ArtistView() {
               className="btn btn-outline btn-sm"
               title={`View on ${link.label}`}
             >
-              <ExternalLink className="size-4 mr-2" />
+              <img src={link.icon} alt="" className="size-4 mr-2 rounded-sm" />
               View on {link.label}
             </a>
           ))}
