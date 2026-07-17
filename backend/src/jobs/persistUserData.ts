@@ -3,6 +3,7 @@ import { convertFromSpotifyTrack, Track } from "@smart-spotify/shared";
 import { Job } from "bullmq";
 import { RedisService, SpotifyService, YouTubeService } from "../services";
 import type { MusicSource } from "../services/RedisService";
+import { convertYouTubeThumbnails } from "../services/YouTubeService";
 
 enum JobProgressPercentage {
   START = 0,
@@ -279,7 +280,7 @@ async function syncYoutube(
       public: false,
       collaborative: false,
       trackCount: p.itemCount,
-      images: [],
+      images: convertYouTubeThumbnails(p.thumbnails),
       externalUrls: {
         spotify: `https://www.youtube.com/playlist?list=${p.id}`,
       },

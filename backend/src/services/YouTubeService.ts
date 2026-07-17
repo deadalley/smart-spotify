@@ -1,3 +1,4 @@
+import { Image } from "@smart-spotify/shared";
 import { google, youtube_v3 } from "googleapis";
 
 type TokenData = {
@@ -5,6 +6,31 @@ type TokenData = {
   refresh_token?: string | null;
   expiry_date?: number | null;
 };
+
+// Largest first, so images[0] (what the UI displays) is the best quality available.
+const THUMBNAIL_SIZE_ORDER: Array<keyof youtube_v3.Schema$ThumbnailDetails> = [
+  "maxres",
+  "standard",
+  "high",
+  "medium",
+  "default",
+];
+
+export function convertYouTubeThumbnails(
+  thumbnails: youtube_v3.Schema$ThumbnailDetails | null | undefined,
+): Image[] {
+  if (!thumbnails) return [];
+
+  return THUMBNAIL_SIZE_ORDER.map((size) => thumbnails[size])
+    .filter((thumbnail): thumbnail is youtube_v3.Schema$Thumbnail =>
+      Boolean(thumbnail?.url),
+    )
+    .map((thumbnail) => ({
+      url: thumbnail.url!,
+      width: thumbnail.width ?? undefined,
+      height: thumbnail.height ?? undefined,
+    }));
+}
 
 function parseISODurationToMs(iso: string | undefined | null): number {
   if (!iso) return 0;
