@@ -61,7 +61,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logoutMutation = useMutation({
     mutationFn: () => authAPI.logout(source),
-    onSuccess: () => {
+    // Always drop the local session, even if the network call fails (e.g.
+    // offline) — the user's intent to log out shouldn't get stuck waiting
+    // on the server.
+    onSettled: () => {
       setIsAuthenticated(false);
       queryClient.clear();
       navigate("/login");

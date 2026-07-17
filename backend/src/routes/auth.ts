@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { Request, Response, Router } from "express";
 import { YouTubeService } from "../services/YouTubeService";
 import { AuthService } from "../services";
+import { refreshYouTubeAccessToken } from "../middleware/requireAuth";
 
 dotenv.config();
 
@@ -252,6 +253,14 @@ router.get("/youtube/callback", async (req: Request, res: Response) => {
 
     const channel = await ytMe.getMyChannel();
 
+    // Google only issues a refresh token on the first-ever grant (or a
+    // forced re-consent) — a returning login won't include one in the
+    // response. Fall back to whatever we already have on file so the
+    // session can still be refreshed transparently later.
+    const existingUser = await authService.getUser(channel.id);
+    const refreshToken =
+      tokens.refresh_token ?? existingUser?.ytMusic?.refreshToken;
+
     res.cookie("youtube_access_token", tokens.access_token, {
       httpOnly: true,
       secure: isProduction,
@@ -260,8 +269,8 @@ router.get("/youtube/callback", async (req: Request, res: Response) => {
       maxAge: 60 * 60 * 1000, // 1 hour (refreshed via /auth/youtube/refresh)
     });
 
-    if (tokens.refresh_token) {
-      res.cookie("youtube_refresh_token", tokens.refresh_token, {
+    if (refreshToken) {
+      res.cookie("youtube_refresh_token", refreshToken, {
         httpOnly: true,
         secure: isProduction,
         sameSite: "lax",
@@ -283,7 +292,7 @@ router.get("/youtube/callback", async (req: Request, res: Response) => {
     authService.storeYouTubeToken(userId, {
       userId: channel.id,
       accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token ?? undefined,
+      refreshToken,
     });
 
     res.cookie("user_id", userId, {
@@ -333,9 +342,12 @@ router.post("/youtube/refresh", async (req: Request, res: Response) => {
 });
 
 router.post("/youtube/logout", (_req: Request, res: Response) => {
-  res.clearCookie("youtube_access_token", { sameSite: "lax" });
-  res.clearCookie("youtube_refresh_token", { sameSite: "lax" });
-  res.clearCookie("youtube_user_id", { sameSite: "lax" });
+  // Must match the path (and any other attributes) the cookies were set
+  // with, or the browser won't recognize these as the same cookies to clear.
+  res.clearCookie("youtube_access_token", { sameSite: "lax", path: "/" });
+  res.clearCookie("youtube_refresh_token", { sameSite: "lax", path: "/" });
+  res.clearCookie("youtube_user_id", { sameSite: "lax", path: "/" });
+  res.clearCookie("user_id", { sameSite: "lax", path: "/" });
   res.json({ success: true });
 });
 
@@ -361,9 +373,10 @@ router.get("/youtube/me", async (req: Request, res: Response) => {
  */
 router.get("/me", async (req: Request, res: Response) => {
   try {
-    const ytAccessToken = req.cookies?.youtube_access_token as
-      | string
-      | undefined;
+    const ytAccessToken =
+      (req.cookies?.youtube_access_token as string | undefined) ??
+      (await refreshYouTubeAccessToken(req, res)) ??
+      undefined;
     if (!ytAccessToken) {
       return res.status(401).json({ error: "Not authenticated" });
     }
