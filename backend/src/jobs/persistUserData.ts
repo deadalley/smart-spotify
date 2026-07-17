@@ -271,6 +271,12 @@ async function syncYoutube(
 
   const youtubePlaylists = await withAutoRefresh(() => yt.listMyPlaylists());
 
+  // TEMPORARY: remove once we've root-caused the missing playlist/artist images.
+  console.log(
+    "[DEBUG] PLAYLIST thumbnails:",
+    JSON.stringify(youtubePlaylists.map((p) => ({ id: p.id, thumbnails: p.thumbnails }))),
+  );
+
   const playlistsDomain = [
     ...youtubePlaylists.map((p) => ({
       id: p.id,
@@ -355,6 +361,13 @@ async function syncYoutube(
   const channels = await withAutoRefresh(() => yt.getChannelsByIds(artistIds));
   const channelThumbnails = new Map(
     channels.map((c) => [c.id, c.thumbnails] as const),
+  );
+
+  // TEMPORARY: remove once we've root-caused the missing playlist/artist images.
+  console.log("[DEBUG] ARTIST ids queried:", JSON.stringify(artistIds));
+  console.log(
+    "[DEBUG] CHANNEL results:",
+    JSON.stringify(channels.map((c) => ({ id: c.id, thumbnails: c.thumbnails }))),
   );
 
   const artistsDomain = Array.from(uniqueArtists.values()).map((a) => ({
