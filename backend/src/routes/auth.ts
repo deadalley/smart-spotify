@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { Request, Response, Router } from "express";
 import { YouTubeService } from "../services/YouTubeService";
 import { AuthService } from "../services";
+import { refreshYouTubeAccessToken } from "../middleware/requireAuth";
 
 dotenv.config();
 
@@ -333,9 +334,12 @@ router.post("/youtube/refresh", async (req: Request, res: Response) => {
 });
 
 router.post("/youtube/logout", (_req: Request, res: Response) => {
-  res.clearCookie("youtube_access_token", { sameSite: "lax" });
-  res.clearCookie("youtube_refresh_token", { sameSite: "lax" });
-  res.clearCookie("youtube_user_id", { sameSite: "lax" });
+  // Must match the path (and any other attributes) the cookies were set
+  // with, or the browser won't recognize these as the same cookies to clear.
+  res.clearCookie("youtube_access_token", { sameSite: "lax", path: "/" });
+  res.clearCookie("youtube_refresh_token", { sameSite: "lax", path: "/" });
+  res.clearCookie("youtube_user_id", { sameSite: "lax", path: "/" });
+  res.clearCookie("user_id", { sameSite: "lax", path: "/" });
   res.json({ success: true });
 });
 
@@ -361,9 +365,10 @@ router.get("/youtube/me", async (req: Request, res: Response) => {
  */
 router.get("/me", async (req: Request, res: Response) => {
   try {
-    const ytAccessToken = req.cookies?.youtube_access_token as
-      | string
-      | undefined;
+    const ytAccessToken =
+      (req.cookies?.youtube_access_token as string | undefined) ??
+      (await refreshYouTubeAccessToken(req, res)) ??
+      undefined;
     if (!ytAccessToken) {
       return res.status(401).json({ error: "Not authenticated" });
     }

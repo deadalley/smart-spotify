@@ -3,13 +3,54 @@ import { NextFunction, Request, Response } from "express";
 import { SpotifyService, YouTubeService } from "../services";
 import type { MusicSource } from "../services/RedisService";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+/**
+ * Exchanges the youtube_refresh_token cookie for a fresh access token and
+ * writes it back as a cookie. The access token cookie is short-lived (1h),
+ * so this lets a session survive past that without forcing a full re-login.
+ * Returns the new access token, or null if there's no valid refresh token.
+ */
+export async function refreshYouTubeAccessToken(
+  req: Request,
+  res: Response,
+): Promise<string | null> {
+  const refreshToken = req.cookies?.youtube_refresh_token as
+    | string
+    | undefined;
+  if (!refreshToken) return null;
+
+  try {
+    const yt = new YouTubeService({ refresh_token: refreshToken });
+    const tokens = await yt.refreshAccessToken();
+    if (!tokens.access_token) return null;
+
+    res.cookie("youtube_access_token", tokens.access_token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 1000, // 1 hour
+    });
+
+    return tokens.access_token;
+  } catch (error) {
+    console.error("Error refreshing YouTube access token:", error);
+    return null;
+  }
+}
+
 export async function requireAuth(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
   const spotifyAccess = req.cookies?.spotify_access_token as string | undefined;
-  const youtubeAccess = req.cookies?.youtube_access_token as string | undefined;
+  let youtubeAccess = req.cookies?.youtube_access_token as string | undefined;
+
+  if (!spotifyAccess && !youtubeAccess) {
+    youtubeAccess = (await refreshYouTubeAccessToken(req, res)) ?? undefined;
+  }
 
   const source: MusicSource | null = spotifyAccess
     ? "spotify"
