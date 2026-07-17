@@ -7,12 +7,16 @@ export type BuyLinkService =
 
 export type BuyLinkEntityType = "track" | "album" | "artist";
 
-export const BUY_LINK_SERVICES: { id: BuyLinkService; label: string }[] = [
-  { id: "qobuz", label: "Qobuz" },
-  { id: "bandcamp", label: "Bandcamp" },
-  { id: "appleMusic", label: "Apple Music" },
-  { id: "discogs", label: "Discogs" },
-  { id: "amazon", label: "Amazon" },
+export const BUY_LINK_SERVICES: {
+  id: BuyLinkService;
+  label: string;
+  icon: string;
+}[] = [
+  { id: "qobuz", label: "Qobuz", icon: "/icons/qobuz.png" },
+  { id: "bandcamp", label: "Bandcamp", icon: "/icons/bandcamp.png" },
+  { id: "appleMusic", label: "Apple Music", icon: "/icons/appleMusic.png" },
+  { id: "discogs", label: "Discogs", icon: "/icons/discogs.png" },
+  { id: "amazon", label: "Amazon", icon: "/icons/amazon.png" },
 ];
 
 export function getPrimaryArtistNameFromTracks(
@@ -99,6 +103,7 @@ export function buildLinks({
   return BUY_LINK_SERVICES.filter((s) => enabled.has(s.id)).map((s) => ({
     service: s.id,
     label: s.label,
+    icon: s.icon,
     href: buildHref(s.id, entityType, q),
   }));
 }

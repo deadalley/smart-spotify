@@ -1,7 +1,7 @@
 import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, Clock, ExternalLink, Heart } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, Heart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSettings } from "../contexts/SettingsContext";
@@ -187,11 +187,15 @@ export function TrackList({
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-ghost btn-xs btn-circle"
+                className="btn btn-ghost btn-xs btn-circle p-0.5"
                 title={`Search on ${link.label}`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <ExternalLink size={12} />
+                <img
+                  src={link.icon}
+                  alt={link.label}
+                  className="size-full rounded-sm"
+                />
               </a>
             ))}
           </div>
