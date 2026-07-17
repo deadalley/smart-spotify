@@ -1,6 +1,6 @@
 import { Album } from "@smart-spotify/shared";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Disc3, ExternalLink } from "lucide-react";
+import { ArrowLeft, Disc3 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
@@ -8,7 +8,10 @@ import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
 import { SpotifyLink } from "../components/SpotifyLink";
 import { TrackList } from "../components/TrackList";
+import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
+import { buildLinks, getPrimaryArtistNameFromTracks } from "../utils/buyLinks";
+import { Tooltip } from "../components/Tooltip";
 
 function getBestAlbumImage(album: Album) {
   const images = album.images ?? [];
@@ -16,67 +19,10 @@ function getBestAlbumImage(album: Album) {
   return images[0]?.url ?? null;
 }
 
-function getPrimaryArtistNameFromTracks(
-  tracks: ReadonlyArray<{ artistNames: string[] }>
-) {
-  const counts = tracks
-    .flatMap((t) => t.artistNames ?? [])
-    .reduce(
-      (acc, name) => acc.set(name, (acc.get(name) ?? 0) + 1),
-      new Map<string, number>()
-    );
-
-  return (
-    [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
-  );
-}
-
-function createBuyLinks({
-  albumName,
-  artistName,
-}: {
-  albumName: string;
-  artistName?: string | null;
-}) {
-  const q = encodeURIComponent(
-    [albumName, artistName].filter(Boolean).join(" ").trim()
-  );
-
-  // Qobuz locale format is typically "{country}-{language}" (e.g. "us-en", "de-de"),
-  // while browsers usually expose "{language}-{country}" (e.g. "en-US", "de-DE").
-  const getQobuzLocale = () => {
-    const nav = typeof navigator !== "undefined" ? navigator : undefined;
-    const preferred =
-      (nav?.languages ?? [])
-        .map((l) => l.replace("_", "-"))
-        .find((l) => l.toLowerCase().startsWith("de-")) ??
-      nav?.language?.replace("_", "-") ??
-      "de-DE";
-
-    const [lang = "de", country = "de"] = preferred
-      .split("-")
-      .map((p) => p.toLowerCase());
-
-    return `${country}-${lang}`;
-  };
-
-  const qobuzLocale = getQobuzLocale();
-
-  return [
-    {
-      label: "Qobuz",
-      href: `https://www.qobuz.com/${qobuzLocale}/search/albums/${q}`,
-    },
-    { label: "Bandcamp", href: `https://bandcamp.com/search?q=${q}` },
-    { label: "Apple Music", href: `https://music.apple.com/search?term=${q}` },
-    { label: "Discogs", href: `https://www.discogs.com/search/?q=${q}&type=release` },
-    { label: "Amazon", href: `https://www.amazon.com/s?k=${q}` },
-  ] as const;
-}
-
 export function AlbumView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { enabledServices } = useSettings();
 
   const {
     data: album,
@@ -118,9 +64,11 @@ export function AlbumView() {
   const albumImage = getBestAlbumImage(album);
   const year = album.releaseDate?.substring(0, 4);
   const primaryArtistName = getPrimaryArtistNameFromTracks(tracks);
-  const buyLinks = createBuyLinks({
-    albumName: album.name,
+  const buyLinks = buildLinks({
+    entityType: "album",
+    name: album.name,
     artistName: primaryArtistName,
+    services: enabledServices,
   });
 
   return (
@@ -169,21 +117,27 @@ export function AlbumView() {
         }
       />
 
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {buyLinks.map((link) => (
-          <a
-            key={link.label}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-outline btn-sm"
-            title={`Search on ${link.label}`}
-          >
-            <ExternalLink className="size-4 mr-2" />
-            {link.label}
-          </a>
-        ))}
-      </div>
+      {buyLinks.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          {buyLinks.map((link) => (
+            <Tooltip key={link.service} content={`Search on ${link.label}`}>
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-outline btn-sm"
+              >
+                <img
+                  src={link.icon}
+                  alt=""
+                  className="size-4 mr-2 rounded-sm"
+                />
+                {link.label}
+              </a>
+            </Tooltip>
+          ))}
+        </div>
+      )}
 
       {tracks.length === 0 ? (
         <Empty Icon={Disc3}>No tracks found</Empty>
@@ -193,4 +147,3 @@ export function AlbumView() {
     </Page>
   );
 }
-
