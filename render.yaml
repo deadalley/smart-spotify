@@ -3,6 +3,8 @@ services:
     name: smart-spotify-backend
     runtime: node
     plan: free
+    branch: main
+    autoDeploy: true
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build:shared && pnpm run build:backend
     startCommand: pnpm run start
     envVars:
