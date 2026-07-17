@@ -1,12 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { convertFromSpotifyTrack, Track } from "@smart-spotify/shared";
 import { Job } from "bullmq";
-import {
-  RedisService,
-  SpotifyService,
-  YouTubeService,
-} from "../services/index.js";
-import type { MusicSource } from "../services/RedisService.js";
+import { RedisService, SpotifyService, YouTubeService } from "../services";
+import type { MusicSource } from "../services/RedisService";
 
 enum JobProgressPercentage {
   START = 0,

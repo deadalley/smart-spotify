@@ -10,7 +10,7 @@ import {
   SpotifyUser,
   Track,
   User,
-} from "./types.js";
+} from "./types";
 
 export function convertFromSpotifyUser(spotifyUser: SpotifyUser): User {
   return {

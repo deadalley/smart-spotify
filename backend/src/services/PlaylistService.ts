@@ -8,8 +8,8 @@ import {
   Track,
   TrackAggregationResult,
 } from "@smart-spotify/shared";
-import { isTrackInPlaylist, isTrackNotInPlaylist } from "../utils.js";
-import { RedisService } from "./RedisService.js";
+import { isTrackInPlaylist, isTrackNotInPlaylist } from "../utils";
+import { RedisService } from "./RedisService";
 
 type GenreInfo = {
   normalized: string;

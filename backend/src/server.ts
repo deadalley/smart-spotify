@@ -3,11 +3,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import crypto from "crypto";
-import { connectRedis } from "./redis.js";
-import { indexRouter } from "./routes/index.js";
-import { authRouter } from "./routes/auth.js";
-import { persistRouter } from "./routes/persist.js";
-import { spotifyRouter } from "./routes/spotify.js";
+import { connectRedis } from "./redis";
+import { indexRouter } from "./routes";
+import { authRouter } from "./routes/auth";
+import { persistRouter } from "./routes/persist";
+import { spotifyRouter } from "./routes/spotify";
 
 dotenv.config();
 

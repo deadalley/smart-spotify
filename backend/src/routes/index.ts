@@ -6,13 +6,9 @@ import {
   SpotifyTrack,
 } from "@smart-spotify/shared";
 import { Request, Response, Router } from "express";
-import { requireAuth } from "../middleware/requireAuth.js";
-import {
-  PlaylistService,
-  RedisService,
-  SpotifyService,
-} from "../services/index.js";
-import type { MusicSource } from "../services/RedisService.js";
+import { requireAuth } from "../middleware/requireAuth";
+import { PlaylistService, RedisService, SpotifyService } from "../services";
+import type { MusicSource } from "../services/RedisService";
 
 const router: Router = Router();
 

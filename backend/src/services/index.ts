@@ -1,6 +1,6 @@
-export { AuthService } from "./AuthService.js";
-export { BullService } from "./BullService.js";
-export { PlaylistService } from "./PlaylistService.js";
-export { RedisService } from "./RedisService.js";
-export { SpotifyService } from "./SpotifyService.js";
-export { YouTubeService } from "./YouTubeService.js";
+export { AuthService } from "./AuthService";
+export { BullService } from "./BullService";
+export { PlaylistService } from "./PlaylistService";
+export { RedisService } from "./RedisService";
+export { SpotifyService } from "./SpotifyService";
+export { YouTubeService } from "./YouTubeService";

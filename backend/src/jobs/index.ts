@@ -1,1 +1,1 @@
-export * from "./persistUserData.js";
+export * from "./persistUserData";

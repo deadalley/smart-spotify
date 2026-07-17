@@ -3,9 +3,9 @@ import {
   getPersistJobStatusMessage,
   PersistJobData,
   persistUserDataJob,
-} from "../jobs/persistUserData.js";
-import { JobProgress, JobQueues, Jobs, JobStatus } from "../types/index.js";
-import type { MusicSource } from "./RedisService.js";
+} from "../jobs/persistUserData";
+import { JobProgress, JobQueues, Jobs, JobStatus } from "../types";
+import type { MusicSource } from "./RedisService";
 
 export class BullService {
   private persistQueue: Queue;

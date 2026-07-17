@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
-import { SpotifyService, YouTubeService } from "../services/index.js";
-import type { MusicSource } from "../services/RedisService.js";
+import { SpotifyService, YouTubeService } from "../services";
+import type { MusicSource } from "../services/RedisService";
 
 export async function requireAuth(
   req: Request,

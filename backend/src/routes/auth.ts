@@ -2,8 +2,8 @@ import axios from "axios";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import { Request, Response, Router } from "express";
-import { YouTubeService } from "../services/YouTubeService.js";
-import { AuthService } from "../services/index.js";
+import { YouTubeService } from "../services/YouTubeService";
+import { AuthService } from "../services";
 
 dotenv.config();
 
