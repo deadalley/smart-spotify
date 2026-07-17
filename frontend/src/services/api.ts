@@ -126,37 +126,21 @@ export const baseAPI = {
     api.patch(`/playlists/${playlistId}/type`, { playlistType }),
 };
 
-// Axios interceptor: transparently refresh access token on 401 once.
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const status = error?.response?.status;
-//     const originalRequest = error?.config as
-//       | (typeof error.config & { _retry?: boolean })
-//       | undefined;
+// The backend transparently refreshes an expired YouTube access token on
+// protected routes, so a 401 here means the session is actually dead (no
+// valid refresh token either). Send the user back to the login screen
+// instead of leaving the app stuck on empty/broken data.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url as string | undefined;
+    const isAuthRoute = typeof url === "string" && url.startsWith("/auth/");
 
-//     if (status !== 401 || !originalRequest || originalRequest._retry) {
-//       return Promise.reject(error);
-//     }
+    if (status === 401 && !isAuthRoute && window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
 
-//     // Don't try to refresh when the refresh itself failed
-//     if (
-//       typeof originalRequest.url === "string" &&
-//       (originalRequest.url.includes("/auth/spotify/refresh") ||
-//         originalRequest.url.includes("/auth/youtube/refresh"))
-//     ) {
-//       window.location.href = "/";
-//       return Promise.reject(error);
-//     }
-
-//     originalRequest._retry = true;
-
-//     try {
-//       await authAPI.refreshToken(getStoredSource());
-//       return api.request(originalRequest);
-//     } catch (refreshError) {
-//       window.location.href = "/";
-//       return Promise.reject(refreshError);
-//     }
-//   },
-// );
+    return Promise.reject(error);
+  },
+);
