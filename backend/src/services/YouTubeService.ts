@@ -19,6 +19,9 @@ const THUMBNAIL_SIZE_ORDER: Array<keyof youtube_v3.Schema$ThumbnailDetails> = [
 export function convertYouTubeThumbnails(
   thumbnails: youtube_v3.Schema$ThumbnailDetails | null | undefined,
 ): Image[] {
+  // TEMPORARY: remove once we've root-caused the missing playlist/artist images.
+  console.log("convertYouTubeThumbnails input:", JSON.stringify(thumbnails));
+
   if (!thumbnails) return [];
 
   return THUMBNAIL_SIZE_ORDER.map((size) => thumbnails[size])
