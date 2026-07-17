@@ -1,0 +1,21 @@
+[build]
+  command = "pnpm install --frozen-lockfile && pnpm run build:shared && pnpm run build:frontend"
+  publish = "frontend/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Proxy API calls to the backend (Render) so the frontend can keep calling
+# relative "/api/..." paths and auth cookies stay same-site.
+# Replace the target with your actual Render backend URL once it's deployed.
+[[redirects]]
+  from = "/api/*"
+  to = "https://smart-spotify-backend.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback so client-side routes (react-router) work on refresh/direct load
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

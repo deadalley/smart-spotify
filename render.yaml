@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: smart-spotify-backend
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build:shared && pnpm run build:backend
+    startCommand: pnpm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      # Public URL of the Netlify site (used for CORS + OAuth redirects back to the app)
+      - key: CLIENT_URL
+        sync: false
+      # Spotify OAuth app credentials (https://developer.spotify.com/dashboard/applications)
+      - key: SPOTIFY_CLIENT_ID
+        sync: false
+      - key: SPOTIFY_CLIENT_SECRET
+        sync: false
+      # Must match the redirect URI registered in the Spotify dashboard, e.g.
+      # https://<your-netlify-site>/api/auth/spotify/callback
+      - key: SPOTIFY_REDIRECT_URI
+        sync: false
+      # YouTube (Google) OAuth app credentials (Google Cloud Console)
+      - key: YOUTUBE_CLIENT_ID
+        sync: false
+      - key: YOUTUBE_CLIENT_SECRET
+        sync: false
+      # Must match the redirect URI registered in Google Cloud Console, e.g.
+      # https://<your-netlify-site>/api/auth/youtube/callback
+      - key: YOUTUBE_REDIRECT_URI
+        sync: false
+      # Redis connection string, e.g. from Upstash (rediss://...) or Render's own Key Value store
+      - key: REDIS_URL
+        sync: false

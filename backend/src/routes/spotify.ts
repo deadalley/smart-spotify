@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
-import { requireAuth } from "../middleware/requireAuth";
-import { RedisService, SpotifyService } from "../services";
-import type { MusicSource } from "../services/RedisService";
+import { requireAuth } from "../middleware/requireAuth.js";
+import { RedisService, SpotifyService } from "../services/index.js";
+import type { MusicSource } from "../services/RedisService.js";
 
 const router: Router = Router();
 

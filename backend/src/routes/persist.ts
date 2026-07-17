@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
-import { requireAuth } from "../middleware/requireAuth";
-import { RedisService } from "../services";
-import { BullService } from "../services/BullService";
-import type { MusicSource } from "../services/RedisService";
+import { requireAuth } from "../middleware/requireAuth.js";
+import { RedisService } from "../services/index.js";
+import { BullService } from "../services/BullService.js";
+import type { MusicSource } from "../services/RedisService.js";
 
 const router: Router = Router();
 const bullService = new BullService();

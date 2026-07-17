@@ -1,4 +1,4 @@
-import { redisClient } from "../redis";
+import { redisClient } from "../redis.js";
 
 export interface UserSourceData {
   userId: string;

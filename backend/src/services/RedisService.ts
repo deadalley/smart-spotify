@@ -21,7 +21,7 @@ import {
   Track,
   User,
 } from "@smart-spotify/shared";
-import { redisClient } from "../redis";
+import { redisClient } from "../redis.js";
 
 export type MusicSource = "spotify" | "yt-music";
 
