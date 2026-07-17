@@ -4,7 +4,7 @@ import { useEffect, useReducer, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { baseAPI } from "../services/api";
-import { SOURCE_LABELS } from "../utils";
+import { getAppName, SOURCE_LABELS } from "../utils";
 
 interface SyncState {
   isLoading: boolean;
@@ -109,6 +109,7 @@ function syncReducer(state: SyncState, action: SyncAction): SyncState {
 export function SyncModal() {
   const { source } = useAuth();
   const sourceLabel = SOURCE_LABELS[source];
+  const appName = getAppName(source);
   const [state, dispatch] = useReducer(syncReducer, initialState);
   const pollingIntervalRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
@@ -327,8 +328,8 @@ export function SyncModal() {
             <div className="mt-4 rounded-box border border-primary/30 bg-base-200/20 p-4">
               <ul className="list-disc pl-5 space-y-1 text-sm text-base-content/80">
                 <li>
-                  In order to manage your entire {sourceLabel} library,
-                  SmartSpotify needs to{" "}
+                  In order to manage your entire {sourceLabel} library,{" "}
+                  {appName} needs to{" "}
                   <span className="font-semibold text-base-content">
                     cache your data
                   </span>{" "}
@@ -345,7 +346,7 @@ export function SyncModal() {
                 <li>You can delete the cached data anytime</li>
                 {source === "spotify" && (
                   <li>
-                    Any changes you make in SmartSpotify will be{" "}
+                    Any changes you make in {appName} will be{" "}
                     <span className="font-semibold text-base-content">
                       automatically
                     </span>{" "}
@@ -357,7 +358,7 @@ export function SyncModal() {
                   <span className="font-semibold text-base-content">
                     manually
                   </span>{" "}
-                  synced to SmartSpotify.
+                  synced to {appName}.
                 </li>
               </ul>
             </div>
@@ -423,7 +424,7 @@ export function SyncModal() {
               className="btn btn-primary w-full mt-2"
               onClick={handleStartSmartSpotify}
             >
-              Start SmartSpotify
+              Start {appName}
             </button>
           ) : (
             <div className="modal-action flex flex-col gap-2">

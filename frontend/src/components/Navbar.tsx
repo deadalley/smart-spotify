@@ -1,12 +1,14 @@
 import { Heart, LogOut, Music, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { getAppName } from "../utils";
 import { SmartSpotifyLogo } from "./SmartSpotifyLogo";
 import { SyncModal } from "./SyncModal";
 
 export function Navbar() {
   const { logout, source } = useAuth();
   const location = useLocation();
+  const appName = getAppName(source);
 
   const handleLogout = () => {
     logout();
@@ -33,7 +35,7 @@ export function Navbar() {
             className="flex font-bold text-lg gap-2 items-center text-base-content hover:text-primary transition-colors group"
           >
             <SmartSpotifyLogo className="size-6 group-hover:scale-110 transition-transform text-primary" />
-            <span>Smart Spotify</span>
+            <span>{appName}</span>
           </Link>
 
           <div className="flex items-center gap-6">

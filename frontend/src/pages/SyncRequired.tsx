@@ -4,11 +4,12 @@ import { useEffect } from "react";
 import { Page } from "../components/Page";
 import { useAuth } from "../contexts/AuthContext";
 import { baseAPI } from "../services/api";
-import { SOURCE_LABELS } from "../utils";
+import { getAppName, SOURCE_LABELS } from "../utils";
 
 export function SyncRequired() {
   const { source } = useAuth();
   const sourceLabel = SOURCE_LABELS[source];
+  const appName = getAppName(source);
 
   const { data: syncStatus } = useQuery({
     queryKey: ["sync-status"],
@@ -46,7 +47,7 @@ export function SyncRequired() {
             <div className="flex-1">
               <h1 className="text-2xl font-bold">Sync required</h1>
               <p className="text-base-content/70 mt-2">
-                SmartSpotify needs to cache your {sourceLabel} library for
+                {appName} needs to cache your {sourceLabel} library for
                 faster access. Start a sync to unlock playlists, artists,
                 albums, and analysis.
               </p>
