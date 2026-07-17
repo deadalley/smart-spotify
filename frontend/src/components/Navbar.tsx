@@ -5,7 +5,7 @@ import { SmartSpotifyLogo } from "./SmartSpotifyLogo";
 import { SyncModal } from "./SyncModal";
 
 export function Navbar() {
-  const { logout } = useAuth();
+  const { logout, source } = useAuth();
   const location = useLocation();
 
   const handleLogout = () => {
@@ -16,7 +16,10 @@ export function Navbar() {
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const navLinks = [
-    { path: "/saved-tracks", label: "Liked Songs", icon: Heart },
+    // Liked Songs has no YouTube Music equivalent synced today.
+    ...(source === "spotify"
+      ? [{ path: "/saved-tracks", label: "Liked Songs", icon: Heart }]
+      : []),
     { path: "/playlists", label: "Playlists", icon: Music },
     { path: "/artists", label: "Artists", icon: Users },
   ];
