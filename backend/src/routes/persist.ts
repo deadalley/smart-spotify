@@ -72,6 +72,14 @@ router.get("/status", requireAuth, async (req: Request, res: Response) => {
 
     const meta = await redisService.getSyncMeta(userId);
     const hasData = !!meta?.lastSync;
+    const lastSyncedAtMarker = hasData
+      ? undefined
+      : await redisService.getLastSyncedAt(userId);
+    // The marker key has no TTL, so it survives after the rest of a user's
+    // library data auto-expires — letting us tell "never synced" apart
+    // from "synced before, but the cache has since expired".
+    const dataExpired = !hasData && !!lastSyncedAtMarker;
+    const lastSyncedAt = meta?.lastSync || lastSyncedAtMarker || undefined;
 
     const activeJobId = await bullService.getActiveJob(userId);
 
@@ -80,7 +88,9 @@ router.get("/status", requireAuth, async (req: Request, res: Response) => {
         success: true,
         hasActiveJob: false,
         hasData,
+        dataExpired,
         lastSync: meta?.lastSync,
+        lastSyncedAt,
         stats: meta
           ? {
               playlists: meta.playlistCount,
@@ -98,7 +108,9 @@ router.get("/status", requireAuth, async (req: Request, res: Response) => {
       success: true,
       hasActiveJob: true,
       hasData,
+      dataExpired,
       lastSync: meta?.lastSync,
+      lastSyncedAt,
       jobId: activeJobId,
       ...jobStatus,
     });

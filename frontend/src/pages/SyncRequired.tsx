@@ -18,6 +18,8 @@ export function SyncRequired() {
       return response.data as {
         hasData?: boolean;
         hasActiveJob?: boolean;
+        dataExpired?: boolean;
+        lastSyncedAt?: string;
         progress?: number;
         message?: string;
       };
@@ -46,11 +48,26 @@ export function SyncRequired() {
             </div>
             <div className="flex-1">
               <h1 className="text-2xl font-bold">Sync required</h1>
-              <p className="text-base-content/70 mt-2">
-                {appName} needs to cache your {sourceLabel} library for
-                faster access. Start a sync to unlock playlists, artists,
-                albums, and analysis.
-              </p>
+              {syncStatus?.dataExpired ? (
+                <div className="alert alert-warning mt-2">
+                  <span className="text-sm">
+                    Your cached {sourceLabel} data automatically expired after
+                    30 days of inactivity
+                    {syncStatus.lastSyncedAt
+                      ? ` (last synced ${new Date(
+                          syncStatus.lastSyncedAt,
+                        ).toLocaleDateString()})`
+                      : ""}
+                    . Sync again to refresh it.
+                  </span>
+                </div>
+              ) : (
+                <p className="text-base-content/70 mt-2">
+                  {appName} needs to cache your {sourceLabel} library for
+                  faster access. Start a sync to unlock playlists, artists,
+                  albums, and analysis.
+                </p>
+              )}
 
               {syncStatus?.hasActiveJob && (
                 <div className="mt-4">

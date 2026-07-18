@@ -123,7 +123,19 @@ export function convertToRedisTrack(track: Track): Record<string, string> {
     externalUrls: JSON.stringify(track.externalUrls),
     artistIds: JSON.stringify(track.artistIds),
     artistNames: JSON.stringify(track.artistNames),
-    album: JSON.stringify(track.album),
+    albumId: track.album.id,
+  };
+}
+
+export function convertToRedisAlbum(album: Album): Record<string, string> {
+  return {
+    id: album.id,
+    name: album.name,
+    type: album.type,
+    releaseDate: album.releaseDate || "",
+    totalTracks: album.totalTracks?.toString() || "",
+    images: JSON.stringify(album.images || []),
+    externalUrls: JSON.stringify(album.externalUrls || { spotify: "" }),
   };
 }
 
@@ -166,7 +178,10 @@ export function convertFromRedisPlaylist(
   };
 }
 
-export function convertFromRedisTrack(data: Record<string, string>): Track {
+export function convertFromRedisTrack(
+  data: Record<string, string>,
+  album?: Album
+): Track {
   return {
     id: data.id,
     name: data.name,
@@ -183,7 +198,19 @@ export function convertFromRedisTrack(data: Record<string, string>): Track {
     externalUrls: JSON.parse(data.externalUrls || "{}"),
     artistIds: JSON.parse(data.artistIds || "[]"),
     artistNames: JSON.parse(data.artistNames || "[]"),
-    album: JSON.parse(data.album || "{}") as Album,
+    album: album ?? ({} as Album),
+  };
+}
+
+export function convertFromRedisAlbum(data: Record<string, string>): Album {
+  return {
+    id: data.id,
+    name: data.name,
+    type: data.type,
+    releaseDate: data.releaseDate || undefined,
+    totalTracks: data.totalTracks ? parseInt(data.totalTracks) : undefined,
+    images: JSON.parse(data.images || "[]"),
+    externalUrls: JSON.parse(data.externalUrls || "{}"),
   };
 }
 
@@ -246,8 +273,14 @@ export function convertSpotifyTrackToRedis(
     externalUrls: JSON.stringify(spotifyTrack.external_urls || { spotify: "" }),
     artistIds: JSON.stringify(spotifyTrack.artists.map((a) => a.id)),
     artistNames: JSON.stringify(spotifyTrack.artists.map((a) => a.name)),
-    album: JSON.stringify(convertFromSpotifyAlbum(spotifyTrack.album)),
+    albumId: spotifyTrack.album.id,
   };
+}
+
+export function convertSpotifyAlbumToRedis(
+  spotifyAlbum: SpotifyAlbum
+): Record<string, string> {
+  return convertToRedisAlbum(convertFromSpotifyAlbum(spotifyAlbum));
 }
 
 export function convertSpotifyArtistToRedis(
