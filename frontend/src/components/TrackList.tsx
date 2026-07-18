@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, Clock, Heart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
 import { formatDuration } from "../utils";
@@ -27,6 +28,7 @@ export function TrackList({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
   const { enabledServices } = useSettings();
+  const { source } = useAuth();
 
   const unlikeTrackMutation = useMutation({
     mutationFn: async (trackId: string) => {
@@ -118,25 +120,35 @@ export function TrackList({
         );
       },
     },
-    {
-      id: "album",
-      accessorFn: (row) => row.track.album.name,
-      header: "Album",
-      meta: { span: 1 },
-      enableSorting: true,
-      cell: ({ row }) => (
-        <div className="min-w-0 flex-1">
-          <Link
-            to={`/albums/${row.original.track.album.id}`}
-            className="block text-base-content/70 text-sm truncate hover:text-primary transition-colors max-w-full"
-            onClick={(e) => e.stopPropagation()}
-            title={row.original.track.album.name}
-          >
-            {row.original.track.album.name}
-          </Link>
-        </div>
-      ),
-    },
+    // YouTube Music has no real album metadata (tracks are grouped by
+    // channel, which is already shown as the artist), so the column would
+    // just repeat the artist name — only show it for Spotify.
+    ...(source === "spotify"
+      ? [
+          {
+            id: "album",
+            accessorFn: (row) => row.track.album.name,
+            header: "Album",
+            meta: { span: 1 },
+            enableSorting: true,
+            cell: ({ row }) => (
+              <div className="min-w-0 flex-1">
+                <Link
+                  to={`/albums/${row.original.track.album.id}`}
+                  className="block text-base-content/70 text-sm truncate hover:text-primary transition-colors max-w-full"
+                  onClick={(e) => e.stopPropagation()}
+                  title={row.original.track.album.name}
+                >
+                  {row.original.track.album.name}
+                </Link>
+              </div>
+            ),
+          } satisfies ColumnDef<
+            { track: Track; trackAnalysisResult?: TrackAggregationResult },
+            unknown
+          >,
+        ]
+      : []),
     {
       id: "year",
       accessorFn: (row) => row.track.album.releaseDate,
