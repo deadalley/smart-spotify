@@ -114,7 +114,18 @@ export function TrackList({
               )}
             </div>
             <p className="text-base-content/50 text-sm truncate mt-0.5">
-              {track.artistNames.join(", ")}
+              {track.artistNames.map((name, i) => (
+                <span key={track.artistIds[i] ?? name}>
+                  {i > 0 && ", "}
+                  <Link
+                    to={`/artists/${track.artistIds[i]}`}
+                    className="hover:text-primary transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {name}
+                  </Link>
+                </span>
+              ))}
             </p>
           </div>
         );
