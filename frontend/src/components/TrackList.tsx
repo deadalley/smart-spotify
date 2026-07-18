@@ -1,7 +1,7 @@
 import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, Clock, Heart } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, Disc3, Heart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -92,43 +92,58 @@ export function TrackList({
         const { track, trackAnalysisResult } = row.original;
         const rowKey = `${track.id}-${row.index}`;
         const isExpanded = expandedRows.has(rowKey);
+        const albumImage = track.album.images?.[0]?.url;
 
         return (
-          <div className="min-w-0 flex-1">
-            <div className="flex gap-2 items-center">
-              <p className="font-medium truncate text-base-content group-hover:text-primary transition-colors">
-                {track.name}
-              </p>
-              {trackAnalysisResult && (
-                <button
-                  className="btn btn-ghost btn-xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleRow(rowKey);
-                  }}
-                >
-                  {isExpanded ? (
-                    <ChevronUp size={12} />
-                  ) : (
-                    <ChevronDown size={12} />
-                  )}
-                </button>
+          <div className="min-w-0 flex-1 flex items-center gap-3">
+            <div className="size-10 shrink-0 rounded overflow-hidden bg-base-300/50 flex items-center justify-center">
+              {albumImage ? (
+                <img
+                  src={albumImage}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Disc3 size={16} className="text-base-content/30" />
               )}
             </div>
-            <p className="text-base-content/50 text-sm truncate mt-0.5">
-              {track.artistNames.map((name, i) => (
-                <span key={track.artistIds[i] ?? name}>
-                  {i > 0 && ", "}
-                  <Link
-                    to={`/artists/${track.artistIds[i]}`}
-                    className="hover:text-primary transition-colors"
-                    onClick={(e) => e.stopPropagation()}
+
+            <div className="min-w-0 flex-1">
+              <div className="flex gap-2 items-center">
+                <p className="font-medium truncate text-base-content group-hover:text-primary transition-colors">
+                  {track.name}
+                </p>
+                {trackAnalysisResult && (
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleRow(rowKey);
+                    }}
                   >
-                    {name}
-                  </Link>
-                </span>
-              ))}
-            </p>
+                    {isExpanded ? (
+                      <ChevronUp size={12} />
+                    ) : (
+                      <ChevronDown size={12} />
+                    )}
+                  </button>
+                )}
+              </div>
+              <p className="text-base-content/50 text-sm truncate mt-0.5">
+                {track.artistNames.map((name, i) => (
+                  <span key={track.artistIds[i] ?? name}>
+                    {i > 0 && ", "}
+                    <Link
+                      to={`/artists/${track.artistIds[i]}`}
+                      className="hover:text-primary transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {name}
+                    </Link>
+                  </span>
+                ))}
+              </p>
+            </div>
           </div>
         );
       },
