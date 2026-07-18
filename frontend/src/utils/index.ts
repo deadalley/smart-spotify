@@ -14,6 +14,15 @@ export function getAppName(source: AuthSource): string {
   return `Smart ${SOURCE_LABELS[source]}`;
 }
 
+// Opens straight into playback where possible: YouTube's watch page autoplays
+// by default, and Spotify's embed player autoplays a preview when given
+// autoplay=1 (the regular open.spotify.com track page does not autoplay).
+export function getListenUrl(source: AuthSource, trackId: string): string {
+  return source === "spotify"
+    ? `https://open.spotify.com/embed/track/${trackId}?autoplay=1`
+    : `https://www.youtube.com/watch?v=${trackId}`;
+}
+
 export function formatDuration(ms: number): string {
   const dur = dayjs.duration(ms);
   const hours = dur.hours();

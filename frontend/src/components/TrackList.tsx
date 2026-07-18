@@ -7,12 +7,14 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
-import { formatDuration } from "../utils";
+import { formatDuration, getListenUrl, SOURCE_LABELS } from "../utils";
 import { buildLinks } from "../utils/buyLinks";
+import { SpotifyLogo } from "./SpotifyLogo";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
 import { Tooltip } from "./Tooltip";
+import { YouTubeLogo } from "./YouTubeLogo";
 
 export function TrackList({
   tracks,
@@ -186,6 +188,31 @@ export function TrackList({
           {formatDuration(row.original.track.durationMs)}
         </span>
       ),
+    },
+    {
+      id: "listen",
+      header: "",
+      meta: { span: 1, align: "center" },
+      cell: ({ row }) => {
+        const Logo = source === "youtube" ? YouTubeLogo : SpotifyLogo;
+        const colorClass =
+          source === "youtube"
+            ? "text-[color:var(--color-primary-youtube)]"
+            : "text-[color:var(--color-primary-spotify)]";
+        return (
+          <Tooltip content={`Listen on ${SOURCE_LABELS[source]}`}>
+            <a
+              href={getListenUrl(source, row.original.track.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost btn-xs btn-circle p-0.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Logo className={`size-full ${colorClass}`} />
+            </a>
+          </Tooltip>
+        );
+      },
     },
   ];
 
