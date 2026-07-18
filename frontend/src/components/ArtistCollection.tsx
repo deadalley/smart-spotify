@@ -6,11 +6,13 @@ import { Grid } from "./Grid";
 import { Sort, SortDirection, SortOption } from "./Sort";
 import { TableSearch } from "./TableSearch";
 import { ViewSwitch } from "./ViewSwitch";
+import { CollectionView, useSettings } from "../contexts/SettingsContext";
 
 export function ArtistCollection({ artists }: { artists: Artist[] }) {
+  const { defaultView } = useSettings();
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<CollectionView>(defaultView);
   const [globalFilter, setGlobalFilter] = useState("");
 
   const sortedAndFilteredArtists = useMemo(() => {
@@ -21,7 +23,7 @@ export function ArtistCollection({ artists }: { artists: Artist[] }) {
     if (globalFilter) {
       const lowerFilter = globalFilter.toLowerCase();
       filtered = artists.filter((artist) =>
-        artist.name.toLowerCase().includes(lowerFilter)
+        artist.name.toLowerCase().includes(lowerFilter),
       );
     }
 
