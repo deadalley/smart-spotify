@@ -19,10 +19,6 @@ function getStoredSource(): AuthSource {
   return value === "youtube" ? "youtube" : "spotify";
 }
 
-function applyThemeForSource(source: AuthSource) {
-  document.documentElement.setAttribute("data-theme", source);
-}
-
 interface AuthContextType {
   user: SpotifyUser | null;
   isLoading: boolean;
@@ -84,10 +80,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = () => {
     logoutMutation.mutate();
   };
-
-  useEffect(() => {
-    applyThemeForSource(source);
-  }, [source]);
 
   useEffect(() => {
     if (user && location.pathname.includes("/login")) {

@@ -18,10 +18,12 @@ function PageHeader({
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-3xl font-bold text-white">{title}</h1>
+        <h1 className="text-3xl font-bold text-base-content">{title}</h1>
         {action}
       </div>
-      {subtitle && <span className="text-zinc-400">{subtitle}</span>}
+      {subtitle && (
+        <span className="text-base-content/60">{subtitle}</span>
+      )}
     </div>
   );
 }
