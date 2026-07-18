@@ -56,13 +56,7 @@ export function SearchDialog() {
             autoFocus
           />
 
-          <div className="mt-4 max-h-[60vh] overflow-y-auto space-y-6 pr-1">
-            {!hasMinQuery && (
-              <p className="text-sm text-base-content/50 text-center py-8">
-                Type at least 2 characters to search your library
-              </p>
-            )}
-
+          <div className="mt-4 max-h-[60vh] overflow-y-auto space-y-8 pr-1">
             {hasMinQuery && isLoading && (
               <div className="flex justify-center py-8">
                 <span className="loading loading-spinner loading-md text-primary"></span>
@@ -79,6 +73,27 @@ export function SearchDialog() {
 
                 {hasAnyMatches && (
                   <>
+                    <SearchResultSection
+                      label="Playlists"
+                      Icon={Music}
+                      count={data.playlists.totalCount}
+                    >
+                      {data.playlists.items.map((playlist) => (
+                        <SearchResultRow
+                          key={playlist.id}
+                          to={`/playlists/${playlist.id}`}
+                          image={playlist.images?.[0]?.url}
+                          FallbackIcon={Music}
+                          shape="square"
+                          title={playlist.name}
+                          subtitle={`${playlist.trackCount} track${
+                            playlist.trackCount !== 1 ? "s" : ""
+                          }`}
+                          onNavigate={handleClose}
+                        />
+                      ))}
+                    </SearchResultSection>
+
                     <SearchResultSection
                       label="Tracks"
                       Icon={Disc3}
@@ -132,27 +147,6 @@ export function SearchDialog() {
                           title={artist.name}
                           subtitle={`${artist.trackCount ?? 0} track${
                             artist.trackCount !== 1 ? "s" : ""
-                          }`}
-                          onNavigate={handleClose}
-                        />
-                      ))}
-                    </SearchResultSection>
-
-                    <SearchResultSection
-                      label="Playlists"
-                      Icon={Music}
-                      count={data.playlists.totalCount}
-                    >
-                      {data.playlists.items.map((playlist) => (
-                        <SearchResultRow
-                          key={playlist.id}
-                          to={`/playlists/${playlist.id}`}
-                          image={playlist.images?.[0]?.url}
-                          FallbackIcon={Music}
-                          shape="square"
-                          title={playlist.name}
-                          subtitle={`${playlist.trackCount} track${
-                            playlist.trackCount !== 1 ? "s" : ""
                           }`}
                           onNavigate={handleClose}
                         />

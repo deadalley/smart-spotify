@@ -16,10 +16,10 @@ export function SearchResultSection({
 
   return (
     <div>
-      <div className="flex items-center gap-2 text-xs text-base-content/50 mb-1 px-2">
-        <Icon size={12} />
+      <div className="flex items-center gap-2 text-xs text-base-content font-medium mb-1 px-2">
+        <Icon size={14} />
         <span>
-          {label} · {count}
+          {label} · <span className="text-accent font-bold">{count}</span>
         </span>
       </div>
       <ul className="space-y-1">{children}</ul>
