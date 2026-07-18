@@ -1,5 +1,5 @@
 import { Disc3, Music, Search, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLibrarySearch } from "../hooks/useLibrarySearch";
 import { TableSearch } from "./TableSearch";
 import { Error } from "./Error";
@@ -8,6 +8,11 @@ import { SearchResultRow } from "./search/SearchResultRow";
 import { SearchResultSection } from "./search/SearchResultSection";
 
 const SEARCH_MODAL_ID = "searchModal";
+
+function isMacPlatform() {
+  if (typeof navigator === "undefined") return false;
+  return /Mac|iPod|iPhone|iPad/.test(navigator.platform ?? navigator.userAgent);
+}
 
 export function SearchDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +30,24 @@ export function SearchDialog() {
     // @ts-expect-error daisyUI adds this
     document.getElementById(SEARCH_MODAL_ID)?.showModal();
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "k") return;
+
+      const dialog = document.getElementById(
+        SEARCH_MODAL_ID
+      ) as HTMLDialogElement | null;
+      if (!dialog || dialog.open) return;
+
+      e.preventDefault();
+      setIsOpen(true);
+      dialog.showModal();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <>
@@ -180,6 +203,10 @@ export function SearchDialog() {
       >
         <Search size={16} />
         <span>Search</span>
+        <span className="flex items-center gap-0.5">
+          <kbd className="kbd kbd-sm">{isMacPlatform() ? "⌘" : "Ctrl"}</kbd>
+          <kbd className="kbd kbd-sm">K</kbd>
+        </span>
       </button>
     </>
   );
