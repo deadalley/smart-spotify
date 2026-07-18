@@ -1,10 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  convertFromSpotifyAlbum,
-  convertFromSpotifyTrack,
-  PlaylistAnalysisResult,
-  SpotifyTrack,
-} from "@smart-spotify/shared";
+import { PlaylistAnalysisResult } from "@smart-spotify/shared";
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { PlaylistService, RedisService, SpotifyService } from "../services";
@@ -308,17 +303,18 @@ router.get(
 
 router.get("/albums/:id", requireAuth, async (req: Request, res: Response) => {
   try {
-    if (getRequestSource(req) !== "spotify") {
-      return res.status(501).json({ error: "Albums not supported for YouTube" });
+    const redisService = new RedisService(getRequestSource(req));
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+    const tracks = await redisService.getAlbumTracks(userId, req.params.id);
+    if (tracks.length === 0) {
+      return res.status(404).json({ error: "Album not found" });
     }
-    const spotifyService = new SpotifyService((req as any).accessToken);
-    const album = await spotifyService.getAlbum(req.params.id);
-    res.json(convertFromSpotifyAlbum(album));
+
+    res.json(tracks[0].album);
   } catch (error: any) {
-    console.error("Error fetching album:", error);
-    if (error.response?.status === 401) {
-      return res.status(401).json({ error: "Token expired" });
-    }
+    console.error("Error fetching cached album:", error);
     res.status(500).json({ error: "Failed to fetch album" });
   }
 });
@@ -328,34 +324,14 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     try {
-      if (getRequestSource(req) !== "spotify") {
-        return res
-          .status(501)
-          .json({ error: "Album tracks not supported for YouTube" });
-      }
-      const spotifyService = new SpotifyService((req as any).accessToken);
-      const [album, albumTracks] = await Promise.all([
-        spotifyService.getAlbum(req.params.id),
-        spotifyService.getAlbumTracks(req.params.id),
-      ]);
+      const redisService = new RedisService(getRequestSource(req));
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
-      // Album tracks endpoint returns simplified tracks; enrich with album + default popularity.
-      const tracks = albumTracks.map((t) => {
-        const enriched: SpotifyTrack = {
-          ...(t as Omit<SpotifyTrack, "album" | "popularity">),
-          album,
-          popularity: (t as any).popularity ?? 0,
-        };
-
-        return convertFromSpotifyTrack(enriched);
-      });
-
+      const tracks = await redisService.getAlbumTracks(userId, req.params.id);
       res.json(tracks);
     } catch (error: any) {
-      console.error("Error fetching album tracks:", error);
-      if (error.response?.status === 401) {
-        return res.status(401).json({ error: "Token expired" });
-      }
+      console.error("Error fetching cached album tracks:", error);
       res.status(500).json({ error: "Failed to fetch album tracks" });
     }
   }
