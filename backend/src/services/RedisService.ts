@@ -436,9 +436,15 @@ export class RedisService {
         pipeline.hSet(trackKey, trackData);
         touchedKeysThisChunk.add(trackKey);
 
-        // Album metadata (shared across tracks, stored once)
+        // Album metadata (shared across tracks, stored once). YouTube tracks
+        // carry a fabricated per-channel "album" (see persistUserData.ts
+        // syncYoutube) that isn't a real album, so it's never persisted here.
         const albumId = track.album?.id;
-        if (albumId && !writtenAlbumIds.has(albumId)) {
+        if (
+          albumId &&
+          track.album.type !== "youtube" &&
+          !writtenAlbumIds.has(albumId)
+        ) {
           writtenAlbumIds.add(albumId);
           const albumKey = this.getRedisKey(userId, "album", albumId);
           pipeline.hSet(albumKey, convertToRedisAlbum(track.album));

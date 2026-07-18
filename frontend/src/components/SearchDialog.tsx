@@ -99,18 +99,30 @@ export function SearchDialog() {
                       Icon={Disc3}
                       count={data.tracks.totalCount}
                     >
-                      {data.tracks.items.map((track) => (
-                        <SearchResultRow
-                          key={track.id}
-                          to={`/albums/${track.album.id}`}
-                          image={track.album.images?.[0]?.url}
-                          FallbackIcon={Disc3}
-                          shape="square"
-                          title={track.name}
-                          subtitle={track.artistNames.join(", ")}
-                          onNavigate={handleClose}
-                        />
-                      ))}
+                      {data.tracks.items.map((track) => {
+                        const hasRealAlbum =
+                          !!track.album.id && track.album.type !== "youtube";
+                        return (
+                          <SearchResultRow
+                            key={track.id}
+                            to={
+                              hasRealAlbum
+                                ? `/albums/${track.album.id}`
+                                : `/artists/${track.artistIds[0]}`
+                            }
+                            image={
+                              hasRealAlbum
+                                ? track.album.images?.[0]?.url
+                                : undefined
+                            }
+                            FallbackIcon={Disc3}
+                            shape="square"
+                            title={track.name}
+                            subtitle={track.artistNames.join(", ")}
+                            onNavigate={handleClose}
+                          />
+                        );
+                      })}
                     </SearchResultSection>
 
                     <SearchResultSection

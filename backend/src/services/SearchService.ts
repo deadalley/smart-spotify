@@ -7,8 +7,15 @@ import { RedisService } from "./RedisService";
 
 const MAX_RESULTS_PER_SECTION = 8;
 
-function matches(query: string, ...fields: (string | undefined)[]): boolean {
-  return fields.some((field) => field?.toLowerCase().includes(query));
+function matches(
+  queryTokens: string[],
+  ...fields: (string | undefined)[]
+): boolean {
+  return fields.some((field) => {
+    if (!field) return false;
+    const lower = field.toLowerCase();
+    return queryTokens.every((token) => lower.includes(token));
+  });
 }
 
 function toGroup<T>(matched: T[]): SearchResultGroup<T> {
@@ -34,7 +41,7 @@ function deriveAlbums(tracks: Track[]) {
 
   for (const track of tracks) {
     const album = track.album;
-    if (!album?.id) continue;
+    if (!album?.id || album.type === "youtube") continue;
     const existing = tracksByAlbumId.get(album.id);
     if (existing) {
       existing.push(track);
@@ -53,7 +60,7 @@ export class SearchService {
   constructor(private redisService: RedisService) {}
 
   async search(userId: string, query: string): Promise<LibrarySearchResult> {
-    const q = query.toLowerCase();
+    const queryTokens = query.toLowerCase().split(/\s+/).filter(Boolean);
 
     const [tracks, artists, playlists] = await Promise.all([
       this.redisService.getUserTracks(userId),
@@ -62,18 +69,20 @@ export class SearchService {
     ]);
 
     const matchedTracks = tracks.filter((t) =>
-      matches(q, t.name, ...(t.artistNames ?? []))
+      matches(queryTokens, t.name, ...(t.artistNames ?? []))
     );
 
     const matchedAlbums = deriveAlbums(tracks).filter((a) =>
-      matches(q, a.name)
+      matches(queryTokens, a.name)
     );
 
-    const matchedArtists = artists.filter((a) => matches(q, a.name));
+    const matchedArtists = artists.filter((a) =>
+      matches(queryTokens, a.name)
+    );
 
     const matchedPlaylists = playlists
       .filter((p) => p.id !== "liked-songs")
-      .filter((p) => matches(q, p.name));
+      .filter((p) => matches(queryTokens, p.name));
 
     return {
       tracks: toGroup(matchedTracks),
