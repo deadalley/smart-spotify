@@ -72,12 +72,12 @@ export function PlaylistView() {
         }
         subtitle={
           <div className="flex gap-2 items-center">
-            <span className="flex gap-2 items-center justify-start text-zinc-400">
+            <span className="flex gap-2 items-center justify-start text-base-content/60">
               <Music size={16} />
               {tracks.length} track{tracks.length !== 1 ? "s" : ""}
             </span>
             •
-            <span className="flex gap-2 items-center justify-start text-zinc-400">
+            <span className="flex gap-2 items-center justify-start text-base-content/60">
               <Clock size={16} />
               {formatDuration(analysisResult.totalDurationMs)}
             </span>

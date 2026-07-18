@@ -120,6 +120,114 @@
   --noise: 0;
 }
 
+@plugin "daisyui/theme" {
+  name: "spotify-light";
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Cross-theme brand tokens (always available) */
+  --color-primary-spotify: oklch(78.5% 0.205 149);
+  --color-primary-youtube: oklch(62% 0.25 27);
+
+  /* Spotify Light Theme Base Colors */
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(96% 0.004 285.823);
+  --color-base-300: oklch(92% 0.006 286.033);
+  --color-base-content: oklch(20% 0.01 0);
+
+  /* Spotify Brand Green, darkened for contrast on a light background */
+  --color-primary: oklch(60% 0.18 149);
+  --color-primary-content: oklch(98% 0.01 0);
+
+  --color-secondary: oklch(48% 0.15 138);
+  --color-secondary-content: oklch(98% 0.01 0);
+
+  --color-accent: oklch(58% 0.17 35);
+  --color-accent-content: oklch(98% 0.01 0);
+
+  --color-neutral: oklch(45% 0.01 0);
+  --color-neutral-content: oklch(98% 0.01 0);
+
+  /* Status Colors */
+  --color-info: oklch(55% 0.18 220);
+  --color-info-content: oklch(98% 0.01 220);
+  --color-success: oklch(48% 0.2 140);
+  --color-success-content: oklch(98% 0.01 140);
+  --color-warning: oklch(65% 0.2 80);
+  --color-warning-content: oklch(20% 0.05 80);
+  --color-error: oklch(55% 0.25 30);
+  --color-error-content: oklch(98% 0.01 30);
+
+  /* border radius */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+  --radius-btn: 0.5rem;
+
+  /* base sizes */
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  /* effects */
+  --depth: 1;
+  --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+  name: "youtube-light";
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Cross-theme brand tokens (always available) */
+  --color-primary-spotify: oklch(78.5% 0.205 149);
+  --color-primary-youtube: oklch(62% 0.25 27);
+
+  /* YouTube Music Light Theme Base Colors */
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(96% 0.004 285);
+  --color-base-300: oklch(92% 0.006 285);
+  --color-base-content: oklch(20% 0.01 0);
+
+  /* YouTube Music red, darkened for contrast on a light background */
+  --color-primary: oklch(55% 0.22 27);
+  --color-primary-content: oklch(98% 0.01 0);
+
+  --color-secondary: oklch(45% 0.05 20);
+  --color-secondary-content: oklch(98% 0.01 0);
+
+  --color-accent: oklch(60% 0.18 10);
+  --color-accent-content: oklch(98% 0.01 0);
+
+  --color-neutral: oklch(45% 0.01 0);
+  --color-neutral-content: oklch(98% 0.01 0);
+
+  /* Status Colors */
+  --color-info: oklch(55% 0.18 220);
+  --color-info-content: oklch(98% 0.01 220);
+  --color-success: oklch(48% 0.2 140);
+  --color-success-content: oklch(98% 0.01 140);
+  --color-warning: oklch(65% 0.2 80);
+  --color-warning-content: oklch(20% 0.05 80);
+  --color-error: oklch(55% 0.25 30);
+  --color-error-content: oklch(98% 0.01 30);
+
+  /* border radius */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+  --radius-btn: 0.5rem;
+
+  /* base sizes */
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  /* effects */
+  --depth: 1;
+  --noise: 0;
+}
+
 @layer utilities {
   .modal-backdrop {
     @apply bg-zinc-950/90 backdrop-blur-xs;
