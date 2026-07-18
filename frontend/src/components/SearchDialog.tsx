@@ -133,11 +133,7 @@ export function SearchDialog() {
                                 ? `/albums/${track.album.id}`
                                 : `/artists/${track.artistIds[0]}`
                             }
-                            image={
-                              hasRealAlbum
-                                ? track.album.images?.[0]?.url
-                                : undefined
-                            }
+                            image={track.album.images?.[0]?.url}
                             FallbackIcon={Disc3}
                             shape="square"
                             title={track.name}
