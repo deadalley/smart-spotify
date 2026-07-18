@@ -344,6 +344,13 @@ export function SyncModal() {
                   library.
                 </li>
                 <li>You can delete the cached data anytime</li>
+                <li>
+                  Cached data{" "}
+                  <span className="font-semibold text-base-content">
+                    automatically expires after 30 days
+                  </span>{" "}
+                  of inactivity — just sync again anytime to refresh it.
+                </li>
                 {source === "spotify" && (
                   <li>
                     Any changes you make in {appName} will be{" "}

@@ -1,5 +1,9 @@
 import { redisClient } from "../redis";
 
+// Matches the fixed, login-anchored expiry already used for the auth
+// cookies (see requireAuth.ts / auth.ts maxAge values) — not sliding.
+const TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
+
 export interface UserSourceData {
   userId: string;
   accessToken: string;
@@ -43,16 +47,19 @@ export class AuthService {
     }
 
     await redisClient.hSet(userKey, "createdAt", new Date().toISOString());
+    await redisClient.expire(userKey, TOKEN_TTL_SECONDS);
     return userId;
   }
 
   async storeSpotifyToken(userId: string, data: AuthUser["spotify"]) {
     const userKey = this.getRedisKey(userId);
     await redisClient.hSet(userKey, "spotify", JSON.stringify(data));
+    await redisClient.expire(userKey, TOKEN_TTL_SECONDS);
   }
 
   async storeYouTubeToken(userId: string, data: AuthUser["ytMusic"]) {
     const userKey = this.getRedisKey(userId);
     await redisClient.hSet(userKey, "ytMusic", JSON.stringify(data));
+    await redisClient.expire(userKey, TOKEN_TTL_SECONDS);
   }
 }

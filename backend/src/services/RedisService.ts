@@ -1,13 +1,17 @@
 import {
+  Album,
   Artist,
   convertToRedisArtist,
+  convertToRedisAlbum,
   convertToRedisPlaylist,
   convertToRedisTrack,
   convertToRedisUser,
+  convertFromRedisAlbum,
   convertFromRedisArtist,
   convertFromRedisPlaylist,
   convertFromRedisTrack,
   convertFromRedisUser,
+  convertSpotifyAlbumToRedis,
   convertSpotifyArtistToRedis,
   convertSpotifyPlaylistToRedis,
   convertSpotifyTrackToRedis,
@@ -24,6 +28,10 @@ import {
 import { redisClient } from "../redis";
 
 export type MusicSource = "spotify" | "yt-music";
+
+// Synced library data is fully rebuilt on every resync, so it's safe to let
+// it expire after a period of inactivity instead of keeping it forever.
+const LIBRARY_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 export class RedisService {
   constructor(private source: MusicSource = "spotify") {}
@@ -45,6 +53,10 @@ export class RedisService {
 
   private getMetaKey(userId: string) {
     return this.getRedisKey(userId, "meta");
+  }
+
+  private getLastSyncedAtKey(userId: string) {
+    return this.getRedisKey(userId, "lastSyncedAt");
   }
 
   // Uses Redis SCAN (incremental) instead of KEYS (blocking).
@@ -70,12 +82,23 @@ export class RedisService {
     trackCount: number;
     artistCount: number;
   }): Promise<void> {
-    await redisClient.hSet(this.getMetaKey(userId), {
+    const metaKey = this.getMetaKey(userId);
+    await redisClient.hSet(metaKey, {
       lastSync,
       playlistCount: String(playlistCount),
       trackCount: String(trackCount),
       artistCount: String(artistCount),
     });
+    await redisClient.expire(metaKey, LIBRARY_TTL_SECONDS);
+
+    // Kept without a TTL so we can tell "never synced" apart from "synced,
+    // but the cached data has since expired" after the rest of a user's
+    // data is gone.
+    await redisClient.set(this.getLastSyncedAtKey(userId), lastSync);
+  }
+
+  async getLastSyncedAt(userId: string): Promise<string | null> {
+    return redisClient.get(this.getLastSyncedAtKey(userId));
   }
 
   async getSyncMeta(userId: string): Promise<{
@@ -101,12 +124,14 @@ export class RedisService {
     const userData = convertSpotifyUserToRedis(user);
 
     await redisClient.hSet(userKey, userData);
+    await redisClient.expire(userKey, LIBRARY_TTL_SECONDS);
   }
 
   async storeUserDomain(user: User): Promise<void> {
     const userKey = this.getRedisKey(user.id, "user");
     const userData = convertToRedisUser(user);
     await redisClient.hSet(userKey, userData);
+    await redisClient.expire(userKey, LIBRARY_TTL_SECONDS);
   }
 
   async getUser(userId: string): Promise<User | null> {
@@ -133,6 +158,7 @@ export class RedisService {
       const playlistKey = this.getRedisKey(userId, "playlist", playlist.id);
       const playlistData = convertSpotifyPlaylistToRedis(playlist);
       pipeline.hSet(playlistKey, playlistData);
+      pipeline.expire(playlistKey, LIBRARY_TTL_SECONDS);
     }
 
     await pipeline.exec();
@@ -149,6 +175,7 @@ export class RedisService {
       const playlistKey = this.getRedisKey(userId, "playlist", playlist.id);
       const playlistData = convertToRedisPlaylist(playlist);
       pipeline.hSet(playlistKey, playlistData);
+      pipeline.expire(playlistKey, LIBRARY_TTL_SECONDS);
     }
 
     await pipeline.exec();
@@ -223,6 +250,7 @@ export class RedisService {
   ): Promise<void> {
     const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
     await redisClient.hSet(playlistKey, { playlistType });
+    await redisClient.expire(playlistKey, LIBRARY_TTL_SECONDS);
   }
 
   // Track operations
@@ -245,11 +273,15 @@ export class RedisService {
 
     // Chunk pipelines to avoid enormous MULTI payloads for big playlists.
     const chunkSize = 200;
+    // Scoped to the whole call so an album shared across many tracks (and
+    // chunks) only gets written once instead of once per track.
+    const writtenAlbumIds = new Set<string>();
 
     for (let offset = 0; offset < tracks.length; offset += chunkSize) {
       const chunk = tracks.slice(offset, offset + chunkSize);
       const pipeline = redisClient.multi();
       const sortedSetData: { score: number; value: string }[] = [];
+      const touchedKeysThisChunk = new Set<string>();
 
       for (let i = 0; i < chunk.length; i++) {
         const globalIndex = offset + i;
@@ -261,12 +293,26 @@ export class RedisService {
 
         // Track metadata
         pipeline.hSet(trackKey, trackData);
+        touchedKeysThisChunk.add(trackKey);
+
+        // Album metadata (shared across tracks, stored once)
+        const albumId = track.album?.id;
+        if (albumId && !writtenAlbumIds.has(albumId)) {
+          writtenAlbumIds.add(albumId);
+          const albumKey = this.getRedisKey(userId, "album", albumId);
+          pipeline.hSet(albumKey, convertSpotifyAlbumToRedis(track.album));
+          touchedKeysThisChunk.add(albumKey);
+        }
 
         // Track-playlist relationship
-        pipeline.sAdd(
-          this.getRedisKey(userId, "track", track.id, "playlists"),
-          playlistId,
+        const trackPlaylistsKey = this.getRedisKey(
+          userId,
+          "track",
+          track.id,
+          "playlists",
         );
+        pipeline.sAdd(trackPlaylistsKey, playlistId);
+        touchedKeysThisChunk.add(trackPlaylistsKey);
 
         // Track ordering
         sortedSetData.push({ score: playlistPosition, value: track.id });
@@ -275,25 +321,42 @@ export class RedisService {
         for (const artist of track.artists) {
           const artistId = artist.id;
 
-          pipeline.sAdd(
-            this.getRedisKey(userId, "artist", artistId, "tracks"),
-            track.id,
-          );
-
-          pipeline.sAdd(
-            this.getRedisKey(userId, "artist", artistId, "playlists"),
-            playlistId,
-          );
-
-          pipeline.sAdd(
-            this.getRedisKey(userId, "track", track.id, "artists"),
+          const artistTracksKey = this.getRedisKey(
+            userId,
+            "artist",
             artistId,
+            "tracks",
           );
+          pipeline.sAdd(artistTracksKey, track.id);
+          touchedKeysThisChunk.add(artistTracksKey);
+
+          const artistPlaylistsKey = this.getRedisKey(
+            userId,
+            "artist",
+            artistId,
+            "playlists",
+          );
+          pipeline.sAdd(artistPlaylistsKey, playlistId);
+          touchedKeysThisChunk.add(artistPlaylistsKey);
+
+          const trackArtistsKey = this.getRedisKey(
+            userId,
+            "track",
+            track.id,
+            "artists",
+          );
+          pipeline.sAdd(trackArtistsKey, artistId);
+          touchedKeysThisChunk.add(trackArtistsKey);
         }
       }
 
       if (sortedSetData.length > 0) {
         pipeline.zAdd(tracksKey, sortedSetData);
+        touchedKeysThisChunk.add(tracksKey);
+      }
+
+      for (const key of touchedKeysThisChunk) {
+        pipeline.expire(key, LIBRARY_TTL_SECONDS);
       }
 
       await pipeline.exec();
@@ -318,10 +381,13 @@ export class RedisService {
     await redisClient.del(tracksKey);
 
     const chunkSize = 200;
+    const writtenAlbumIds = new Set<string>();
+
     for (let offset = 0; offset < tracks.length; offset += chunkSize) {
       const chunk = tracks.slice(offset, offset + chunkSize);
       const pipeline = redisClient.multi();
       const sortedSetData: { score: number; value: string }[] = [];
+      const touchedKeysThisChunk = new Set<string>();
 
       for (let i = 0; i < chunk.length; i++) {
         const globalIndex = offset + i;
@@ -335,37 +401,68 @@ export class RedisService {
         });
 
         pipeline.hSet(trackKey, trackData);
+        touchedKeysThisChunk.add(trackKey);
+
+        // Album metadata (shared across tracks, stored once)
+        const albumId = track.album?.id;
+        if (albumId && !writtenAlbumIds.has(albumId)) {
+          writtenAlbumIds.add(albumId);
+          const albumKey = this.getRedisKey(userId, "album", albumId);
+          pipeline.hSet(albumKey, convertToRedisAlbum(track.album));
+          touchedKeysThisChunk.add(albumKey);
+        }
 
         // Track-playlist relationship
-        pipeline.sAdd(
-          this.getRedisKey(userId, "track", track.id, "playlists"),
-          playlistId,
+        const trackPlaylistsKey = this.getRedisKey(
+          userId,
+          "track",
+          track.id,
+          "playlists",
         );
+        pipeline.sAdd(trackPlaylistsKey, playlistId);
+        touchedKeysThisChunk.add(trackPlaylistsKey);
 
         // Track ordering
         sortedSetData.push({ score: playlistPosition, value: track.id });
 
         // Artist relationships
         for (const artistId of track.artistIds) {
-          pipeline.sAdd(
-            this.getRedisKey(userId, "artist", artistId, "tracks"),
-            track.id,
-          );
-
-          pipeline.sAdd(
-            this.getRedisKey(userId, "artist", artistId, "playlists"),
-            playlistId,
-          );
-
-          pipeline.sAdd(
-            this.getRedisKey(userId, "track", track.id, "artists"),
+          const artistTracksKey = this.getRedisKey(
+            userId,
+            "artist",
             artistId,
+            "tracks",
           );
+          pipeline.sAdd(artistTracksKey, track.id);
+          touchedKeysThisChunk.add(artistTracksKey);
+
+          const artistPlaylistsKey = this.getRedisKey(
+            userId,
+            "artist",
+            artistId,
+            "playlists",
+          );
+          pipeline.sAdd(artistPlaylistsKey, playlistId);
+          touchedKeysThisChunk.add(artistPlaylistsKey);
+
+          const trackArtistsKey = this.getRedisKey(
+            userId,
+            "track",
+            track.id,
+            "artists",
+          );
+          pipeline.sAdd(trackArtistsKey, artistId);
+          touchedKeysThisChunk.add(trackArtistsKey);
         }
       }
 
       if (sortedSetData.length > 0) {
         pipeline.zAdd(tracksKey, sortedSetData);
+        touchedKeysThisChunk.add(tracksKey);
+      }
+
+      for (const key of touchedKeysThisChunk) {
+        pipeline.expire(key, LIBRARY_TTL_SECONDS);
       }
 
       await pipeline.exec();
@@ -380,16 +477,45 @@ export class RedisService {
       const artistKey = this.getRedisKey(userId, "artist", artist.id);
       const artistData = convertToRedisArtist(artist);
       pipeline.hSet(artistKey, artistData);
+      pipeline.expire(artistKey, LIBRARY_TTL_SECONDS);
     }
 
     await pipeline.exec();
+  }
+
+  // Fetches album hashes for a batch of (possibly duplicate/empty) album
+  // IDs in a single pipelined round trip, deduped.
+  private async fetchAlbumsByIds(
+    userId: string,
+    albumIds: (string | undefined)[],
+  ): Promise<Map<string, Album>> {
+    const uniqueIds = Array.from(
+      new Set(albumIds.filter((id): id is string => !!id)),
+    );
+    const albumMap = new Map<string, Album>();
+    if (uniqueIds.length === 0) return albumMap;
+
+    const pipeline = redisClient.multi();
+    uniqueIds.forEach((id) =>
+      pipeline.hGetAll(this.getRedisKey(userId, "album", id)),
+    );
+    const results = await pipeline.exec();
+    if (!results) return albumMap;
+
+    uniqueIds.forEach((id, index) => {
+      const data = results[index] as unknown as Record<string, string>;
+      if (data && Object.keys(data).length > 0) {
+        albumMap.set(id, convertFromRedisAlbum(data));
+      }
+    });
+
+    return albumMap;
   }
 
   async getUserTracks(userId: string): Promise<Track[]> {
     const trackKeys = await this.scanKeys(
       this.getRedisKey(userId, "track", "*"),
     );
-    const tracks: Track[] = [];
 
     // Filter keys to only include direct track hash keys (not relationship sets)
     const directTrackKeys = trackKeys.filter((key) => {
@@ -399,19 +525,24 @@ export class RedisService {
       return parts.length === 5;
     });
 
-    for (const trackKey of directTrackKeys) {
-      try {
-        const trackData = await redisClient.hGetAll(trackKey);
+    if (directTrackKeys.length === 0) return [];
 
-        if (Object.keys(trackData).length > 0) {
-          const track = convertFromRedisTrack(trackData);
+    const pipeline = redisClient.multi();
+    directTrackKeys.forEach((key) => pipeline.hGetAll(key));
+    const results = await pipeline.exec();
 
-          tracks.push(track);
-        }
-      } catch (error) {
-        console.error(`Error fetching track data for key ${trackKey}:`, error);
-      }
-    }
+    const rawTracks = (results || [])
+      .map((data) => data as unknown as Record<string, string>)
+      .filter((data) => data && Object.keys(data).length > 0);
+
+    const albumMap = await this.fetchAlbumsByIds(
+      userId,
+      rawTracks.map((data) => data.albumId),
+    );
+
+    const tracks = rawTracks.map((data) =>
+      convertFromRedisTrack(data, albumMap.get(data.albumId)),
+    );
 
     return tracks.sort((a, b) => b.name.localeCompare(a.name));
   }
@@ -428,21 +559,33 @@ export class RedisService {
     );
     const trackIds = await redisClient.zRange(tracksKey, 0, -1);
 
+    if (trackIds.length === 0) return [];
+
+    const pipeline = redisClient.multi();
+    trackIds.forEach((trackId) =>
+      pipeline.hGetAll(this.getRedisKey(userId, "track", trackId)),
+    );
+    const results = await pipeline.exec();
+    const rawTracks = (results || []).map(
+      (data) => data as unknown as Record<string, string>,
+    );
+
+    const albumMap = await this.fetchAlbumsByIds(
+      userId,
+      rawTracks
+        .filter((data) => data && Object.keys(data).length > 0)
+        .map((data) => data.albumId),
+    );
+
     const tracks: Track[] = [];
-
-    for (let i = 0; i < trackIds.length; i++) {
-      const trackId = trackIds[i];
-      const trackData = await redisClient.hGetAll(
-        this.getRedisKey(userId, "track", trackId),
-      );
-
-      if (Object.keys(trackData).length > 0) {
-        const track = convertFromRedisTrack(trackData);
+    rawTracks.forEach((data, i) => {
+      if (data && Object.keys(data).length > 0) {
+        const track = convertFromRedisTrack(data, albumMap.get(data.albumId));
         // Set position from the sorted set order
         track.playlistPosition = i;
         tracks.push(track);
       }
-    }
+    });
 
     return tracks;
   }
@@ -451,20 +594,27 @@ export class RedisService {
     const trackIds = await redisClient.sMembers(
       this.getRedisKey(userId, "artist", artistId, "tracks"),
     );
-    const tracks: Track[] = [];
 
-    for (const trackId of trackIds) {
-      const trackData = await redisClient.hGetAll(
-        this.getRedisKey(userId, "track", trackId),
-      );
-      if (Object.keys(trackData).length > 0) {
-        const track = convertFromRedisTrack(trackData);
+    if (trackIds.length === 0) return [];
 
-        tracks.push(track);
-      }
-    }
+    const pipeline = redisClient.multi();
+    trackIds.forEach((trackId) =>
+      pipeline.hGetAll(this.getRedisKey(userId, "track", trackId)),
+    );
+    const results = await pipeline.exec();
 
-    return tracks;
+    const rawTracks = (results || [])
+      .map((data) => data as unknown as Record<string, string>)
+      .filter((data) => data && Object.keys(data).length > 0);
+
+    const albumMap = await this.fetchAlbumsByIds(
+      userId,
+      rawTracks.map((data) => data.albumId),
+    );
+
+    return rawTracks.map((data) =>
+      convertFromRedisTrack(data, albumMap.get(data.albumId)),
+    );
   }
 
   // Artist operations
@@ -477,6 +627,7 @@ export class RedisService {
       const artistKey = this.getRedisKey(userId, "artist", artist.id);
       const artistData = convertSpotifyArtistToRedis(artist);
       pipeline.hSet(artistKey, artistData);
+      pipeline.expire(artistKey, LIBRARY_TTL_SECONDS);
     }
     await pipeline.exec();
   }
@@ -630,28 +781,50 @@ export class RedisService {
       };
     }
 
-    // Process tracks and collect stats
-    const tracks: Track[] = [];
-    const artistTrackCount = new Map<string, number>();
-    let totalDurationMs = 0;
+    // Pass 1: extract raw track hashes + their artist IDs. Album hashes
+    // need to be fetched (based on the albumIds seen here) before we can
+    // build the final hydrated Track objects.
+    const rawTrackEntries: {
+      index: number;
+      trackData: Record<string, string>;
+      artistIds: string[];
+    }[] = [];
 
     trackIds.forEach((_, index) => {
       const trackData = results[index * 2] as unknown as Record<string, string>;
       const artistIds = results[index * 2 + 1] as string[];
 
-      if (trackData) {
-        const track = convertFromRedisTrack(trackData);
-        track.playlistPosition = index;
-        tracks.push(track);
-        totalDurationMs += track.durationMs;
-
-        artistIds.forEach((artistId) => {
-          artistTrackCount.set(
-            artistId,
-            (artistTrackCount.get(artistId) || 0) + 1,
-          );
-        });
+      if (trackData && Object.keys(trackData).length > 0) {
+        rawTrackEntries.push({ index, trackData, artistIds: artistIds || [] });
       }
+    });
+
+    const albumMap = await this.fetchAlbumsByIds(
+      userId,
+      rawTrackEntries.map((entry) => entry.trackData.albumId),
+    );
+
+    // Pass 2: build the final tracks and collect stats now that album data
+    // is available.
+    const tracks: Track[] = [];
+    const artistTrackCount = new Map<string, number>();
+    let totalDurationMs = 0;
+
+    rawTrackEntries.forEach(({ index, trackData, artistIds }) => {
+      const track = convertFromRedisTrack(
+        trackData,
+        albumMap.get(trackData.albumId),
+      );
+      track.playlistPosition = index;
+      tracks.push(track);
+      totalDurationMs += track.durationMs;
+
+      artistIds.forEach((artistId) => {
+        artistTrackCount.set(
+          artistId,
+          (artistTrackCount.get(artistId) || 0) + 1,
+        );
+      });
     });
 
     // Fetch artist data
@@ -734,41 +907,67 @@ export class RedisService {
     // Store track metadata if it doesn't exist
     const trackData = convertSpotifyTrackToRedis(track, nextPosition);
     await redisClient.hSet(trackKey, trackData);
+    await redisClient.expire(trackKey, LIBRARY_TTL_SECONDS);
+
+    // Store album metadata (shared across tracks, upserted here)
+    if (track.album?.id) {
+      const albumKey = this.getRedisKey(userId, "album", track.album.id);
+      await redisClient.hSet(albumKey, convertSpotifyAlbumToRedis(track.album));
+      await redisClient.expire(albumKey, LIBRARY_TTL_SECONDS);
+    }
 
     // Store track-playlist relationship
-    await redisClient.sAdd(
-      this.getRedisKey(userId, "track", track.id, "playlists"),
-      playlistId,
+    const trackPlaylistsKey = this.getRedisKey(
+      userId,
+      "track",
+      track.id,
+      "playlists",
     );
+    await redisClient.sAdd(trackPlaylistsKey, playlistId);
+    await redisClient.expire(trackPlaylistsKey, LIBRARY_TTL_SECONDS);
 
     // Add to playlist's sorted set
     await redisClient.zAdd(tracksKey, { score: nextPosition, value: track.id });
+    await redisClient.expire(tracksKey, LIBRARY_TTL_SECONDS);
 
     // Store artist relationships
     for (const artist of track.artists) {
       // Store artist-track relationship
-      await redisClient.sAdd(
-        this.getRedisKey(userId, "artist", artist.id, "tracks"),
-        track.id,
+      const artistTracksKey = this.getRedisKey(
+        userId,
+        "artist",
+        artist.id,
+        "tracks",
       );
+      await redisClient.sAdd(artistTracksKey, track.id);
+      await redisClient.expire(artistTracksKey, LIBRARY_TTL_SECONDS);
 
       // Store artist-playlist relationship
-      await redisClient.sAdd(
-        this.getRedisKey(userId, "artist", artist.id, "playlists"),
-        playlistId,
+      const artistPlaylistsKey = this.getRedisKey(
+        userId,
+        "artist",
+        artist.id,
+        "playlists",
       );
+      await redisClient.sAdd(artistPlaylistsKey, playlistId);
+      await redisClient.expire(artistPlaylistsKey, LIBRARY_TTL_SECONDS);
 
       // Store track-artist relationship
-      await redisClient.sAdd(
-        this.getRedisKey(userId, "track", track.id, "artists"),
-        artist.id,
+      const trackArtistsKey = this.getRedisKey(
+        userId,
+        "track",
+        track.id,
+        "artists",
       );
+      await redisClient.sAdd(trackArtistsKey, artist.id);
+      await redisClient.expire(trackArtistsKey, LIBRARY_TTL_SECONDS);
     }
 
     // Update playlist track count
     const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
     const trackCount = await redisClient.zCard(tracksKey);
     await redisClient.hSet(playlistKey, { tracks: trackCount.toString() });
+    await redisClient.expire(playlistKey, LIBRARY_TTL_SECONDS);
   }
 
   // Remove track from playlist
@@ -786,12 +985,19 @@ export class RedisService {
 
     // Remove from playlist's sorted set
     await redisClient.zRem(tracksKey, trackId);
+    // EXPIRE on a key Redis already auto-deleted (now-empty ZSET) is a
+    // harmless no-op.
+    await redisClient.expire(tracksKey, LIBRARY_TTL_SECONDS);
 
     // Remove track-playlist relationship
-    await redisClient.sRem(
-      this.getRedisKey(userId, "track", trackId, "playlists"),
-      playlistId,
+    const trackPlaylistsKey = this.getRedisKey(
+      userId,
+      "track",
+      trackId,
+      "playlists",
     );
+    await redisClient.sRem(trackPlaylistsKey, playlistId);
+    await redisClient.expire(trackPlaylistsKey, LIBRARY_TTL_SECONDS);
 
     // Get track artists to update their relationships
     const artistIds = await redisClient.sMembers(
@@ -799,9 +1005,7 @@ export class RedisService {
     );
 
     // Check if track still exists in other playlists
-    const remainingPlaylists = await redisClient.sMembers(
-      this.getRedisKey(userId, "track", trackId, "playlists"),
-    );
+    const remainingPlaylists = await redisClient.sMembers(trackPlaylistsKey);
 
     // If track is not in any other playlist, remove it completely
     if (remainingPlaylists.length === 0) {
@@ -815,10 +1019,14 @@ export class RedisService {
 
       // Remove artist-track relationships
       for (const artistId of artistIds) {
-        await redisClient.sRem(
-          this.getRedisKey(userId, "artist", artistId, "tracks"),
-          trackId,
+        const artistTracksKey = this.getRedisKey(
+          userId,
+          "artist",
+          artistId,
+          "tracks",
         );
+        await redisClient.sRem(artistTracksKey, trackId);
+        await redisClient.expire(artistTracksKey, LIBRARY_TTL_SECONDS);
       }
     }
 
@@ -836,10 +1044,14 @@ export class RedisService {
 
       // If no more tracks from this artist in the playlist, remove the relationship
       if (!hasTracksInPlaylist) {
-        await redisClient.sRem(
-          this.getRedisKey(userId, "artist", artistId, "playlists"),
-          playlistId,
+        const artistPlaylistsKey = this.getRedisKey(
+          userId,
+          "artist",
+          artistId,
+          "playlists",
         );
+        await redisClient.sRem(artistPlaylistsKey, playlistId);
+        await redisClient.expire(artistPlaylistsKey, LIBRARY_TTL_SECONDS);
       }
     }
 
@@ -847,6 +1059,7 @@ export class RedisService {
     const playlistKey = this.getRedisKey(userId, "playlist", playlistId);
     const trackCount = await redisClient.zCard(tracksKey);
     await redisClient.hSet(playlistKey, { tracks: trackCount.toString() });
+    await redisClient.expire(playlistKey, LIBRARY_TTL_SECONDS);
   }
 
   // Helper method to delete all user data
