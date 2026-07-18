@@ -1,3 +1,4 @@
+import { Image } from "@smart-spotify/shared";
 import { google, youtube_v3 } from "googleapis";
 
 type TokenData = {
@@ -5,6 +6,34 @@ type TokenData = {
   refresh_token?: string | null;
   expiry_date?: number | null;
 };
+
+// YouTube's standard video category for "Music" (see videoCategories.list).
+export const YOUTUBE_MUSIC_CATEGORY_ID = "10";
+
+// Largest first, so images[0] (what the UI displays) is the best quality available.
+const THUMBNAIL_SIZE_ORDER: Array<keyof youtube_v3.Schema$ThumbnailDetails> = [
+  "maxres",
+  "standard",
+  "high",
+  "medium",
+  "default",
+];
+
+export function convertYouTubeThumbnails(
+  thumbnails: youtube_v3.Schema$ThumbnailDetails | null | undefined,
+): Image[] {
+  if (!thumbnails) return [];
+
+  return THUMBNAIL_SIZE_ORDER.map((size) => thumbnails[size])
+    .filter((thumbnail): thumbnail is youtube_v3.Schema$Thumbnail =>
+      Boolean(thumbnail?.url),
+    )
+    .map((thumbnail) => ({
+      url: thumbnail.url!,
+      width: thumbnail.width ?? undefined,
+      height: thumbnail.height ?? undefined,
+    }));
+}
 
 function parseISODurationToMs(iso: string | undefined | null): number {
   if (!iso) return 0;
@@ -227,6 +256,7 @@ export class YouTubeService {
       durationMs: number;
       thumbnails: youtube_v3.Schema$ThumbnailDetails | null;
       viewCount?: number;
+      categoryId?: string;
     }>
   > {
     if (ids.length === 0) return [];
@@ -243,6 +273,7 @@ export class YouTubeService {
       durationMs: number;
       thumbnails: youtube_v3.Schema$ThumbnailDetails | null;
       viewCount?: number;
+      categoryId?: string;
     }> = [];
 
     for (const chunk of chunks) {
@@ -251,8 +282,6 @@ export class YouTubeService {
         part: ["snippet", "contentDetails", "statistics"],
         maxResults: 50,
       });
-
-      console.log(res.data.items);
 
       for (const v of res.data.items ?? []) {
         const id = v.id;
@@ -272,6 +301,42 @@ export class YouTubeService {
           viewCount: v.statistics?.viewCount
             ? Number(v.statistics.viewCount)
             : undefined,
+          categoryId: v.snippet?.categoryId ?? undefined,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  async getChannelsByIds(ids: string[]): Promise<
+    Array<{
+      id: string;
+      thumbnails: youtube_v3.Schema$ThumbnailDetails | null;
+    }>
+  > {
+    if (ids.length === 0) return [];
+
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 50) chunks.push(ids.slice(i, i + 50));
+
+    const results: Array<{
+      id: string;
+      thumbnails: youtube_v3.Schema$ThumbnailDetails | null;
+    }> = [];
+
+    for (const chunk of chunks) {
+      const res = await this.youtube.channels.list({
+        id: chunk,
+        part: ["snippet"],
+        maxResults: 50,
+      });
+
+      for (const c of res.data.items ?? []) {
+        if (!c.id) continue;
+        results.push({
+          id: c.id,
+          thumbnails: c.snippet?.thumbnails ?? null,
         });
       }
     }

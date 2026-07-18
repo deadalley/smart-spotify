@@ -2,7 +2,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, RefreshCw, Trash } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { baseAPI } from "../services/api";
+import { getAppName, SOURCE_LABELS } from "../utils";
 
 interface SyncState {
   isLoading: boolean;
@@ -105,6 +107,9 @@ function syncReducer(state: SyncState, action: SyncAction): SyncState {
 }
 
 export function SyncModal() {
+  const { source } = useAuth();
+  const sourceLabel = SOURCE_LABELS[source];
+  const appName = getAppName(source);
   const [state, dispatch] = useReducer(syncReducer, initialState);
   const pollingIntervalRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
@@ -306,7 +311,7 @@ export function SyncModal() {
       <dialog id="syncModal" className="modal">
         <div className="modal-box">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-lg font-bold">Sync Spotify data</h3>
+            <h3 className="text-lg font-bold">Sync {sourceLabel} data</h3>
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
@@ -323,8 +328,8 @@ export function SyncModal() {
             <div className="mt-4 rounded-box border border-primary/30 bg-base-200/20 p-4">
               <ul className="list-disc pl-5 space-y-1 text-sm text-base-content/80">
                 <li>
-                  In order to manage your entire Spotify library, SmartSpotify
-                  needs to{" "}
+                  In order to manage your entire {sourceLabel} library,{" "}
+                  {appName} needs to{" "}
                   <span className="font-semibold text-base-content">
                     cache your data
                   </span>{" "}
@@ -335,22 +340,25 @@ export function SyncModal() {
                   <span className="font-semibold text-base-content">
                     belongs to you
                   </span>{" "}
-                  and will only be used to run analysis on your Spotify library.
+                  and will only be used to run analysis on your {sourceLabel}{" "}
+                  library.
                 </li>
                 <li>You can delete the cached data anytime</li>
+                {source === "spotify" && (
+                  <li>
+                    Any changes you make in {appName} will be{" "}
+                    <span className="font-semibold text-base-content">
+                      automatically
+                    </span>{" "}
+                    synced to Spotify.
+                  </li>
+                )}
                 <li>
-                  Any changes you make in SmartSpotify will be{" "}
-                  <span className="font-semibold text-base-content">
-                    automatically
-                  </span>{" "}
-                  synced to Spotify.
-                </li>
-                <li>
-                  Changes you make in Spotify need to be{" "}
+                  Changes you make in {sourceLabel} need to be{" "}
                   <span className="font-semibold text-base-content">
                     manually
                   </span>{" "}
-                  synced to SmartSpotify.
+                  synced to {appName}.
                 </li>
               </ul>
             </div>
@@ -416,7 +424,7 @@ export function SyncModal() {
               className="btn btn-primary w-full mt-2"
               onClick={handleStartSmartSpotify}
             >
-              Start SmartSpotify
+              Start {appName}
             </button>
           ) : (
             <div className="modal-action flex flex-col gap-2">
@@ -438,7 +446,9 @@ export function SyncModal() {
                 ) : (
                   <RefreshCw size={14} />
                 )}
-                {state.isLoading ? "Syncing data..." : "Sync data with Spotify"}
+                {state.isLoading
+                  ? "Syncing data..."
+                  : `Sync data with ${sourceLabel}`}
               </button>
             </div>
           )}

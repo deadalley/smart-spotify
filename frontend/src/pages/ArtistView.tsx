@@ -5,7 +5,7 @@ import { Empty } from "../components/Empty";
 import { Error } from "../components/Error";
 import { PageLoading } from "../components/Loading";
 import { Page } from "../components/Page";
-import { SpotifyLink } from "../components/SpotifyLink";
+import { SourceLink } from "../components/SourceLink";
 import { TrackList } from "../components/TrackList";
 import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
@@ -97,7 +97,7 @@ export function ArtistView() {
         }
         action={
           artist?.externalUrls?.spotify && (
-            <SpotifyLink href={artist.externalUrls.spotify} />
+            <SourceLink href={artist.externalUrls.spotify} />
           )
         }
       />

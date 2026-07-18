@@ -1,8 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { convertFromSpotifyTrack, Track } from "@smart-spotify/shared";
+import { convertFromSpotifyTrack, Playlist, Track } from "@smart-spotify/shared";
 import { Job } from "bullmq";
 import { RedisService, SpotifyService, YouTubeService } from "../services";
 import type { MusicSource } from "../services/RedisService";
+import {
+  convertYouTubeThumbnails,
+  YOUTUBE_MUSIC_CATEGORY_ID,
+} from "../services/YouTubeService";
+
+// YouTube's API has no concept of "YouTube Music" playlists distinct from
+// regular YouTube ones — they're the same underlying objects. Approximate
+// it by requiring a majority of a playlist's videos to be tagged with the
+// "Music" video category; playlists that are mostly non-music (vlogs,
+// gaming, tutorials, etc.) are skipped. Not perfect — video category is
+// set by the uploader and is sometimes wrong — but it's the best signal
+// the official Data API exposes.
+const MIN_MUSIC_RATIO = 0.5;
 
 enum JobProgressPercentage {
   START = 0,
@@ -270,75 +283,73 @@ async function syncYoutube(
 
   const youtubePlaylists = await withAutoRefresh(() => yt.listMyPlaylists());
 
-  const playlistsDomain = [
-    ...youtubePlaylists.map((p) => ({
-      id: p.id,
-      name: p.title,
-      description: p.description,
-      ownerId: userId,
-      public: false,
-      collaborative: false,
-      trackCount: p.itemCount,
-      images: [],
-      externalUrls: {
-        spotify: `https://www.youtube.com/playlist?list=${p.id}`,
-      },
-      snapshotId: "",
-    })),
-  ];
-
-  await redisService.storePlaylistsDomain(userId, playlistsDomain);
-  await job.updateProgress(JobProgressPercentage.PLAYLISTS_STORED);
-
   const uniqueArtists = new Map<string, { id: string; name: string }>();
+  const musicPlaylistsDomain: Playlist[] = [];
   let totalTracksStored = 0;
 
-  const storePlaylistVideos = async (
-    playlistId: string,
-    videoIds: string[],
-  ) => {
-    const videos = await withAutoRefresh(() => yt.getVideosByIds(videoIds));
-
-    const tracks: Track[] = videos.map((v) => {
-      uniqueArtists.set(v.channelId, {
-        id: v.channelId,
-        name: v.channelTitle.replace(" - Topic", ""),
-      });
-      return {
-        id: v.id,
-        name: v.title,
-        uri: `youtube:video:${v.id}`,
-        durationMs: v.durationMs,
-        explicit: false,
-        popularity: v.viewCount ?? 0,
-        previewUrl: null,
-        trackNumber: 0,
-        discNumber: 0,
-        externalUrls: { spotify: `https://www.youtube.com/watch?v=${v.id}` },
-        artistIds: [v.channelId],
-        artistNames: [v.channelTitle],
-        album: {
-          id: v.channelId,
-          name: v.channelTitle,
-          type: "youtube",
-          releaseDate: v.publishedAt?.slice(0, 10),
-          images: [],
-          externalUrls: {
-            spotify: `https://www.youtube.com/channel/${v.channelId}`,
-          },
-        },
-      };
-    });
-
-    await redisService.storeTracksDomain(userId, playlistId, tracks);
-    totalTracksStored += tracks.length;
-  };
-
-  // Store normal playlists
   for (let i = 0; i < youtubePlaylists.length; i++) {
     const p = youtubePlaylists[i];
     const ids = await withAutoRefresh(() => yt.listPlaylistVideoIds(p.id));
-    await storePlaylistVideos(p.id, ids);
+    const videos = await withAutoRefresh(() => yt.getVideosByIds(ids));
+
+    const musicRatio =
+      videos.length === 0
+        ? 1
+        : videos.filter((v) => v.categoryId === YOUTUBE_MUSIC_CATEGORY_ID)
+            .length / videos.length;
+
+    if (musicRatio >= MIN_MUSIC_RATIO) {
+      musicPlaylistsDomain.push({
+        id: p.id,
+        name: p.title,
+        description: p.description,
+        ownerId: userId,
+        public: false,
+        collaborative: false,
+        trackCount: p.itemCount,
+        images: convertYouTubeThumbnails(p.thumbnails),
+        externalUrls: {
+          spotify: `https://www.youtube.com/playlist?list=${p.id}`,
+        },
+        snapshotId: "",
+      });
+
+      const tracks: Track[] = videos.map((v) => {
+        uniqueArtists.set(v.channelId, {
+          id: v.channelId,
+          name: v.channelTitle.replace(" - Topic", ""),
+        });
+        return {
+          id: v.id,
+          name: v.title,
+          uri: `youtube:video:${v.id}`,
+          durationMs: v.durationMs,
+          explicit: false,
+          popularity: v.viewCount ?? 0,
+          previewUrl: null,
+          trackNumber: 0,
+          discNumber: 0,
+          externalUrls: {
+            spotify: `https://www.youtube.com/watch?v=${v.id}`,
+          },
+          artistIds: [v.channelId],
+          artistNames: [v.channelTitle],
+          album: {
+            id: v.channelId,
+            name: v.channelTitle,
+            type: "youtube",
+            releaseDate: v.publishedAt?.slice(0, 10),
+            images: convertYouTubeThumbnails(v.thumbnails),
+            externalUrls: {
+              spotify: `https://www.youtube.com/channel/${v.channelId}`,
+            },
+          },
+        };
+      });
+
+      await redisService.storeTracksDomain(userId, p.id, tracks);
+      totalTracksStored += tracks.length;
+    }
 
     const progress = calculateProgress({
       currentStep: i,
@@ -349,11 +360,19 @@ async function syncYoutube(
     await job.updateProgress(progress);
   }
 
+  await redisService.storePlaylistsDomain(userId, musicPlaylistsDomain);
+
   // Store artists (channel ids). Genres are unknown for YouTube, store empty.
+  const artistIds = Array.from(uniqueArtists.keys());
+  const channels = await withAutoRefresh(() => yt.getChannelsByIds(artistIds));
+  const channelThumbnails = new Map(
+    channels.map((c) => [c.id, c.thumbnails] as const),
+  );
+
   const artistsDomain = Array.from(uniqueArtists.values()).map((a) => ({
     id: a.id,
     name: a.name,
-    images: [],
+    images: convertYouTubeThumbnails(channelThumbnails.get(a.id)),
     externalUrls: { spotify: `https://www.youtube.com/channel/${a.id}` },
     trackCount: 0,
     genres: [],
@@ -365,18 +384,14 @@ async function syncYoutube(
   await redisService.setSyncMeta({
     userId,
     lastSync: new Date().toISOString(),
-    playlistCount: youtubePlaylists.length + 1,
+    playlistCount: musicPlaylistsDomain.length,
     trackCount: totalTracksStored,
     artistCount: artistsDomain.length,
   });
 
   await job.updateProgress(JobProgressPercentage.COMPLETED);
   console.log(
-    `YouTube persistence completed for user ${userId}: ${
-      youtubePlaylists.length + 1
-    } playlists (including liked-songs), ${totalTracksStored} tracks, ${
-      artistsDomain.length
-    } artists`,
+    `YouTube persistence completed for user ${userId}: ${musicPlaylistsDomain.length} playlists, ${totalTracksStored} tracks, ${artistsDomain.length} artists`,
   );
 }
 

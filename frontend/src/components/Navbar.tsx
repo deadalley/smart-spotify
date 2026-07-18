@@ -1,12 +1,14 @@
 import { Heart, LogOut, Music, Settings, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { getAppName } from "../utils";
 import { SmartSpotifyLogo } from "./SmartSpotifyLogo";
 import { SyncModal } from "./SyncModal";
 
 export function Navbar() {
-  const { logout } = useAuth();
+  const { logout, source } = useAuth();
   const location = useLocation();
+  const appName = getAppName(source);
 
   const handleLogout = () => {
     logout();
@@ -16,7 +18,10 @@ export function Navbar() {
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const navLinks = [
-    { path: "/saved-tracks", label: "Liked Songs", icon: Heart },
+    // Liked Songs has no YouTube Music equivalent synced today.
+    ...(source === "spotify"
+      ? [{ path: "/saved-tracks", label: "Liked Songs", icon: Heart }]
+      : []),
     { path: "/playlists", label: "Playlists", icon: Music },
     { path: "/artists", label: "Artists", icon: Users },
     { path: "/settings", label: "Settings", icon: Settings },
@@ -31,7 +36,7 @@ export function Navbar() {
             className="flex font-bold text-lg gap-2 items-center text-base-content hover:text-primary transition-colors group"
           >
             <SmartSpotifyLogo className="size-6 group-hover:scale-110 transition-transform text-primary" />
-            <span>Smart Spotify</span>
+            <span>{appName}</span>
           </Link>
 
           <div className="flex items-center gap-6">

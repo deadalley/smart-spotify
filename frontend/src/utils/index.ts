@@ -1,8 +1,18 @@
 import { PlaylistType } from "@smart-spotify/shared";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
+import type { AuthSource } from "../contexts/AuthContext";
 
 dayjs.extend(duration);
+
+export const SOURCE_LABELS: Record<AuthSource, string> = {
+  spotify: "Spotify",
+  youtube: "YouTube Music",
+};
+
+export function getAppName(source: AuthSource): string {
+  return `Smart ${SOURCE_LABELS[source]}`;
+}
 
 export function formatDuration(ms: number): string {
   const dur = dayjs.duration(ms);

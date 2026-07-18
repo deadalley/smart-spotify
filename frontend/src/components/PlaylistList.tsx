@@ -120,7 +120,6 @@ export function PlaylistList({
           <div className="flex flex-wrap gap-2 items-center">
             {suggestedPlaylist.similarArtists.length > 0 ? (
               suggestedPlaylist.similarArtists.map((artist) => {
-                console.log({ artist });
                 return (
                   <Tooltip
                     key={artist.name}
@@ -321,15 +320,15 @@ export function PlaylistList({
         playlist,
         suggestedPlaylist: undefined,
       })),
-    [playlists]
+    [playlists],
   );
 
   // If no track analysis result, use the showAllColumns for regular playlist view
   const columnsToUse = suggestedPlaylists
     ? suggestedColumns
     : enableFilter
-    ? showAllColumns
-    : simpleColumns;
+      ? showAllColumns
+      : simpleColumns;
 
   return (
     <TableWrapper>
