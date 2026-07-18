@@ -617,6 +617,14 @@ export class RedisService {
     );
   }
 
+  // Albums aren't stored as their own domain (Spotify albums are fetched
+  // live; YouTube has no album concept), so derive them from tracks that are
+  // already cached — this keeps album lookups working for both sources.
+  async getAlbumTracks(userId: string, albumId: string): Promise<Track[]> {
+    const tracks = await this.getUserTracks(userId);
+    return tracks.filter((track) => track.album.id === albumId);
+  }
+
   // Artist operations
   async storeArtists(userId: string, artists: SpotifyArtist[]): Promise<void> {
     if (artists.length === 0) return;
