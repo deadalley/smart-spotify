@@ -315,9 +315,10 @@ async function syncYoutube(
       });
 
       const tracks: Track[] = videos.map((v) => {
+        const artistName = v.channelTitle.replace(/ - Topic$/, "");
         uniqueArtists.set(v.channelId, {
           id: v.channelId,
-          name: v.channelTitle.replace(" - Topic", ""),
+          name: artistName,
         });
         return {
           id: v.id,
@@ -333,10 +334,10 @@ async function syncYoutube(
             spotify: `https://www.youtube.com/watch?v=${v.id}`,
           },
           artistIds: [v.channelId],
-          artistNames: [v.channelTitle],
+          artistNames: [artistName],
           album: {
             id: v.channelId,
-            name: v.channelTitle,
+            name: artistName,
             type: "youtube",
             releaseDate: v.publishedAt?.slice(0, 10),
             images: convertYouTubeThumbnails(v.thumbnails),
