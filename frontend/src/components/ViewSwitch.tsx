@@ -1,11 +1,12 @@
 import { Grid2X2, List } from "lucide-react";
+import { CollectionView } from "../contexts/SettingsContext";
 
 export function ViewSwitch({
   view,
   setView,
 }: {
-  view: "grid" | "list";
-  setView: (view: "grid" | "list") => void;
+  view: CollectionView;
+  setView: (view: CollectionView) => void;
 }) {
   return (
     <div className="join">

@@ -1,9 +1,18 @@
 import { createContext, ReactNode, useContext, useState } from "react";
 import { BuyLinkService } from "../utils/buyLinks";
 
-const SETTINGS_STORAGE_KEY = "smart_spotify_buy_link_services";
+export type EnabledServices = Record<BuyLinkService, boolean>;
 
-const DEFAULT_ENABLED_SERVICES: Record<BuyLinkService, boolean> = {
+export type CollectionView = "grid" | "list";
+
+export type Settings = {
+  enabledServices: EnabledServices;
+  defaultView: CollectionView;
+};
+
+const SETTINGS_STORAGE_KEY = "smart_spotify_settings";
+
+const DEFAULT_ENABLED_SERVICES: EnabledServices = {
   qobuz: true,
   bandcamp: true,
   appleMusic: true,
@@ -11,22 +20,38 @@ const DEFAULT_ENABLED_SERVICES: Record<BuyLinkService, boolean> = {
   amazon: true,
 };
 
-function getStoredServices(): Record<BuyLinkService, boolean> {
+function getStoredSettings(): Settings {
   const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-  if (!raw) return DEFAULT_ENABLED_SERVICES;
+  if (!raw)
+    return { enabledServices: DEFAULT_ENABLED_SERVICES, defaultView: "grid" };
 
   try {
     const parsed = JSON.parse(raw);
-    return { ...DEFAULT_ENABLED_SERVICES, ...parsed };
+    return {
+      enabledServices: parsed.enabledServices || DEFAULT_ENABLED_SERVICES,
+      defaultView: parsed.defaultView === "list" ? "list" : "grid",
+    };
   } catch {
-    return DEFAULT_ENABLED_SERVICES;
+    return { enabledServices: DEFAULT_ENABLED_SERVICES, defaultView: "grid" };
   }
+}
+
+function getStoredServices(): EnabledServices {
+  const settings = getStoredSettings();
+  return settings.enabledServices || DEFAULT_ENABLED_SERVICES;
+}
+
+function getStoredDefaultView(): CollectionView {
+  const settings = getStoredSettings();
+  return settings.defaultView === "list" ? "list" : "grid";
 }
 
 interface SettingsContextType {
   enabledServices: BuyLinkService[];
   isServiceEnabled: (service: BuyLinkService) => boolean;
   setServiceEnabled: (service: BuyLinkService, enabled: boolean) => void;
+  defaultView: CollectionView;
+  setDefaultView: (view: CollectionView) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(
@@ -34,8 +59,11 @@ const SettingsContext = createContext<SettingsContextType | undefined>(
 );
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [services, setServices] = useState<Record<BuyLinkService, boolean>>(
-    () => getStoredServices(),
+  const [services, setServices] = useState<EnabledServices>(() =>
+    getStoredServices(),
+  );
+  const [defaultView, _setDefaultView] = useState<CollectionView>(() =>
+    getStoredDefaultView(),
   );
 
   const setServiceEnabled = (service: BuyLinkService, enabled: boolean) => {
@@ -46,12 +74,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setDefaultView = (view: CollectionView) => {
+    _setDefaultView(view);
+    const settings = getStoredSettings();
+    const next = { ...settings, defaultView: view };
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+  };
+
   const value: SettingsContextType = {
     enabledServices: (Object.keys(services) as BuyLinkService[]).filter(
       (service) => services[service],
     ),
     isServiceEnabled: (service) => services[service] ?? false,
     setServiceEnabled,
+    defaultView,
+    setDefaultView,
   };
 
   return (

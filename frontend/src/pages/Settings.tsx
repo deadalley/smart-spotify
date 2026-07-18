@@ -1,17 +1,31 @@
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Grid2X2, List, Monitor, Moon, Sun } from "lucide-react";
 import { Page } from "../components/Page";
-import { useSettings } from "../contexts/SettingsContext";
+import { CollectionView, useSettings } from "../contexts/SettingsContext";
 import { ColorMode, useTheme } from "../contexts/ThemeContext";
 import { BUY_LINK_SERVICES } from "../utils/buyLinks";
 
-const COLOR_MODE_OPTIONS: { value: ColorMode; label: string; icon: typeof Sun }[] = [
+const COLOR_MODE_OPTIONS: {
+  value: ColorMode;
+  label: string;
+  icon: typeof Sun;
+}[] = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
   { value: "system", label: "System", icon: Monitor },
 ];
 
+const VIEW_OPTIONS: {
+  value: CollectionView;
+  label: string;
+  icon: typeof Monitor;
+}[] = [
+  { value: "grid", label: "Grid", icon: Grid2X2 },
+  { value: "list", label: "List", icon: List },
+];
+
 export function Settings() {
-  const { isServiceEnabled, setServiceEnabled } = useSettings();
+  const { isServiceEnabled, setServiceEnabled, defaultView, setDefaultView } =
+    useSettings();
   const { colorMode, setColorMode } = useTheme();
 
   return (
@@ -43,12 +57,37 @@ export function Settings() {
         </div>
       </div>
 
+      <div className="mb-8 max-w-md">
+        <h2 className="text-lg font-semibold text-base-content mb-3">
+          Default view
+        </h2>
+        <p className="text-base-content/60 mb-3">
+          Choose the default view for displaying content.
+        </p>
+        <div className="join w-full">
+          {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              className={`join-item btn flex-1 gap-2 ${
+                defaultView === value ? "btn-primary" : "btn-outline"
+              }`}
+              aria-pressed={defaultView === value}
+              onClick={() => setDefaultView(value)}
+            >
+              <Icon size={16} />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <h2 className="text-lg font-semibold text-base-content mb-1">
-        Buy / view links
+        External services
       </h2>
       <p className="text-base-content/60 mb-3">
-        Choose which services show up as buy / view links on tracks, albums,
-        and artists.
+        Choose which services show up as buy / view links on tracks, albums, and
+        artists.
       </p>
 
       <div className="flex flex-col divide-y divide-base-200 max-w-md">

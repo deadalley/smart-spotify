@@ -6,6 +6,7 @@ import { PlaylistTile } from "./PlaylistTile";
 import { Sort, SortDirection, SortOption } from "./Sort";
 import { TableSearch } from "./TableSearch";
 import { ViewSwitch } from "./ViewSwitch";
+import { CollectionView, useSettings } from "../contexts/SettingsContext";
 
 export function PlaylistCollection({
   playlists,
@@ -16,9 +17,10 @@ export function PlaylistCollection({
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
 }) {
+  const { defaultView } = useSettings();
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<CollectionView>(defaultView);
   const [internalGlobalFilter, setInternalGlobalFilter] = useState("");
 
   const globalFilter = externalGlobalFilter ?? internalGlobalFilter;
@@ -32,7 +34,7 @@ export function PlaylistCollection({
     if (globalFilter) {
       const lowerFilter = globalFilter.toLowerCase();
       filtered = playlists.filter((playlist) =>
-        playlist.name.toLowerCase().includes(lowerFilter)
+        playlist.name.toLowerCase().includes(lowerFilter),
       );
     }
 
