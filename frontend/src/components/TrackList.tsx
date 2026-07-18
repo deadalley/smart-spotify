@@ -128,7 +128,7 @@ export function TrackList({
         <div className="min-w-0 flex-1">
           <Link
             to={`/albums/${row.original.track.album.id}`}
-            className="text-base-content/70 text-sm truncate hover:text-primary transition-colors max-w-full"
+            className="block text-base-content/70 text-sm truncate hover:text-primary transition-colors max-w-full"
             onClick={(e) => e.stopPropagation()}
             title={row.original.track.album.name}
           >
