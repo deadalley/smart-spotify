@@ -2,7 +2,12 @@
 import { PlaylistAnalysisResult } from "@smart-spotify/shared";
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
-import { PlaylistService, RedisService, SpotifyService } from "../services";
+import {
+  PlaylistService,
+  RedisService,
+  SearchService,
+  SpotifyService,
+} from "../services";
 import type { MusicSource } from "../services/RedisService";
 
 const router: Router = Router();
@@ -86,6 +91,29 @@ router.delete(
     }
   }
 );
+
+router.get("/search", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const redisService = new RedisService(getRequestSource(req));
+    const searchService = new SearchService(redisService);
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+    const query = (req.query.q as string | undefined)?.trim() ?? "";
+    if (query.length < 2) {
+      return res
+        .status(400)
+        .json({ error: "Query must be at least 2 characters" });
+    }
+
+    const result = await searchService.search(userId, query);
+
+    res.json(result);
+  } catch (error: any) {
+    console.error("Error searching library:", error);
+    res.status(500).json({ error: "Failed to search library" });
+  }
+});
 
 router.get("/playlists", requireAuth, async (req: Request, res: Response) => {
   try {

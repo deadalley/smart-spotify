@@ -1,6 +1,7 @@
 import {
   Album,
   Artist,
+  LibrarySearchResult,
   PersistResponse,
   Playlist,
   PlaylistAnalysisResult,
@@ -124,6 +125,10 @@ export const baseAPI = {
   // Playlist type management
   updatePlaylistType: (playlistId: string, playlistType: string) =>
     api.patch(`/playlists/${playlistId}/type`, { playlistType }),
+
+  // Library search
+  search: (query: string) =>
+    api.get<LibrarySearchResult>("/search", { params: { q: query } }),
 };
 
 // The backend transparently refreshes an expired YouTube access token on

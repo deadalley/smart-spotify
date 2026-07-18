@@ -5,6 +5,7 @@ export interface TableSearchProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  autoFocus?: boolean;
 }
 
 export function TableSearch({
@@ -12,6 +13,7 @@ export function TableSearch({
   onChange,
   placeholder = "Search...",
   className = "",
+  autoFocus = false,
 }: TableSearchProps) {
   return (
     <div className={className}>
@@ -22,6 +24,7 @@ export function TableSearch({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          autoFocus={autoFocus}
         />
       </label>
     </div>

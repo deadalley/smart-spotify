@@ -167,6 +167,18 @@ export interface PlaylistAnalysisResult extends PlaylistData {
   consistencyAnalysis?: PlaylistConsistencyAnalysis;
 }
 
+export interface SearchResultGroup<T> {
+  items: T[];
+  totalCount: number;
+}
+
+export interface LibrarySearchResult {
+  tracks: SearchResultGroup<Track>;
+  albums: SearchResultGroup<Album & { artistName: string | null }>;
+  artists: SearchResultGroup<Artist>;
+  playlists: SearchResultGroup<Playlist>;
+}
+
 // Spotify API types (raw from API)
 export interface SpotifyUser {
   id: string;

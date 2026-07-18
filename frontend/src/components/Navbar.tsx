@@ -2,6 +2,7 @@ import { Heart, LogOut, Music, Settings, Users } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { getAppName } from "../utils";
+import { SearchDialog } from "./SearchDialog";
 import { SmartSpotifyLogo } from "./SmartSpotifyLogo";
 import { SyncModal } from "./SyncModal";
 
@@ -41,6 +42,9 @@ export function Navbar() {
 
           <div className="flex items-center gap-6">
             <ul className="flex items-center gap-1">
+              <li>
+                <SearchDialog />
+              </li>
               {navLinks.map(({ path, label, icon: Icon }) => (
                 <li key={path}>
                   <Link
