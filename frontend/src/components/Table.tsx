@@ -117,7 +117,7 @@ export function Table<T>({
                 style={{
                   gridColumn: `span ${meta?.span || 1}`,
                 }}
-                className={canSort ? "cursor-pointer select-none" : ""}
+                className={`min-w-0 ${canSort ? "cursor-pointer select-none" : ""}`}
                 onClick={
                   canSort ? header.column.getToggleSortingHandler() : undefined
                 }
@@ -183,7 +183,7 @@ export function Table<T>({
                       style={{
                         gridColumn: `span ${meta?.span || 1}`,
                       }}
-                      className={`flex items-center ${alignClass}`}
+                      className={`min-w-0 flex items-center ${alignClass}`}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

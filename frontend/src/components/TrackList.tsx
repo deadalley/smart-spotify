@@ -4,14 +4,17 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, Clock, Heart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
-import { formatDuration } from "../utils";
+import { formatDuration, getListenUrl, SOURCE_LABELS } from "../utils";
 import { buildLinks } from "../utils/buyLinks";
+import { SpotifyLogo } from "./SpotifyLogo";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
 import { Tooltip } from "./Tooltip";
+import { YouTubeLogo } from "./YouTubeLogo";
 
 export function TrackList({
   tracks,
@@ -27,6 +30,7 @@ export function TrackList({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
   const { enabledServices } = useSettings();
+  const { source } = useAuth();
 
   const unlikeTrackMutation = useMutation({
     mutationFn: async (trackId: string) => {
@@ -112,31 +116,52 @@ export function TrackList({
               )}
             </div>
             <p className="text-base-content/50 text-sm truncate mt-0.5">
-              {track.artistNames.join(", ")}
+              {track.artistNames.map((name, i) => (
+                <span key={track.artistIds[i] ?? name}>
+                  {i > 0 && ", "}
+                  <Link
+                    to={`/artists/${track.artistIds[i]}`}
+                    className="hover:text-primary transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {name}
+                  </Link>
+                </span>
+              ))}
             </p>
           </div>
         );
       },
     },
-    {
-      id: "album",
-      accessorFn: (row) => row.track.album.name,
-      header: "Album",
-      meta: { span: 1 },
-      enableSorting: true,
-      cell: ({ row }) => (
-        <div className="min-w-0 flex-1">
-          <Link
-            to={`/albums/${row.original.track.album.id}`}
-            className="text-base-content/70 text-sm truncate hover:text-primary transition-colors max-w-full"
-            onClick={(e) => e.stopPropagation()}
-            title={row.original.track.album.name}
-          >
-            {row.original.track.album.name}
-          </Link>
-        </div>
-      ),
-    },
+    // YouTube Music has no real album metadata (tracks are grouped by
+    // channel, which is already shown as the artist), so the column would
+    // just repeat the artist name — only show it for Spotify.
+    ...(source === "spotify"
+      ? [
+          {
+            id: "album",
+            accessorFn: (row) => row.track.album.name,
+            header: "Album",
+            meta: { span: 1 },
+            enableSorting: true,
+            cell: ({ row }) => (
+              <div className="min-w-0 flex-1">
+                <Link
+                  to={`/albums/${row.original.track.album.id}`}
+                  className="block text-base-content/70 text-sm truncate hover:text-primary transition-colors max-w-full"
+                  onClick={(e) => e.stopPropagation()}
+                  title={row.original.track.album.name}
+                >
+                  {row.original.track.album.name}
+                </Link>
+              </div>
+            ),
+          } satisfies ColumnDef<
+            { track: Track; trackAnalysisResult?: TrackAggregationResult },
+            unknown
+          >,
+        ]
+      : []),
     {
       id: "year",
       accessorFn: (row) => row.track.album.releaseDate,
@@ -163,6 +188,31 @@ export function TrackList({
           {formatDuration(row.original.track.durationMs)}
         </span>
       ),
+    },
+    {
+      id: "listen",
+      header: "",
+      meta: { span: 1, align: "center" },
+      cell: ({ row }) => {
+        const Logo = source === "youtube" ? YouTubeLogo : SpotifyLogo;
+        const colorClass =
+          source === "youtube"
+            ? "text-[color:var(--color-primary-youtube)]"
+            : "text-[color:var(--color-primary-spotify)]";
+        return (
+          <Tooltip content={`Listen on ${SOURCE_LABELS[source]}`}>
+            <a
+              href={getListenUrl(source, row.original.track.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost btn-xs btn-circle p-0.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Logo className={`size-full ${colorClass}`} />
+            </a>
+          </Tooltip>
+        );
+      },
     },
   ];
 
