@@ -7,6 +7,9 @@ type TokenData = {
   expiry_date?: number | null;
 };
 
+// YouTube's standard video category for "Music" (see videoCategories.list).
+export const YOUTUBE_MUSIC_CATEGORY_ID = "10";
+
 // Largest first, so images[0] (what the UI displays) is the best quality available.
 const THUMBNAIL_SIZE_ORDER: Array<keyof youtube_v3.Schema$ThumbnailDetails> = [
   "maxres",
@@ -19,9 +22,6 @@ const THUMBNAIL_SIZE_ORDER: Array<keyof youtube_v3.Schema$ThumbnailDetails> = [
 export function convertYouTubeThumbnails(
   thumbnails: youtube_v3.Schema$ThumbnailDetails | null | undefined,
 ): Image[] {
-  // TEMPORARY: remove once we've root-caused the missing playlist/artist images.
-  console.log("convertYouTubeThumbnails input:", JSON.stringify(thumbnails));
-
   if (!thumbnails) return [];
 
   return THUMBNAIL_SIZE_ORDER.map((size) => thumbnails[size])
@@ -256,6 +256,7 @@ export class YouTubeService {
       durationMs: number;
       thumbnails: youtube_v3.Schema$ThumbnailDetails | null;
       viewCount?: number;
+      categoryId?: string;
     }>
   > {
     if (ids.length === 0) return [];
@@ -272,6 +273,7 @@ export class YouTubeService {
       durationMs: number;
       thumbnails: youtube_v3.Schema$ThumbnailDetails | null;
       viewCount?: number;
+      categoryId?: string;
     }> = [];
 
     for (const chunk of chunks) {
@@ -299,6 +301,7 @@ export class YouTubeService {
           viewCount: v.statistics?.viewCount
             ? Number(v.statistics.viewCount)
             : undefined,
+          categoryId: v.snippet?.categoryId ?? undefined,
         });
       }
     }
