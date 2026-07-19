@@ -14,6 +14,7 @@ import { TableSearch } from "./TableSearch";
 
 export interface TableColumnMeta {
   span?: number;
+  width?: string;
   align?: "left" | "center" | "right";
 }
 
@@ -52,10 +53,10 @@ export function Table<T>({
   const [internalGlobalFilter, setInternalGlobalFilter] = useState("");
 
   const globalFilter = externalFilter
-    ? externalGlobalFilter ?? ""
+    ? (externalGlobalFilter ?? "")
     : internalGlobalFilter;
   const setGlobalFilter = externalFilter
-    ? externalOnGlobalFilterChange ?? setInternalGlobalFilter
+    ? (externalOnGlobalFilterChange ?? setInternalGlobalFilter)
     : setInternalGlobalFilter;
 
   const table = useReactTable({
@@ -74,10 +75,15 @@ export function Table<T>({
     enableGlobalFilter: true,
   });
 
-  const totalSpan = columns.reduce((sum, col) => {
-    const meta = col.meta as TableColumnMeta | undefined;
-    return sum + (meta?.span || 1);
-  }, 0);
+  const gridTemplateColumns = columns
+    .map((col) => {
+      const meta = col.meta as TableColumnMeta | undefined;
+      const cellSize = meta?.width ? meta.width : "minmax(0, 1fr)";
+      return Array(meta?.span || 1)
+        .fill(cellSize)
+        .join(" ");
+    })
+    .join(" ");
 
   return (
     <div className={`w-full flex flex-col h-fit ${className}`}>
@@ -93,7 +99,7 @@ export function Table<T>({
       <div
         className="grid gap-4 px-4 py-3 border-b border-base-200 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-300/50"
         style={{
-          gridTemplateColumns: `repeat(${totalSpan}, minmax(0, 1fr))`,
+          gridTemplateColumns,
         }}
       >
         {table.getHeaderGroups().map((headerGroup) =>
@@ -108,8 +114,8 @@ export function Table<T>({
               meta?.align === "right"
                 ? "justify-end"
                 : meta?.align === "center"
-                ? "justify-center"
-                : "justify-start";
+                  ? "justify-center"
+                  : "justify-start";
 
             return (
               <div
@@ -127,7 +133,7 @@ export function Table<T>({
                     ? null
                     : flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                   {canSort && (
                     <span className="inline-flex">
@@ -141,7 +147,7 @@ export function Table<T>({
                 </div>
               </div>
             );
-          })
+          }),
         )}
       </div>
 
@@ -158,7 +164,7 @@ export function Table<T>({
                   onRowClick ? "cursor-pointer" : ""
                 }`}
                 style={{
-                  gridTemplateColumns: `repeat(${totalSpan}, minmax(0, 1fr))`,
+                  gridTemplateColumns,
                 }}
                 onClick={(e) => {
                   // Don't trigger row click if clicking on a button or interactive element
@@ -175,8 +181,8 @@ export function Table<T>({
                     meta?.align === "right"
                       ? "justify-end"
                       : meta?.align === "center"
-                      ? "justify-center"
-                      : "justify-start";
+                        ? "justify-center"
+                        : "justify-start";
                   return (
                     <div
                       key={cell.id}
@@ -187,7 +193,7 @@ export function Table<T>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </div>
                   );

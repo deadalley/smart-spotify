@@ -61,7 +61,7 @@ export function PlaylistConsistency({
         </div>
         <div
           className={`text-right text-4xl font-bold ${getConsistencyColor(
-            consistencyScore
+            consistencyScore,
           )}`}
         >
           {consistencyScore}
@@ -74,13 +74,13 @@ export function PlaylistConsistency({
         {genreScore !== undefined && (
           <div
             className={`card bg-base-300 border p-4 ${getScoreBorder(
-              genreScore
+              genreScore,
             )}`}
           >
             <p className="text-sm text-base-content/60">Genre score</p>
             <p
               className={`text-2xl font-bold ${getConsistencyColor(
-                genreScore
+                genreScore,
               )}`}
             >
               {genreScore}
@@ -126,7 +126,6 @@ export function PlaylistConsistency({
                   {
                     id: "artist",
                     header: "Artist",
-                    meta: { span: 6 },
                     cell: ({ row }) => {
                       const outlier = row.original;
                       const artistImage = outlier.artist.images[0]?.url;
@@ -160,7 +159,7 @@ export function PlaylistConsistency({
                   {
                     id: "tracks",
                     header: "Tracks",
-                    meta: { span: 2, align: "center" },
+                    meta: { span: 1, width: "5rem", align: "center" },
                     accessorFn: (row) => row.trackCount,
                     cell: ({ row }) => (
                       <span className="text-sm text-base-content/70 tabular-nums">
@@ -171,7 +170,7 @@ export function PlaylistConsistency({
                   {
                     id: "genres",
                     header: "Genres",
-                    meta: { span: 4 },
+                    meta: { span: 1, width: "16rem" },
                     cell: ({ row }) => {
                       const outlier = row.original;
                       const unique = outlier.uniqueGenres.slice(0, 4);
@@ -213,13 +212,13 @@ export function PlaylistConsistency({
             {timeScore !== undefined && (
               <div
                 className={`card bg-base-300 border p-4 flex-1 ${getScoreBorder(
-                  timeScore
+                  timeScore,
                 )}`}
               >
                 <p className="text-sm text-base-content/60">Time score</p>
                 <p
                   className={`text-2xl font-bold ${getConsistencyColor(
-                    timeScore
+                    timeScore,
                   )}`}
                 >
                   {timeScore}
@@ -276,8 +275,8 @@ export function PlaylistConsistency({
                   {timeAnalysis.decadeDistribution.map((decade) => {
                     const maxPercentage = Math.max(
                       ...timeAnalysis.decadeDistribution.map(
-                        (d) => d.percentage
-                      )
+                        (d) => d.percentage,
+                      ),
                     );
                     const barHeight = (decade.percentage / maxPercentage) * 100;
 

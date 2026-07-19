@@ -1,4 +1,4 @@
-import { PlaylistType } from "@smart-spotify/shared";
+import { PlaylistType, TrackOwnership } from "@smart-spotify/shared";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import type { AuthSource } from "../contexts/AuthContext";
@@ -45,4 +45,10 @@ export const PLAYLIST_TYPES = [
   { value: PlaylistType.COLLECTION, label: "Collection" },
   { value: PlaylistType.ARTIST, label: "Artist" },
   { value: PlaylistType.OTHER, label: "Other" },
+];
+
+export const TRACK_OWNERSHIP_OPTIONS = [
+  { value: TrackOwnership.NOT_OWNED, label: "Not Owned" },
+  { value: TrackOwnership.WISHLIST, label: "Wishlist" },
+  { value: TrackOwnership.OWNED, label: "Owned" },
 ];

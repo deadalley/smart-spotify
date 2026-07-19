@@ -123,7 +123,7 @@ export function ArtistView() {
       {tracks.length === 0 ? (
         <Empty Icon={Music}>No tracks found</Empty>
       ) : (
-        <TrackList tracks={tracks} />
+        <TrackList tracks={tracks} withOwnershipFilter />
       )}
     </Page>
   );

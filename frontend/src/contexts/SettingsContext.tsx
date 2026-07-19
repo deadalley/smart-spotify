@@ -69,7 +69,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setServiceEnabled = (service: BuyLinkService, enabled: boolean) => {
     setServices((prev) => {
       const next = { ...prev, [service]: enabled };
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+      const settings = getStoredSettings();
+      localStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify({ ...settings, enabledServices: next }),
+      );
       return next;
     });
   };

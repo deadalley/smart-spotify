@@ -1,33 +1,65 @@
-import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
+import {
+  Playlist,
+  Track,
+  TrackAggregationResult,
+  TrackOwnership,
+} from "@smart-spotify/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp, Clock, Disc3, Heart } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Circle,
+  CircleCheck,
+  Clock,
+  Disc3,
+  Heart,
+  Star,
+  Tag,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { baseAPI } from "../services/api";
-import { formatDuration, getListenUrl, SOURCE_LABELS } from "../utils";
+import {
+  formatDuration,
+  getListenUrl,
+  SOURCE_LABELS,
+  TRACK_OWNERSHIP_OPTIONS,
+} from "../utils";
 import { buildLinks } from "../utils/buyLinks";
 import { SpotifyLogo } from "./SpotifyLogo";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
+import { TrackOwnershipSelector } from "./TrackOwnershipSelector";
 import { Tooltip } from "./Tooltip";
 import { YouTubeLogo } from "./YouTubeLogo";
+
+const OWNERSHIP_FILTER_ICONS: Record<TrackOwnership, typeof Circle> = {
+  [TrackOwnership.NOT_OWNED]: Circle,
+  [TrackOwnership.WISHLIST]: Star,
+  [TrackOwnership.OWNED]: CircleCheck,
+};
 
 export function TrackList({
   tracks,
   aggregatedTracks,
   playlists,
   showUnlike = false,
+  withOwnershipFilter = false,
 }: {
   tracks: Track[];
   aggregatedTracks?: TrackAggregationResult[];
   playlists?: Playlist[];
   showUnlike?: boolean;
+  withOwnershipFilter?: boolean;
 }) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [ownershipFilter, setOwnershipFilter] = useState<Set<TrackOwnership>>(
+    new Set(TRACK_OWNERSHIP_OPTIONS.map((option) => option.value)),
+  );
   const queryClient = useQueryClient();
   const { enabledServices } = useSettings();
   const { source } = useAuth();
@@ -43,15 +75,28 @@ export function TrackList({
     },
   });
 
+  const toggleOwnershipFilter = (state: TrackOwnership) => {
+    setOwnershipFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(state)) {
+        next.delete(state);
+      } else {
+        next.add(state);
+      }
+      return next;
+    });
+  };
+
   const data = useMemo(() => {
-    if (aggregatedTracks) {
-      return aggregatedTracks.map((result) => ({
-        track: result.track,
-        trackAnalysisResult: result,
-      }));
-    }
-    return tracks.map((track) => ({ track, trackAnalysisResult: undefined }));
-  }, [tracks, aggregatedTracks]);
+    const rows = aggregatedTracks
+      ? aggregatedTracks.map((result) => ({
+          track: result.track,
+          trackAnalysisResult: result,
+        }))
+      : tracks.map((track) => ({ track, trackAnalysisResult: undefined }));
+
+    return rows.filter((row) => ownershipFilter.has(row.track.ownership));
+  }, [tracks, aggregatedTracks, ownershipFilter]);
 
   const toggleRow = (rowKey: string) => {
     setExpandedRows((prev) => {
@@ -75,7 +120,7 @@ export function TrackList({
     {
       id: "index",
       header: "#",
-      meta: { span: 1 },
+      meta: { width: "2rem", align: "center" },
       cell: ({ row }) => (
         <span className="text-base-content/50 text-sm group-hover:text-base-content/70 transition-colors">
           {row.index + 1}
@@ -157,7 +202,7 @@ export function TrackList({
             id: "album",
             accessorFn: (row) => row.track.album.name,
             header: "Album",
-            meta: { span: 1 },
+            meta: { span: 1, width: "9rem" },
             enableSorting: true,
             cell: ({ row }) => (
               <div className="min-w-0 flex-1">
@@ -181,7 +226,7 @@ export function TrackList({
       id: "year",
       accessorFn: (row) => row.track.album.releaseDate,
       header: "Year",
-      meta: { span: 1, align: "center" },
+      meta: { span: 1, width: "3.5rem", align: "center" },
       enableSorting: true,
       cell: ({ row }) => {
         const year = row.original.track.album.releaseDate?.substring(0, 4);
@@ -196,7 +241,7 @@ export function TrackList({
       id: "duration",
       accessorFn: (row) => row.track.durationMs,
       header: () => <Clock size={14} />,
-      meta: { span: showUnlike ? 1 : 2, align: "right" },
+      meta: { span: showUnlike ? 1 : 2, width: "3rem", align: "right" },
       enableSorting: true,
       cell: ({ row }) => (
         <span className="text-base-content/50 text-sm tabular-nums">
@@ -205,9 +250,20 @@ export function TrackList({
       ),
     },
     {
+      id: "ownership",
+      header: () => <Tag size={14} />,
+      meta: { span: 1, width: "2.5rem", align: "center" },
+      cell: ({ row }) => (
+        <TrackOwnershipSelector
+          trackId={row.original.track.id}
+          currentOwnership={row.original.track.ownership}
+        />
+      ),
+    },
+    {
       id: "listen",
       header: "",
-      meta: { span: 1, align: "center" },
+      meta: { span: 1, width: "2rem", align: "center" },
       cell: ({ row }) => {
         const Logo = source === "youtube" ? YouTubeLogo : SpotifyLogo;
         const colorClass =
@@ -235,7 +291,7 @@ export function TrackList({
     columns.push({
       id: "buy",
       header: "",
-      meta: { span: 2, align: "right" },
+      meta: { span: 2, width: "2rem", align: "right" },
       cell: ({ row }) => {
         const { track } = row.original;
         const links = buildLinks({
@@ -274,7 +330,7 @@ export function TrackList({
     columns.push({
       id: "unlike",
       header: "",
-      meta: { span: 1, align: "center" },
+      meta: { span: 1, width: "2.5rem", align: "center" },
       cell: ({ row }) => (
         <button
           className="btn btn-ghost btn-sm btn-circle text-primary"
@@ -292,35 +348,62 @@ export function TrackList({
   }
 
   return (
-    <TableWrapper>
-      <Table
-        data={data}
-        columns={columns}
-        getRowKey={(row, index) => `${row.track.id}-${index}`}
-        renderSubRow={
-          aggregatedTracks
-            ? (row) => {
-                const { trackAnalysisResult, track } = row.original;
-                const rowKey = `${track.id}-${row.index}`;
+    <div className="flex flex-col gap-2">
+      {withOwnershipFilter && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-base-content/50 text-xs font-medium uppercase tracking-wider">
+            Filter:
+          </span>
+          {TRACK_OWNERSHIP_OPTIONS.map((option) => {
+            const Icon = OWNERSHIP_FILTER_ICONS[option.value];
+            const isActive = ownershipFilter.has(option.value);
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => toggleOwnershipFilter(option.value)}
+                className={`btn btn-xs gap-1 ${
+                  isActive ? "btn-soft btn-primary" : "btn-outline"
+                }`}
+              >
+                <Icon size={12} />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-                if (!trackAnalysisResult || !expandedRows.has(rowKey))
-                  return null;
+      <TableWrapper>
+        <Table
+          data={data}
+          columns={columns}
+          getRowKey={(row, index) => `${row.track.id}-${index}`}
+          renderSubRow={
+            aggregatedTracks
+              ? (row) => {
+                  const { trackAnalysisResult, track } = row.original;
+                  const rowKey = `${track.id}-${row.index}`;
 
-                return (
-                  <div className="grid grid-cols-12">
-                    <div className="col-span-1"></div>
-                    <div className="col-span-11">
-                      <TrackAnalysisResult
-                        trackAnalysisResult={trackAnalysisResult}
-                        playlists={playlists}
-                      />
+                  if (!trackAnalysisResult || !expandedRows.has(rowKey))
+                    return null;
+
+                  return (
+                    <div className="grid grid-cols-12">
+                      <div className="col-span-1"></div>
+                      <div className="col-span-11">
+                        <TrackAnalysisResult
+                          trackAnalysisResult={trackAnalysisResult}
+                          playlists={playlists}
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              }
-            : undefined
-        }
-      />
-    </TableWrapper>
+                  );
+                }
+              : undefined
+          }
+        />
+      </TableWrapper>
+    </div>
   );
 }

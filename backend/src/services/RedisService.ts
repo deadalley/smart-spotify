@@ -279,6 +279,39 @@ export class RedisService {
     await redisClient.expire(playlistKey, LIBRARY_TTL_SECONDS);
   }
 
+  async updateTrackOwnership(
+    userId: string,
+    trackId: string,
+    ownership: string,
+  ): Promise<void> {
+    const trackKey = this.getRedisKey(userId, "track", trackId);
+    await redisClient.hSet(trackKey, { ownership });
+    await redisClient.expire(trackKey, LIBRARY_TTL_SECONDS);
+  }
+
+  // Pipelined lookup of which playlists each of the given tracks belongs to
+  // (using the track:{id}:playlists sets already maintained by
+  // storeTracks/storeTracksDomain/addTrackToPlaylist/removeTrackFromPlaylist).
+  async getTrackPlaylistMemberships(
+    userId: string,
+    trackIds: string[],
+  ): Promise<Record<string, string[]>> {
+    const membershipMap: Record<string, string[]> = {};
+    if (trackIds.length === 0) return membershipMap;
+
+    const pipeline = redisClient.multi();
+    trackIds.forEach((trackId) =>
+      pipeline.sMembers(this.getRedisKey(userId, "track", trackId, "playlists")),
+    );
+    const results = await pipeline.exec();
+
+    trackIds.forEach((trackId, index) => {
+      membershipMap[trackId] = (results?.[index] as string[]) || [];
+    });
+
+    return membershipMap;
+  }
+
   // Track operations
   async storeTracks(
     userId: string,

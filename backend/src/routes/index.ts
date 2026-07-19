@@ -400,4 +400,67 @@ router.patch(
   }
 );
 
+router.patch(
+  "/tracks/:id/ownership",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const redisService = new RedisService(getRequestSource(req));
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+      const trackId = req.params.id;
+      const { ownership } = req.body;
+
+      if (!ownership) {
+        return res.status(400).json({ error: "ownership is required" });
+      }
+
+      const validOwnershipStates = ["not-owned", "wishlist", "owned"];
+      if (!validOwnershipStates.includes(ownership)) {
+        return res.status(400).json({
+          error: "Invalid ownership state",
+          validOwnershipStates,
+        });
+      }
+
+      await redisService.updateTrackOwnership(userId, trackId, ownership);
+
+      res.json({ success: true, ownership });
+    } catch (error: any) {
+      console.error("Error updating track ownership:", error);
+      res.status(500).json({ error: "Failed to update track ownership" });
+    }
+  }
+);
+
+router.post(
+  "/tracks/playlist-memberships",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const redisService = new RedisService(getRequestSource(req));
+      const userId = (req as any).userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "Not authenticated" });
+
+      const trackIds = req.body.trackIds;
+      if (!Array.isArray(trackIds)) {
+        return res.status(400).json({ error: "trackIds must be an array" });
+      }
+
+      const membershipMap = await redisService.getTrackPlaylistMemberships(
+        userId,
+        trackIds
+      );
+
+      res.json(membershipMap);
+    } catch (error: any) {
+      console.error("Error fetching track playlist memberships:", error);
+      res
+        .status(500)
+        .json({ error: "Failed to fetch track playlist memberships" });
+    }
+  }
+);
+
 export { router as indexRouter };

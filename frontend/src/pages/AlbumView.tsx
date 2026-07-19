@@ -142,7 +142,7 @@ export function AlbumView() {
       {tracks.length === 0 ? (
         <Empty Icon={Disc3}>No tracks found</Empty>
       ) : (
-        <TrackList tracks={tracks} />
+        <TrackList tracks={tracks} withOwnershipFilter />
       )}
     </Page>
   );

@@ -12,6 +12,7 @@ import { PlaylistView } from "./pages/PlaylistView";
 import { SavedTracks } from "./pages/SavedTracks";
 import { Settings } from "./pages/Settings";
 import { SyncRequired } from "./pages/SyncRequired";
+import { Wishlist } from "./pages/Wishlist";
 import { Layout } from "./components/Layout";
 import { RequireSpotify } from "./components/RequireSpotify";
 
@@ -50,6 +51,7 @@ function App() {
               <Route path="artists" element={<Artists />} />
               <Route path="artists/:id" element={<ArtistView />} />
               <Route path="albums/:id" element={<AlbumView />} />
+              <Route path="wishlist" element={<Wishlist />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 
