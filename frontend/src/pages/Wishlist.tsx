@@ -38,14 +38,14 @@ export function Wishlist() {
   const wishlistTracks = useMemo(
     () =>
       (tracks ?? []).filter(
-        (track) => track.ownership === TrackOwnership.WISHLIST
+        (track) => track.ownership === TrackOwnership.WISHLIST,
       ),
-    [tracks]
+    [tracks],
   );
 
   const wishlistTrackIds = useMemo(
     () => wishlistTracks.map((track) => track.id),
-    [wishlistTracks]
+    [wishlistTracks],
   );
 
   const { data: playlists } = useQuery({
@@ -60,9 +60,8 @@ export function Wishlist() {
   const { data: playlistMemberships } = useQuery({
     queryKey: ["track-playlist-memberships", wishlistTrackIds],
     queryFn: async () => {
-      const response = await baseAPI.getTrackPlaylistMemberships(
-        wishlistTrackIds
-      );
+      const response =
+        await baseAPI.getTrackPlaylistMemberships(wishlistTrackIds);
       return response.data;
     },
     enabled: groupBy === "playlist" && wishlistTrackIds.length > 0,
@@ -108,8 +107,8 @@ export function Wishlist() {
           const name =
             playlistId === LIKED_SONGS_PLAYLIST_ID
               ? "Liked Songs"
-              : playlists?.find((playlist) => playlist.id === playlistId)
-                  ?.name ?? "Unknown Playlist";
+              : (playlists?.find((playlist) => playlist.id === playlistId)
+                  ?.name ?? "Unknown Playlist");
           const group = groupMap.get(playlistId) ?? {
             key: playlistId,
             name,
@@ -122,7 +121,7 @@ export function Wishlist() {
     }
 
     return Array.from(groupMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
+      a.name.localeCompare(b.name),
     );
   }, [groupBy, wishlistTracks, playlists, playlistMemberships]);
 
@@ -145,25 +144,24 @@ export function Wishlist() {
             {wishlistTracks.length !== 1 ? "s" : ""}
           </span>
         }
-        action={
-          <div className="flex items-center gap-2">
-            <span className="text-base-content/50 text-xs font-medium uppercase tracking-wider">
-              Group by:
-            </span>
-            <select
-              value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-              className="select select-sm bg-base-300"
-              style={{ boxShadow: "none" }}
-            >
-              <option value="none">None</option>
-              <option value="artist">Artist</option>
-              <option value="album">Album</option>
-              <option value="playlist">Playlist</option>
-            </select>
-          </div>
-        }
       />
+
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-base-content/50 text-xs font-medium uppercase tracking-wider">
+          Group by:
+        </span>
+        <select
+          value={groupBy}
+          onChange={(e) => setGroupBy(e.target.value as GroupBy)}
+          className="select select-sm bg-base-300 cursor-pointer"
+          style={{ boxShadow: "none" }}
+        >
+          <option value="none">None</option>
+          <option value="artist">Artist</option>
+          <option value="album">Album</option>
+          <option value="playlist">Playlist</option>
+        </select>
+      </div>
 
       {wishlistTracks.length === 0 ? (
         <Empty Icon={Star}>No wishlist tracks yet</Empty>

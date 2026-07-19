@@ -48,15 +48,17 @@ export function TrackList({
   aggregatedTracks,
   playlists,
   showUnlike = false,
+  withOwnershipFilter = false,
 }: {
   tracks: Track[];
   aggregatedTracks?: TrackAggregationResult[];
   playlists?: Playlist[];
   showUnlike?: boolean;
+  withOwnershipFilter?: boolean;
 }) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [ownershipFilter, setOwnershipFilter] = useState<Set<TrackOwnership>>(
-    new Set(TRACK_OWNERSHIP_OPTIONS.map((option) => option.value))
+    new Set(TRACK_OWNERSHIP_OPTIONS.map((option) => option.value)),
   );
   const queryClient = useQueryClient();
   const { enabledServices } = useSettings();
@@ -347,28 +349,30 @@ export function TrackList({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-base-content/50 text-xs font-medium uppercase tracking-wider">
-          Filter:
-        </span>
-        {TRACK_OWNERSHIP_OPTIONS.map((option) => {
-          const Icon = OWNERSHIP_FILTER_ICONS[option.value];
-          const isActive = ownershipFilter.has(option.value);
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => toggleOwnershipFilter(option.value)}
-              className={`btn btn-xs gap-1 ${
-                isActive ? "btn-primary" : "btn-outline"
-              }`}
-            >
-              <Icon size={12} />
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
+      {withOwnershipFilter && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-base-content/50 text-xs font-medium uppercase tracking-wider">
+            Filter:
+          </span>
+          {TRACK_OWNERSHIP_OPTIONS.map((option) => {
+            const Icon = OWNERSHIP_FILTER_ICONS[option.value];
+            const isActive = ownershipFilter.has(option.value);
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => toggleOwnershipFilter(option.value)}
+                className={`btn btn-xs gap-1 ${
+                  isActive ? "btn-soft btn-primary" : "btn-outline"
+                }`}
+              >
+                <Icon size={12} />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <TableWrapper>
         <Table

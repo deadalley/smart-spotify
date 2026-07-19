@@ -79,6 +79,7 @@ export function SavedTracks() {
         tracks={tracks}
         playlists={playlists}
         showUnlike={true}
+        withOwnershipFilter={true}
       />
     </Page>
   );
