@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { convertFromSpotifyTrack, Playlist, Track } from "@smart-spotify/shared";
+import {
+  convertFromSpotifyTrack,
+  Playlist,
+  Track,
+  TrackOwnership,
+} from "@smart-spotify/shared";
 import { Job } from "bullmq";
 import { RedisService, SpotifyService, YouTubeService } from "../services";
 import type { MusicSource } from "../services/RedisService";
@@ -345,6 +350,7 @@ async function syncYoutube(
               spotify: `https://www.youtube.com/channel/${v.channelId}`,
             },
           },
+          ownership: TrackOwnership.NOT_OWNED,
         };
       });
 

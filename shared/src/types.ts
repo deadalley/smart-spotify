@@ -37,6 +37,12 @@ export interface Playlist {
   playlistType?: PlaylistType;
 }
 
+export enum TrackOwnership {
+  NOT_OWNED = "not-owned",
+  WISHLIST = "wishlist",
+  OWNED = "owned",
+}
+
 export interface Track {
   id: string;
   name: string;
@@ -52,6 +58,7 @@ export interface Track {
   artistIds: string[];
   artistNames: string[];
   album: Album;
+  ownership: TrackOwnership;
 }
 
 export interface Artist {

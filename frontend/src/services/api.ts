@@ -97,6 +97,9 @@ export const baseAPI = {
     api.get<PlaylistAnalysisResult>(`/playlists/${playlistId}/analyze`),
   aggregatePlaylists: () => api.post<Playlist[]>("/playlists/aggregate"),
 
+  // Tracks
+  getTracks: () => api.get<Track[]>("/tracks"),
+
   // Playlists
   getPlaylists: (offset = 0) =>
     api.get<Playlist[]>(`/playlists?offset=${offset}`),
@@ -125,6 +128,14 @@ export const baseAPI = {
   // Playlist type management
   updatePlaylistType: (playlistId: string, playlistType: string) =>
     api.patch(`/playlists/${playlistId}/type`, { playlistType }),
+
+  // Track ownership management
+  updateTrackOwnership: (trackId: string, ownership: string) =>
+    api.patch(`/tracks/${trackId}/ownership`, { ownership }),
+  getTrackPlaylistMemberships: (trackIds: string[]) =>
+    api.post<Record<string, string[]>>("/tracks/playlist-memberships", {
+      trackIds,
+    }),
 
   // Library search
   search: (query: string) =>

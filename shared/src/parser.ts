@@ -9,6 +9,7 @@ import {
   SpotifyTrack,
   SpotifyUser,
   Track,
+  TrackOwnership,
   User,
 } from "./types";
 
@@ -56,6 +57,7 @@ export function convertFromSpotifyTrack(
     artistIds: spotifyTrack.artists.map((a) => a.id),
     artistNames: spotifyTrack.artists.map((a) => a.name),
     album: convertFromSpotifyAlbum(spotifyTrack.album),
+    ownership: TrackOwnership.NOT_OWNED,
   };
 }
 
@@ -199,6 +201,7 @@ export function convertFromRedisTrack(
     artistIds: JSON.parse(data.artistIds || "[]"),
     artistNames: JSON.parse(data.artistNames || "[]"),
     album: album ?? ({} as Album),
+    ownership: (data.ownership as TrackOwnership) || TrackOwnership.NOT_OWNED,
   };
 }
 
