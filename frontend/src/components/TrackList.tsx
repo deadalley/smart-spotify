@@ -202,7 +202,7 @@ export function TrackList({
             id: "album",
             accessorFn: (row) => row.track.album.name,
             header: "Album",
-            meta: { span: 1 },
+            meta: { span: 1, width: "9rem" },
             enableSorting: true,
             cell: ({ row }) => (
               <div className="min-w-0 flex-1">
@@ -226,7 +226,7 @@ export function TrackList({
       id: "year",
       accessorFn: (row) => row.track.album.releaseDate,
       header: "Year",
-      meta: { span: 1, align: "center" },
+      meta: { span: 1, width: "3.5rem", align: "center" },
       enableSorting: true,
       cell: ({ row }) => {
         const year = row.original.track.album.releaseDate?.substring(0, 4);
@@ -241,7 +241,7 @@ export function TrackList({
       id: "duration",
       accessorFn: (row) => row.track.durationMs,
       header: () => <Clock size={14} />,
-      meta: { span: showUnlike ? 1 : 2, align: "right" },
+      meta: { span: showUnlike ? 1 : 2, width: "3rem", align: "right" },
       enableSorting: true,
       cell: ({ row }) => (
         <span className="text-base-content/50 text-sm tabular-nums">
@@ -250,9 +250,20 @@ export function TrackList({
       ),
     },
     {
+      id: "ownership",
+      header: () => <Tag size={14} />,
+      meta: { span: 1, width: "2.5rem", align: "center" },
+      cell: ({ row }) => (
+        <TrackOwnershipSelector
+          trackId={row.original.track.id}
+          currentOwnership={row.original.track.ownership}
+        />
+      ),
+    },
+    {
       id: "listen",
       header: "",
-      meta: { span: 1, align: "center" },
+      meta: { span: 1, width: "2rem", align: "center" },
       cell: ({ row }) => {
         const Logo = source === "youtube" ? YouTubeLogo : SpotifyLogo;
         const colorClass =
@@ -274,24 +285,13 @@ export function TrackList({
         );
       },
     },
-    {
-      id: "ownership",
-      header: () => <Tag size={14} />,
-      meta: { span: 1, align: "center" },
-      cell: ({ row }) => (
-        <TrackOwnershipSelector
-          trackId={row.original.track.id}
-          currentOwnership={row.original.track.ownership}
-        />
-      ),
-    },
   ];
 
   if (enabledServices.length > 0) {
     columns.push({
       id: "buy",
       header: "",
-      meta: { span: 2, align: "right" },
+      meta: { span: 2, width: "2rem", align: "right" },
       cell: ({ row }) => {
         const { track } = row.original;
         const links = buildLinks({
@@ -330,7 +330,7 @@ export function TrackList({
     columns.push({
       id: "unlike",
       header: "",
-      meta: { span: 1, align: "center" },
+      meta: { span: 1, width: "2.5rem", align: "center" },
       cell: ({ row }) => (
         <button
           className="btn btn-ghost btn-sm btn-circle text-primary"

@@ -55,7 +55,6 @@ export function PlaylistList({
       id: "name",
       accessorKey: "playlist",
       header: "Name",
-      meta: { span: 3 },
       enableSorting: true,
       cell: ({ row }) => {
         const { playlist } = row.original;
@@ -96,7 +95,7 @@ export function PlaylistList({
       id: "type",
       accessorFn: (row) => row.playlist.playlistType,
       header: "Type",
-      meta: { span: 2 },
+      meta: { span: 1, width: "7rem" },
       enableSorting: true,
       cell: ({ row }) => {
         const { playlist } = row.original;
@@ -111,7 +110,7 @@ export function PlaylistList({
     {
       id: "artists",
       header: "Tracks by Same Artists",
-      meta: { span: 3 },
+      meta: { span: 1, width: "16rem" },
       cell: ({ row }) => {
         const { suggestedPlaylist } = row.original;
         if (!suggestedPlaylist) return null;
@@ -148,7 +147,7 @@ export function PlaylistList({
     {
       id: "genres",
       header: "Similar Genres",
-      meta: { span: 2 },
+      meta: { span: 1, width: "12rem" },
       cell: ({ row }) => {
         const { suggestedPlaylist } = row.original;
         if (!suggestedPlaylist) return null;
@@ -169,7 +168,7 @@ export function PlaylistList({
     {
       id: "actions",
       header: "",
-      meta: { span: 2 },
+      meta: { span: 1, width: "4rem" },
       cell: ({ row }) => {
         if (!trackAnalysisResult) return null;
         return (
@@ -189,7 +188,6 @@ export function PlaylistList({
       id: "name",
       accessorKey: "playlist",
       header: "Name",
-      meta: { span: 10 },
       enableSorting: true,
       cell: ({ row }) => {
         const { playlist } = row.original;
@@ -227,7 +225,7 @@ export function PlaylistList({
       id: "type",
       accessorFn: (row) => row.playlist.playlistType,
       header: "Type",
-      meta: { span: 2 },
+      meta: { span: 1, width: "7rem" },
       enableSorting: true,
       cell: ({ row }) => {
         const { playlist } = row.original;
@@ -253,7 +251,6 @@ export function PlaylistList({
       id: "name",
       accessorFn: (row) => row.playlist.name,
       header: "Name",
-      meta: { span: suggestedPlaylists ? 8 : 10 },
       enableSorting: true,
       cell: ({ row }) => {
         const { playlist } = row.original;
@@ -294,7 +291,7 @@ export function PlaylistList({
       id: "type",
       accessorFn: (row) => row.playlist.playlistType,
       header: "Type",
-      meta: { span: 2 },
+      meta: { span: 1, width: "7rem" },
       enableSorting: true,
       cell: ({ row }) => {
         const { playlist } = row.original;
@@ -309,7 +306,7 @@ export function PlaylistList({
     {
       id: "actions",
       header: "",
-      meta: { span: 2 },
+      meta: { span: 1, width: "4rem" },
       cell: () => null, // No add button in simple view
     },
   ];

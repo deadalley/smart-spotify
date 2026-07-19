@@ -53,10 +53,10 @@ export function Table<T>({
   const [internalGlobalFilter, setInternalGlobalFilter] = useState("");
 
   const globalFilter = externalFilter
-    ? externalGlobalFilter ?? ""
+    ? (externalGlobalFilter ?? "")
     : internalGlobalFilter;
   const setGlobalFilter = externalFilter
-    ? externalOnGlobalFilterChange ?? setInternalGlobalFilter
+    ? (externalOnGlobalFilterChange ?? setInternalGlobalFilter)
     : setInternalGlobalFilter;
 
   const table = useReactTable({
@@ -78,8 +78,10 @@ export function Table<T>({
   const gridTemplateColumns = columns
     .map((col) => {
       const meta = col.meta as TableColumnMeta | undefined;
-      if (meta?.width) return meta.width;
-      return Array(meta?.span || 1).fill("minmax(0, 1fr)").join(" ");
+      const cellSize = meta?.width ? meta.width : "minmax(0, 1fr)";
+      return Array(meta?.span || 1)
+        .fill(cellSize)
+        .join(" ");
     })
     .join(" ");
 
@@ -112,14 +114,14 @@ export function Table<T>({
               meta?.align === "right"
                 ? "justify-end"
                 : meta?.align === "center"
-                ? "justify-center"
-                : "justify-start";
+                  ? "justify-center"
+                  : "justify-start";
 
             return (
               <div
                 key={header.id}
                 style={{
-                  gridColumn: `span ${meta?.width ? 1 : meta?.span || 1}`,
+                  gridColumn: `span ${meta?.span || 1}`,
                 }}
                 className={`min-w-0 ${canSort ? "cursor-pointer select-none" : ""}`}
                 onClick={
@@ -131,7 +133,7 @@ export function Table<T>({
                     ? null
                     : flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                   {canSort && (
                     <span className="inline-flex">
@@ -145,7 +147,7 @@ export function Table<T>({
                 </div>
               </div>
             );
-          })
+          }),
         )}
       </div>
 
@@ -179,19 +181,19 @@ export function Table<T>({
                     meta?.align === "right"
                       ? "justify-end"
                       : meta?.align === "center"
-                      ? "justify-center"
-                      : "justify-start";
+                        ? "justify-center"
+                        : "justify-start";
                   return (
                     <div
                       key={cell.id}
                       style={{
-                        gridColumn: `span ${meta?.width ? 1 : meta?.span || 1}`,
+                        gridColumn: `span ${meta?.span || 1}`,
                       }}
                       className={`min-w-0 flex items-center ${alignClass}`}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </div>
                   );

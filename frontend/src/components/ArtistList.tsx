@@ -13,7 +13,6 @@ export function ArtistList({ artists }: { artists: Artist[] }) {
       id: "name",
       accessorKey: "name",
       header: "Name",
-      meta: { span: 10 },
       enableSorting: true,
       cell: ({ row }) => {
         const artist = row.original;
@@ -48,7 +47,7 @@ export function ArtistList({ artists }: { artists: Artist[] }) {
       id: "trackCount",
       accessorKey: "trackCount",
       header: "Tracks",
-      meta: { span: 2 },
+      meta: { span: 1, width: "5rem", align: "right" },
       enableSorting: true,
       cell: ({ row }) => (
         <div className="flex items-center justify-end">
