@@ -118,7 +118,7 @@ export function TrackList({
     {
       id: "index",
       header: "#",
-      meta: { span: 1 },
+      meta: { width: "2rem", align: "center" },
       cell: ({ row }) => (
         <span className="text-base-content/50 text-sm group-hover:text-base-content/70 transition-colors">
           {row.index + 1}

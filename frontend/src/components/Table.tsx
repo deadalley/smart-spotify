@@ -14,6 +14,7 @@ import { TableSearch } from "./TableSearch";
 
 export interface TableColumnMeta {
   span?: number;
+  width?: string;
   align?: "left" | "center" | "right";
 }
 
@@ -74,10 +75,13 @@ export function Table<T>({
     enableGlobalFilter: true,
   });
 
-  const totalSpan = columns.reduce((sum, col) => {
-    const meta = col.meta as TableColumnMeta | undefined;
-    return sum + (meta?.span || 1);
-  }, 0);
+  const gridTemplateColumns = columns
+    .map((col) => {
+      const meta = col.meta as TableColumnMeta | undefined;
+      if (meta?.width) return meta.width;
+      return Array(meta?.span || 1).fill("minmax(0, 1fr)").join(" ");
+    })
+    .join(" ");
 
   return (
     <div className={`w-full flex flex-col h-fit ${className}`}>
@@ -93,7 +97,7 @@ export function Table<T>({
       <div
         className="grid gap-4 px-4 py-3 border-b border-base-200 text-base-content/50 text-xs font-medium uppercase tracking-wider bg-base-300/50"
         style={{
-          gridTemplateColumns: `repeat(${totalSpan}, minmax(0, 1fr))`,
+          gridTemplateColumns,
         }}
       >
         {table.getHeaderGroups().map((headerGroup) =>
@@ -115,7 +119,7 @@ export function Table<T>({
               <div
                 key={header.id}
                 style={{
-                  gridColumn: `span ${meta?.span || 1}`,
+                  gridColumn: `span ${meta?.width ? 1 : meta?.span || 1}`,
                 }}
                 className={`min-w-0 ${canSort ? "cursor-pointer select-none" : ""}`}
                 onClick={
@@ -158,7 +162,7 @@ export function Table<T>({
                   onRowClick ? "cursor-pointer" : ""
                 }`}
                 style={{
-                  gridTemplateColumns: `repeat(${totalSpan}, minmax(0, 1fr))`,
+                  gridTemplateColumns,
                 }}
                 onClick={(e) => {
                   // Don't trigger row click if clicking on a button or interactive element
@@ -181,7 +185,7 @@ export function Table<T>({
                     <div
                       key={cell.id}
                       style={{
-                        gridColumn: `span ${meta?.span || 1}`,
+                        gridColumn: `span ${meta?.width ? 1 : meta?.span || 1}`,
                       }}
                       className={`min-w-0 flex items-center ${alignClass}`}
                     >
