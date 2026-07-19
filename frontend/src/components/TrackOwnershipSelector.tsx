@@ -1,13 +1,14 @@
 import { TrackOwnership } from "@smart-spotify/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Circle, CircleCheck, Star } from "lucide-react";
+import { Gift, PackageCheck, PackageX } from "lucide-react";
 import { baseAPI } from "../services/api";
 import { TRACK_OWNERSHIP_OPTIONS } from "../utils";
+import { Tooltip } from "./Tooltip";
 
-const OWNERSHIP_ICONS: Record<TrackOwnership, typeof Circle> = {
-  [TrackOwnership.NOT_OWNED]: Circle,
-  [TrackOwnership.WISHLIST]: Star,
-  [TrackOwnership.OWNED]: CircleCheck,
+const OWNERSHIP_ICONS: Record<TrackOwnership, typeof PackageX> = {
+  [TrackOwnership.NOT_OWNED]: PackageX,
+  [TrackOwnership.WISHLIST]: Gift,
+  [TrackOwnership.OWNED]: PackageCheck,
 };
 
 const OWNERSHIP_COLOR_CLASSES: Record<TrackOwnership, string> = {
@@ -40,23 +41,21 @@ export function TrackOwnershipSelector({
   });
 
   const Icon = OWNERSHIP_ICONS[currentOwnership];
+  const tooltipContent = TRACK_OWNERSHIP_OPTIONS.find(
+    (option) => option.value === currentOwnership,
+  )?.label;
 
   return (
-    <div
-      className="dropdown dropdown-end"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        type="button"
-        tabIndex={0}
-        className={`btn btn-ghost btn-xs btn-circle ${OWNERSHIP_COLOR_CLASSES[currentOwnership]}`}
-        title="Set ownership status"
-      >
-        <Icon
-          size={16}
-          fill={currentOwnership !== TrackOwnership.NOT_OWNED ? "currentColor" : "none"}
-        />
-      </button>
+    <div className="dropdown dropdown-end" onClick={(e) => e.stopPropagation()}>
+      <Tooltip content={tooltipContent}>
+        <button
+          type="button"
+          tabIndex={0}
+          className={`btn btn-ghost btn-xs btn-circle ${OWNERSHIP_COLOR_CLASSES[currentOwnership]}`}
+        >
+          <Icon size={16} />
+        </button>
+      </Tooltip>
       <ul
         tabIndex={0}
         className="dropdown-content menu bg-base-100 rounded-box z-10 w-40 p-1 shadow-md border border-base-200"
@@ -68,9 +67,7 @@ export function TrackOwnershipSelector({
               <button
                 type="button"
                 className={
-                  option.value === currentOwnership
-                    ? "active"
-                    : undefined
+                  option.value === currentOwnership ? "active" : undefined
                 }
                 onClick={(e) => {
                   e.stopPropagation();
@@ -83,7 +80,6 @@ export function TrackOwnershipSelector({
                 <OptionIcon
                   size={14}
                   className={OWNERSHIP_COLOR_CLASSES[option.value]}
-                  fill={option.value !== TrackOwnership.NOT_OWNED ? "currentColor" : "none"}
                 />
                 {option.label}
               </button>
