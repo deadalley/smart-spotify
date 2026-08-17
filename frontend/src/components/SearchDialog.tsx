@@ -1,5 +1,5 @@
 import { Disc3, Music, Search, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLibrarySearch } from "../hooks/useLibrarySearch";
 import { TableSearch } from "./TableSearch";
 import { Error } from "./Error";
@@ -17,6 +17,7 @@ function isMacPlatform() {
 export function SearchDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, isError, hasMinQuery, hasAnyMatches } =
     useLibrarySearch(query, isOpen);
@@ -29,6 +30,7 @@ export function SearchDialog() {
     setIsOpen(true);
     // @ts-expect-error daisyUI adds this
     document.getElementById(SEARCH_MODAL_ID)?.showModal();
+    inputRef.current?.focus();
   };
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function SearchDialog() {
       e.preventDefault();
       setIsOpen(true);
       dialog.showModal();
+      inputRef.current?.focus();
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -73,6 +76,7 @@ export function SearchDialog() {
           </div>
 
           <TableSearch
+            ref={inputRef}
             value={query}
             onChange={setQuery}
             placeholder="Search tracks, albums, artists, playlists..."
