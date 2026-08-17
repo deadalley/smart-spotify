@@ -470,12 +470,14 @@ export class RedisService {
         touchedKeysThisChunk.add(trackKey);
 
         // Album metadata (shared across tracks, stored once). YouTube tracks
-        // carry a fabricated per-channel "album" (see persistUserData.ts
-        // syncYoutube) that isn't a real, browsable album — but it still
-        // carries the track's cover art (the video thumbnail), so it's kept
-        // here for display purposes. Consumers use `type === "youtube"` to
-        // avoid treating it as a real album (no Albums search section entry,
-        // no /albums/:id link).
+        // carry a fabricated per-video "album" (see persistUserData.ts
+        // syncYoutube, id is `${channelId}:${videoId}`) that isn't a real,
+        // browsable album — it only exists to carry the track's cover art
+        // (the video thumbnail). The id must stay unique per video: reusing
+        // the channel id would collide across an artist's tracks and this
+        // dedupe would silently drop every thumbnail but the first. Consumers
+        // use `type === "youtube"` to avoid treating it as a real album (no
+        // Albums search section entry, no /albums/:id link).
         const albumId = track.album?.id;
         if (albumId && !writtenAlbumIds.has(albumId)) {
           writtenAlbumIds.add(albumId);

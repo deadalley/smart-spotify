@@ -341,7 +341,14 @@ async function syncYoutube(
           artistIds: [v.channelId],
           artistNames: [artistName],
           album: {
-            id: v.channelId,
+            // Unique per video, not per channel: each YouTube video has its
+            // own thumbnail, and this "album" only exists to carry that
+            // thumbnail. Reusing the channel id here would collide across
+            // every track from the same artist, and the storage layer's
+            // "write album once per id" dedupe (see RedisService.storeTracksDomain)
+            // would then keep only the first video's thumbnail, showing it
+            // on every other track from that channel.
+            id: `${v.channelId}:${v.id}`,
             name: artistName,
             type: "youtube",
             releaseDate: v.publishedAt?.slice(0, 10),
