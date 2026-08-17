@@ -4,7 +4,7 @@ import { useEffect, useReducer, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { baseAPI } from "../services/api";
-import { getAppName, SOURCE_LABELS } from "../utils";
+import { getAppName } from "../utils";
 
 interface SyncState {
   isLoading: boolean;
@@ -108,8 +108,7 @@ function syncReducer(state: SyncState, action: SyncAction): SyncState {
 
 export function SyncModal() {
   const { source } = useAuth();
-  const sourceLabel = SOURCE_LABELS[source];
-  const appName = getAppName(source);
+  const appName = getAppName();
   const [state, dispatch] = useReducer(syncReducer, initialState);
   const pollingIntervalRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
@@ -268,7 +267,7 @@ export function SyncModal() {
     (document.getElementById("syncModal") as HTMLDialogElement)?.close();
   };
 
-  const handleStartSmartSpotify = () => {
+  const handleStart = () => {
     handleClose();
     navigate("/", { replace: true });
   };
@@ -311,7 +310,7 @@ export function SyncModal() {
       <dialog id="syncModal" className="modal">
         <div className="modal-box">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-lg font-bold">Sync {sourceLabel} data</h3>
+            <h3 className="text-lg font-bold">Sync your library</h3>
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
@@ -328,8 +327,8 @@ export function SyncModal() {
             <div className="mt-4 rounded-box border border-primary/30 bg-base-200/20 p-4">
               <ul className="list-disc pl-5 space-y-1 text-sm text-base-content/80">
                 <li>
-                  In order to manage your entire {sourceLabel} library,{" "}
-                  {appName} needs to{" "}
+                  In order to manage your entire library, {appName} needs
+                  to{" "}
                   <span className="font-semibold text-base-content">
                     cache your data
                   </span>{" "}
@@ -340,8 +339,7 @@ export function SyncModal() {
                   <span className="font-semibold text-base-content">
                     belongs to you
                   </span>{" "}
-                  and will only be used to run analysis on your {sourceLabel}{" "}
-                  library.
+                  and will only be used to run analysis on your library.
                 </li>
                 <li>You can delete the cached data anytime</li>
                 <li>
@@ -357,11 +355,11 @@ export function SyncModal() {
                     <span className="font-semibold text-base-content">
                       automatically
                     </span>{" "}
-                    synced to Spotify.
+                    synced back.
                   </li>
                 )}
                 <li>
-                  Changes you make in {sourceLabel} need to be{" "}
+                  Changes you make elsewhere need to be{" "}
                   <span className="font-semibold text-base-content">
                     manually
                   </span>{" "}
@@ -429,7 +427,7 @@ export function SyncModal() {
           {state.syncProgress === 100 && !state.error ? (
             <button
               className="btn btn-primary w-full mt-2"
-              onClick={handleStartSmartSpotify}
+              onClick={handleStart}
             >
               Start {appName}
             </button>
@@ -453,9 +451,7 @@ export function SyncModal() {
                 ) : (
                   <RefreshCw size={14} />
                 )}
-                {state.isLoading
-                  ? "Syncing data..."
-                  : `Sync data with ${sourceLabel}`}
+                {state.isLoading ? "Syncing data..." : "Sync data"}
               </button>
             </div>
           )}

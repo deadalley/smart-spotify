@@ -2,14 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Database, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import { Page } from "../components/Page";
-import { useAuth } from "../contexts/AuthContext";
 import { baseAPI } from "../services/api";
-import { getAppName, SOURCE_LABELS } from "../utils";
+import { getAppName } from "../utils";
 
 export function SyncRequired() {
-  const { source } = useAuth();
-  const sourceLabel = SOURCE_LABELS[source];
-  const appName = getAppName(source);
+  const appName = getAppName();
 
   const { data: syncStatus } = useQuery({
     queryKey: ["sync-status"],
@@ -51,8 +48,8 @@ export function SyncRequired() {
               {syncStatus?.dataExpired ? (
                 <div className="alert alert-warning mt-2">
                   <span className="text-sm">
-                    Your cached {sourceLabel} data automatically expired after
-                    30 days of inactivity
+                    Your cached data automatically expired after 30 days of
+                    inactivity
                     {syncStatus.lastSyncedAt
                       ? ` (last synced ${new Date(
                           syncStatus.lastSyncedAt,
@@ -63,9 +60,9 @@ export function SyncRequired() {
                 </div>
               ) : (
                 <p className="text-base-content/70 mt-2">
-                  {appName} needs to cache your {sourceLabel} library for
-                  faster access. Start a sync to unlock playlists, artists,
-                  albums, and analysis.
+                  {appName} needs to cache your library for faster access.
+                  Start a sync to unlock playlists, artists, albums, and
+                  analysis.
                 </p>
               )}
 
@@ -87,7 +84,7 @@ export function SyncRequired() {
                 onClick={openSyncModal}
               >
                 <RefreshCw size={14} />
-                Sync data with {sourceLabel}
+                Sync data
               </button>
             </div>
           </div>

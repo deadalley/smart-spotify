@@ -5,13 +5,8 @@ import type { AuthSource } from "../contexts/AuthContext";
 
 dayjs.extend(duration);
 
-export const SOURCE_LABELS: Record<AuthSource, string> = {
-  spotify: "Spotify",
-  youtube: "YouTube Music",
-};
-
-export function getAppName(source: AuthSource): string {
-  return `Smart ${SOURCE_LABELS[source]}`;
+export function getAppName(): string {
+  return "Smart Music";
 }
 
 // Opens straight into playback where possible: YouTube Music's watch page

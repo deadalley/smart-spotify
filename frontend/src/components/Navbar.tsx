@@ -9,7 +9,7 @@ import { SyncModal } from "./SyncModal";
 export function Navbar() {
   const { logout, source } = useAuth();
   const location = useLocation();
-  const appName = getAppName(source);
+  const appName = getAppName();
 
   const handleLogout = () => {
     logout();
