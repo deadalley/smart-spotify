@@ -332,9 +332,13 @@ export class RedisService {
 
     // Chunk pipelines to avoid enormous MULTI payloads for big playlists.
     const chunkSize = 200;
-    // Scoped to the whole call so an album shared across many tracks (and
-    // chunks) only gets written once instead of once per track.
+    // Scoped to the whole call (not per chunk) so a key shared across many
+    // tracks/chunks — an album, or an artist that recurs across dozens of
+    // tracks — only gets HSET/SADD + EXPIRE issued once instead of once per
+    // chunk it happens to appear in. This is the main lever on Redis command
+    // volume for large libraries.
     const writtenAlbumIds = new Set<string>();
+    const expiredKeys = new Set<string>();
 
     for (let offset = 0; offset < tracks.length; offset += chunkSize) {
       const chunk = tracks.slice(offset, offset + chunkSize);
@@ -350,7 +354,8 @@ export class RedisService {
         const trackKey = this.getRedisKey(userId, "track", track.id);
         const trackData = convertSpotifyTrackToRedis(track, playlistPosition);
 
-        // Track metadata
+        // Track metadata (artistIds/artistNames are embedded in this hash,
+        // so no separate track:{id}:artists set is needed).
         pipeline.hSet(trackKey, trackData);
         touchedKeysThisChunk.add(trackKey);
 
@@ -376,7 +381,8 @@ export class RedisService {
         // Track ordering
         sortedSetData.push({ score: playlistPosition, value: track.id });
 
-        // Artist relationships
+        // Artist relationships (reverse indexes only; track -> artists is
+        // already covered by the track hash's artistIds field)
         for (const artist of track.artists) {
           const artistId = artist.id;
 
@@ -397,15 +403,6 @@ export class RedisService {
           );
           pipeline.sAdd(artistPlaylistsKey, playlistId);
           touchedKeysThisChunk.add(artistPlaylistsKey);
-
-          const trackArtistsKey = this.getRedisKey(
-            userId,
-            "track",
-            track.id,
-            "artists",
-          );
-          pipeline.sAdd(trackArtistsKey, artistId);
-          touchedKeysThisChunk.add(trackArtistsKey);
         }
       }
 
@@ -422,6 +419,8 @@ export class RedisService {
       touchedKeysThisChunk.add(trackIndexKey);
 
       for (const key of touchedKeysThisChunk) {
+        if (expiredKeys.has(key)) continue;
+        expiredKeys.add(key);
         pipeline.expire(key, LIBRARY_TTL_SECONDS);
       }
 
@@ -447,7 +446,10 @@ export class RedisService {
     await redisClient.del(tracksKey);
 
     const chunkSize = 200;
+    // See storeTracks() above: scoped to the whole call so keys shared
+    // across chunks (albums, recurring artists) aren't re-EXPIREd per chunk.
     const writtenAlbumIds = new Set<string>();
+    const expiredKeys = new Set<string>();
 
     for (let offset = 0; offset < tracks.length; offset += chunkSize) {
       const chunk = tracks.slice(offset, offset + chunkSize);
@@ -466,6 +468,8 @@ export class RedisService {
           playlistPosition,
         });
 
+        // artistIds/artistNames are embedded in this hash, so no separate
+        // track:{id}:artists set is needed.
         pipeline.hSet(trackKey, trackData);
         touchedKeysThisChunk.add(trackKey);
 
@@ -518,15 +522,6 @@ export class RedisService {
           );
           pipeline.sAdd(artistPlaylistsKey, playlistId);
           touchedKeysThisChunk.add(artistPlaylistsKey);
-
-          const trackArtistsKey = this.getRedisKey(
-            userId,
-            "track",
-            track.id,
-            "artists",
-          );
-          pipeline.sAdd(trackArtistsKey, artistId);
-          touchedKeysThisChunk.add(trackArtistsKey);
         }
       }
 
@@ -543,6 +538,8 @@ export class RedisService {
       touchedKeysThisChunk.add(trackIndexKey);
 
       for (const key of touchedKeysThisChunk) {
+        if (expiredKeys.has(key)) continue;
+        expiredKeys.add(key);
         pipeline.expire(key, LIBRARY_TTL_SECONDS);
       }
 
@@ -845,11 +842,11 @@ export class RedisService {
       };
     }
 
-    // Fetch all track data and artist IDs
+    // Fetch all track data (artist IDs are embedded in each track hash's
+    // artistIds field, so no separate track:{id}:artists lookup is needed).
     const trackPipeline = redisClient.multi();
     trackIds.forEach((id) => {
       trackPipeline.hGetAll(this.getRedisKey(userId, "track", id));
-      trackPipeline.sMembers(this.getRedisKey(userId, "track", id, "artists"));
     });
 
     const results = await trackPipeline.exec();
@@ -873,11 +870,11 @@ export class RedisService {
     }[] = [];
 
     trackIds.forEach((_, index) => {
-      const trackData = results[index * 2] as unknown as Record<string, string>;
-      const artistIds = results[index * 2 + 1] as string[];
+      const trackData = results[index] as unknown as Record<string, string>;
 
       if (trackData && Object.keys(trackData).length > 0) {
-        rawTrackEntries.push({ index, trackData, artistIds: artistIds || [] });
+        const artistIds: string[] = JSON.parse(trackData.artistIds || "[]");
+        rawTrackEntries.push({ index, trackData, artistIds });
       }
     });
 
@@ -1037,16 +1034,6 @@ export class RedisService {
       );
       await redisClient.sAdd(artistPlaylistsKey, playlistId);
       await redisClient.expire(artistPlaylistsKey, LIBRARY_TTL_SECONDS);
-
-      // Store track-artist relationship
-      const trackArtistsKey = this.getRedisKey(
-        userId,
-        "track",
-        track.id,
-        "artists",
-      );
-      await redisClient.sAdd(trackArtistsKey, artist.id);
-      await redisClient.expire(trackArtistsKey, LIBRARY_TTL_SECONDS);
     }
 
     // Update playlist track count
@@ -1085,10 +1072,12 @@ export class RedisService {
     await redisClient.sRem(trackPlaylistsKey, playlistId);
     await redisClient.expire(trackPlaylistsKey, LIBRARY_TTL_SECONDS);
 
-    // Get track artists to update their relationships
-    const artistIds = await redisClient.sMembers(
-      this.getRedisKey(userId, "track", trackId, "artists"),
+    // Get track artists (embedded in the track hash's artistIds field) to
+    // update their relationships
+    const trackData = await redisClient.hGetAll(
+      this.getRedisKey(userId, "track", trackId),
     );
+    const artistIds: string[] = JSON.parse(trackData.artistIds || "[]");
 
     // Check if track still exists in other playlists
     const remainingPlaylists = await redisClient.sMembers(trackPlaylistsKey);
@@ -1098,11 +1087,6 @@ export class RedisService {
       // Remove track hash
       await redisClient.del(this.getRedisKey(userId, "track", trackId));
       await redisClient.sRem(this.getTrackIndexKey(userId), trackId);
-
-      // Remove track-artist relationships
-      await redisClient.del(
-        this.getRedisKey(userId, "track", trackId, "artists"),
-      );
 
       // Remove artist-track relationships
       for (const artistId of artistIds) {
