@@ -13,6 +13,7 @@ import {
   CircleCheck,
   Clock,
   Disc3,
+  ExternalLink,
   Heart,
   Star,
   Tag,
@@ -25,17 +26,14 @@ import { baseAPI } from "../services/api";
 import {
   formatDuration,
   getListenUrl,
-  SOURCE_LABELS,
   TRACK_OWNERSHIP_OPTIONS,
 } from "../utils";
 import { buildLinks } from "../utils/buyLinks";
-import { SpotifyLogo } from "./SpotifyLogo";
 import { Table } from "./Table";
 import { TableWrapper } from "./TableWrapper";
 import { TrackAnalysisResult } from "./TrackAnalysisResult";
 import { TrackOwnershipSelector } from "./TrackOwnershipSelector";
 import { Tooltip } from "./Tooltip";
-import { YouTubeLogo } from "./YouTubeLogo";
 
 const OWNERSHIP_FILTER_ICONS: Record<TrackOwnership, typeof Circle> = {
   [TrackOwnership.NOT_OWNED]: Circle,
@@ -265,13 +263,8 @@ export function TrackList({
       header: "",
       meta: { span: 1, width: "2rem", align: "center" },
       cell: ({ row }) => {
-        const Logo = source === "youtube" ? YouTubeLogo : SpotifyLogo;
-        const colorClass =
-          source === "youtube"
-            ? "text-[color:var(--color-primary-youtube)]"
-            : "text-[color:var(--color-primary-spotify)]";
         return (
-          <Tooltip content={`Listen on ${SOURCE_LABELS[source]}`}>
+          <Tooltip content="Listen">
             <a
               href={getListenUrl(source, row.original.track.id)}
               target="_blank"
@@ -279,7 +272,7 @@ export function TrackList({
               className="btn btn-ghost btn-xs btn-circle p-0.5"
               onClick={(e) => e.stopPropagation()}
             >
-              <Logo className={`size-full ${colorClass}`} />
+              <ExternalLink className="size-full text-base-content/60" />
             </a>
           </Tooltip>
         );
