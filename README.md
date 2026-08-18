@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="./assets/images/smart-music-library.svg" alt="Smart Spotify Logo" width="200"/>
-  <h1>Smart Spotify</h1>
-  <p>Smart playlist manager for your Spotify library.</p>
+   <img src="./assets/images/smart-music-library.svg" alt="Smart Music Library Logo" width="200"/>
+  <h1>Smart Music Library</h1>
+  <p>Smart playlist manager for your Spotify and YouTube Music library.</p>
   
   [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg)](https://www.typescriptlang.org)
@@ -70,7 +70,7 @@ This will start:
 ## Project Structure
 
 ```
-smart-spotify/
+smart-music-library/
 ├── frontend/          # React frontend application
 │   ├── src/
 │   │   ├── components/  # React components
@@ -105,6 +105,8 @@ smart-spotify/
 - `GET /api/auth/youtube/me` - Current user (YouTube)
 - `POST /api/auth/youtube/refresh` - Refresh YouTube access token
 
+- `GET /api/auth/me` - Current user (either source)
+
 ### Data Persistence
 
 - `POST /api/persist` - Start data sync job
@@ -117,7 +119,7 @@ smart-spotify/
 - `GET /api/playlists/:id` - Get playlist details
 - `GET /api/playlists/:id/tracks` - Get playlist tracks
 - `GET /api/playlists/:id/analyze` - Get playlist analysis
-- `POST /api/playlists/:id/tracks` - Add track to playlist
+- `GET /api/playlists/aggregate` - Get aggregated playlist stats
 - `PATCH /api/playlists/:id/type` - Update playlist type
 
 ### Artists
@@ -126,10 +128,23 @@ smart-spotify/
 - `GET /api/artists/:id` - Get artist details
 - `GET /api/artists/:id/tracks` - Get artist tracks
 
+### Albums
+
+- `GET /api/albums/:id` - Get album details
+- `GET /api/albums/:id/tracks` - Get album tracks
+
 ### Tracks
 
+- `GET /api/tracks` - Get all cached tracks
 - `GET /api/tracks/saved` - Get saved tracks
-- `GET /api/tracks/aggregate` - Get track recommendations
+- `DELETE /api/tracks/saved/:id` - Remove a track from saved (Spotify only)
+- `GET /api/tracks/aggregate` - Get aggregated liked-songs stats
+- `PATCH /api/tracks/:id/ownership` - Update wishlist ownership state (`not-owned`, `wishlist`, `owned`)
+- `POST /api/tracks/playlist-memberships` - Get playlist membership for a set of tracks
+
+### Search
+
+- `GET /api/search?q=` - Search across the cached library
 
 ## License
 
