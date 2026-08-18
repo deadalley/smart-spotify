@@ -3,7 +3,7 @@ import {
   Track,
   TrackAggregationResult,
   TrackOwnership,
-} from "@smart-spotify/shared";
+} from "@smart-music-library/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import {

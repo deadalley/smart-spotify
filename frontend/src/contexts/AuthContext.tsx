@@ -1,4 +1,4 @@
-import { SpotifyUser } from "@smart-spotify/shared";
+import { SpotifyUser } from "@smart-music-library/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,

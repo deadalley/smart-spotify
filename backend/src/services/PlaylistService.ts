@@ -7,7 +7,7 @@ import {
   TimeOutlier,
   Track,
   TrackAggregationResult,
-} from "@smart-spotify/shared";
+} from "@smart-music-library/shared";
 import { isTrackInPlaylist, isTrackNotInPlaylist } from "../utils";
 import { RedisService } from "./RedisService";
 

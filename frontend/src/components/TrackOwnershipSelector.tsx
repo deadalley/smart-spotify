@@ -1,4 +1,4 @@
-import { TrackOwnership } from "@smart-spotify/shared";
+import { TrackOwnership } from "@smart-music-library/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Gift, PackageCheck, PackageX } from "lucide-react";
 import { baseAPI } from "../services/api";

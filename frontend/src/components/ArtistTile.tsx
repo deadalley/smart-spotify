@@ -1,4 +1,4 @@
-import { Artist } from "@smart-spotify/shared";
+import { Artist } from "@smart-music-library/shared";
 import { Music, User } from "lucide-react";
 import { Tile } from "./Tile";
 

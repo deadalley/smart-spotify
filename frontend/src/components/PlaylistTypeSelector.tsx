@@ -1,4 +1,4 @@
-import { PlaylistType } from "@smart-spotify/shared";
+import { PlaylistType } from "@smart-music-library/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { baseAPI } from "../services/api";
 import { PLAYLIST_TYPES } from "../utils";

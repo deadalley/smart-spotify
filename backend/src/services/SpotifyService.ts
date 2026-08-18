@@ -7,7 +7,7 @@ import {
   SpotifyPlaylistTracksResponse,
   SpotifyTrack,
   SpotifyUser,
-} from "@smart-spotify/shared";
+} from "@smart-music-library/shared";
 import axios, { AxiosError } from "axios";
 
 type SpotifyAlbumTracksResponse = {

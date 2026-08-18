@@ -13,6 +13,7 @@
   },
   "keywords": [
     "spotify",
+    "youtube",
     "express",
     "typescript"
   ],
@@ -20,7 +21,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@smart-spotify/shared": "workspace:*",
+    "@smart-music-library/shared": "workspace:*",
     "axios": "^1.6.0",
     "bullmq": "^5.63.0",
     "cookie-parser": "^1.4.6",

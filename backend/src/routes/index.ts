@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PlaylistAnalysisResult } from "@smart-spotify/shared";
+import { PlaylistAnalysisResult } from "@smart-music-library/shared";
 import { Request, Response, Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import {

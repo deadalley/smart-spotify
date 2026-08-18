@@ -1,4 +1,4 @@
-import { PlaylistConsistencyAnalysis } from "@smart-spotify/shared";
+import { PlaylistConsistencyAnalysis } from "@smart-music-library/shared";
 import { AlertTriangle, CheckCircle2, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { GenreBadge } from "./GenreBadge";

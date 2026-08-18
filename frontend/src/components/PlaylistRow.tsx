@@ -1,4 +1,4 @@
-import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
+import { Playlist, Track, TrackAggregationResult } from "@smart-music-library/shared";
 import { Music, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PLAYLIST_TYPES } from "../utils";

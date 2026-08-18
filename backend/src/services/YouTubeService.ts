@@ -1,4 +1,4 @@
-import { Image } from "@smart-spotify/shared";
+import { Image } from "@smart-music-library/shared";
 import { google, youtube_v3 } from "googleapis";
 
 type TokenData = {

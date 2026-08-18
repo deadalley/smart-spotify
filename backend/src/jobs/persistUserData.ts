@@ -4,7 +4,7 @@ import {
   Playlist,
   Track,
   TrackOwnership,
-} from "@smart-spotify/shared";
+} from "@smart-music-library/shared";
 import { Job } from "bullmq";
 import { RedisService, SpotifyService, YouTubeService } from "../services";
 import type { MusicSource } from "../services/RedisService";

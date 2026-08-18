@@ -1,4 +1,4 @@
-import { PlaylistType, TrackOwnership } from "@smart-spotify/shared";
+import { PlaylistType, TrackOwnership } from "@smart-music-library/shared";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import type { AuthSource } from "../contexts/AuthContext";

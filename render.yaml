@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: smart-spotify-backend
+    name: smart-music-library-backend
     runtime: node
     plan: free
     branch: main

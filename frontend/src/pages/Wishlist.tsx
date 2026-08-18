@@ -1,4 +1,4 @@
-import { Track, TrackOwnership } from "@smart-spotify/shared";
+import { Track, TrackOwnership } from "@smart-music-library/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Star } from "lucide-react";
 import { useMemo, useState } from "react";

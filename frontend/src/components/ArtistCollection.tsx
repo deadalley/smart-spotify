@@ -1,4 +1,4 @@
-import { Artist } from "@smart-spotify/shared";
+import { Artist } from "@smart-music-library/shared";
 import { useMemo, useState } from "react";
 import { ArtistList } from "./ArtistList";
 import { ArtistTile } from "./ArtistTile";

@@ -1,4 +1,4 @@
-import { Playlist } from "@smart-spotify/shared";
+import { Playlist } from "@smart-music-library/shared";
 import { useMemo, useState } from "react";
 import { Grid } from "./Grid";
 import { PlaylistList } from "./PlaylistList";

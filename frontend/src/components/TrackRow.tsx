@@ -1,4 +1,4 @@
-import { Playlist, Track, TrackAggregationResult } from "@smart-spotify/shared";
+import { Playlist, Track, TrackAggregationResult } from "@smart-music-library/shared";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";

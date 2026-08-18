@@ -1,4 +1,4 @@
-import { Playlist, TrackAggregationResult } from "@smart-spotify/shared";
+import { Playlist, TrackAggregationResult } from "@smart-music-library/shared";
 import { List } from "lucide-react";
 import { Empty } from "./Empty";
 import { PlaylistList } from "./PlaylistList";

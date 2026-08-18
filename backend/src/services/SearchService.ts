@@ -2,7 +2,7 @@ import {
   LibrarySearchResult,
   SearchResultGroup,
   Track,
-} from "@smart-spotify/shared";
+} from "@smart-music-library/shared";
 import { RedisService } from "./RedisService";
 
 const MAX_RESULTS_PER_SECTION = 8;

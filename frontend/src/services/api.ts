@@ -11,7 +11,7 @@ import {
   SpotifyPlaylistTracksResponse,
   Track,
   TrackAggregationResult,
-} from "@smart-spotify/shared";
+} from "@smart-music-library/shared";
 import axios from "axios";
 import type { AuthSource } from "../contexts/AuthContext";
 

@@ -1,4 +1,4 @@
-import { Artist, Playlist, PlaylistData } from "@smart-spotify/shared";
+import { Artist, Playlist, PlaylistData } from "@smart-music-library/shared";
 
 export function getGenres(
   artists: Artist[],

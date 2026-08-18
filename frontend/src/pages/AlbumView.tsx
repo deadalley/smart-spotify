@@ -1,4 +1,4 @@
-import { Album } from "@smart-spotify/shared";
+import { Album } from "@smart-music-library/shared";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Disc3 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";

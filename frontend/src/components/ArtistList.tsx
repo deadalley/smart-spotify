@@ -1,4 +1,4 @@
-import { Artist } from "@smart-spotify/shared";
+import { Artist } from "@smart-music-library/shared";
 import { ColumnDef } from "@tanstack/react-table";
 import { Music, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";

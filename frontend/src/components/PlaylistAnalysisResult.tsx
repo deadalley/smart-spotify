@@ -1,4 +1,4 @@
-import { Artist, PlaylistConsistencyAnalysis } from "@smart-spotify/shared";
+import { Artist, PlaylistConsistencyAnalysis } from "@smart-music-library/shared";
 import { Accordion } from "./Accordion";
 import { ArtistCollection } from "./ArtistCollection";
 import { GenreCluster } from "./GenreCluster";

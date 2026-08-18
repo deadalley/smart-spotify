@@ -1,4 +1,4 @@
-import { Playlist } from "@smart-spotify/shared";
+import { Playlist } from "@smart-music-library/shared";
 import { Music } from "lucide-react";
 import { PLAYLIST_TYPES } from "../utils";
 import { Tile } from "./Tile";

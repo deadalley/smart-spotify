@@ -1,7 +1,7 @@
 {
-  "name": "smart-spotify",
+  "name": "smart-music-library",
   "version": "1.0.0",
-  "description": "A React + Express Spotify integration app with authentication, playlist viewing, and library search",
+  "description": "A React + Express Spotify/YouTube Music integration app with authentication, playlist viewing, and library search",
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {

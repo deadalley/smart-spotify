@@ -1,4 +1,4 @@
-import { Playlist, TrackAggregationResult } from "@smart-spotify/shared";
+import { Playlist, TrackAggregationResult } from "@smart-music-library/shared";
 import { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, Music } from "lucide-react";
 import { useMemo, useState } from "react";
